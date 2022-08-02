@@ -1,0 +1,121 @@
+#include "initializer.h"
+
+Initializer::Initializer(const Params &initializer_params) : name_(initializer_params.get<std::string>("name")) {}
+
+Initializer::~Initializer() {}
+
+const std::string &Initializer::get_name() { return name_; }
+
+Zeros::Zeros(const Params &initializer_params) : Initializer(initializer_params) {}
+
+Zeros::~Zeros() {}
+
+void Zeros::call(Float *data, int &dim)
+{
+    memset(data, 0, sizeof(Float) * dim);
+}
+
+Ones::Ones(const Params &initializer_params) : Initializer(initializer_params) {}
+
+Ones::~Ones() {}
+
+void Ones::call(Float *data, int &dim)
+{
+    for (int i = 0; i < dim; i++)
+    {
+        data[i] = 1.0f;
+    }
+}
+
+RandomUniform::RandomUniform(const Params &initializer_params) : Initializer(initializer_params),
+                                                                 min_(initializer_params.get<double>("min")),
+                                                                 max_(initializer_params.get<double>("max")),
+                                                                 distribution(min_, max_),
+                                                                 random(time(NULL))
+{
+    assert(max_ > min_);
+}
+
+RandomUniform::~RandomUniform() {}
+
+void RandomUniform::call(Float *data, int &dim)
+{
+    for (int i = 0; i < dim; i++)
+    {
+        data[i] = distribution(random);
+    }
+}
+
+RandomNormal::RandomNormal(const Params &initializer_params) : Initializer(initializer_params),
+                                                               mean_(initializer_params.get<double>("mean")),
+                                                               stddev_(initializer_params.get<double>("stddev")),
+                                                               distribution(mean_, stddev_),
+                                                               random(time(NULL))
+{
+    assert(stddev_ > 0.0);
+}
+
+RandomNormal::~RandomNormal() {}
+
+void RandomNormal::call(Float *data, int &dim)
+{
+    for (int i = 0; i < dim; i++)
+    {
+        data[i] = distribution(random);
+    }
+}
+
+TruncateNormal::TruncateNormal(const Params &initializer_params) : Initializer(initializer_params),
+                                                                   mean_(initializer_params.get<double>("mean")),
+                                                                   stddev_(initializer_params.get<double>("stddev")),
+                                                                   distribution(mean_, stddev_),
+                                                                   random(time(NULL))
+{
+    assert(stddev_ > 0.0);
+}
+
+TruncateNormal::~TruncateNormal() {}
+
+void TruncateNormal::call(Float *data, int &dim)
+{
+    double tmp;
+    for (int i = 0; i < dim; i++)
+    {
+        tmp = distribution(random);
+        while (abs(tmp - mean_) > 2.0 * stddev_)
+        {
+            tmp = distribution(random);
+        }
+        data[i] = tmp;
+    }
+}
+
+const std::shared_ptr<Initializer> get_initializers(const Params &p)
+{
+    auto name = p.get<std::string>("name");
+    if (name == "zeros")
+    {
+        return std::shared_ptr<Initializer>{new Zeros(p)};
+    }
+    else if (name == "ones")
+    {
+        return std::shared_ptr<Initializer>{new Ones(p)};
+    }
+    else if (name == "random_uniform")
+    {
+        return std::shared_ptr<Initializer>{new RandomUniform(p)};
+    }
+    else if (name == "random_normal")
+    {
+        return std::shared_ptr<Initializer>{new RandomNormal(p)};
+    }
+    else if (name == "truncate_normal")
+    {
+        return std::shared_ptr<Initializer>{new TruncateNormal(p)};
+    }
+    else
+    {
+        std::cout << "No Such Initializer: " << name << std::endl;
+        exit(-2);
+    }
+}
