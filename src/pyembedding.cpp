@@ -1,4 +1,4 @@
-#include "py_embedding.h"
+#include "pyembedding.h"
 
 Parameters::Parameters() : params_(cpptoml::make_table()) {}
 Parameters::Parameters(const Parameters &p) : params_(p.params_){};
@@ -13,22 +13,28 @@ Parameters ::~Parameters()
 {
 }
 
+void Parameters::insert(std::string key, bool value)
+{
+    auto value_ = cpptoml::make_value<bool>(std::move(value));
+    params_->insert(key, value_);
+}
+
 void Parameters::insert(std::string key, int value)
 {
     int64_t tmp = value;
-    auto value_ = cpptoml::make_value<int>(std::move(tmp));
+    auto value_ = cpptoml::make_value<int64_t>(std::move(tmp));
     params_->insert(key, value_);
 }
 
 void Parameters::insert(std::string key, std::string value)
 {
-    std::shared_ptr<cpptoml::value<std::string>> value_ = cpptoml::make_value<std::string>(std::move(value));
+    auto value_ = cpptoml::make_value<std::string>(std::move(value));
     params_->insert(key, value_);
 }
 
 void Parameters::insert(std::string key, double value)
 {
-    std::shared_ptr<cpptoml::value<double>> value_ = cpptoml::make_value<double>(std::move(value));
+    auto value_ = cpptoml::make_value<double>(std::move(value));
     params_->insert(key, value_);
 }
 
@@ -36,7 +42,7 @@ void Parameters::insert(std::string key, double value)
 PyInitializer::PyInitializer()
 {
     Parameters p;
-    p.insert("name", "zeros");
+    p.insert("name", std::string("zeros"));
     initializer_ = get_initializers(Params(p.params_));
 }
 
@@ -55,22 +61,29 @@ PyInitializer &PyInitializer::operator=(const PyInitializer &p)
     return *this;
 }
 
-PyInitializer::~PyInitializer() {}
+void PyInitializer::call(Float *data, int dim)
+{
+    initializer_->call(data, dim);
+}
+
+PyInitializer::~PyInitializer()
+{
+}
 
 // PyOptimizer的实现
 PyOptimizer::PyOptimizer()
 {
     Parameters sgd, decay;
-    sgd.insert("name", "sgd");
-    sgd.insert("eta", 0.001);
-    decay.insert("name", "");
+    sgd.insert("name", std::string("sgd"));
+    sgd.insert("eta", double(0.001));
+    decay.insert("name", std::string(""));
     optimizer_ = get_optimizers(Params(sgd.params_), Params(decay.params_));
 }
 
 PyOptimizer::PyOptimizer(Parameters op_params)
 {
     Parameters decay;
-    decay.insert("name", "");
+    decay.insert("name", std::string(""));
     optimizer_ = get_optimizers(Params(op_params.params_), Params(decay.params_));
 }
 
@@ -87,9 +100,15 @@ PyOptimizer &PyOptimizer::operator=(const PyOptimizer &p)
     return *this;
 }
 PyOptimizer::~PyOptimizer() {}
-
+void PyOptimizer::call(Float *data, int wn, Float *gds, int gn, u_int64_t global_step)
+{
+    assert(wn == gn);
+    optimizer_->call(data, gds, wn, global_step);
+}
 // PyFilter的实现
-PyFilter::PyFilter() : filter_(nullptr) {}
+PyFilter::PyFilter() : filter_(nullptr)
+{
+}
 PyFilter::PyFilter(Parameters params)
 {
     size_t capacity = params.params_->get_as<size_t>("capacity").value_or(min_size);
@@ -107,6 +126,23 @@ PyFilter &PyFilter::operator=(const PyFilter &p)
     this->filter_ = p.filter_;
     return *this;
 }
+
+bool PyFilter::check(u_int64_t key)
+{
+    if (filter_ == nullptr)
+    {
+        return true;
+    }
+    return filter_->check(key);
+}
+void PyFilter::add(u_int64_t key, u_int64_t num)
+{
+    if (filter_ != nullptr)
+    {
+        filter_->add(key, num);
+    }
+}
+
 PyFilter::~PyFilter() {}
 
 // PyEmbedding实现
@@ -116,11 +152,11 @@ PyEmbedding::PyEmbedding(int dim, std::string data_dir, PyFilter filter,
 }
 PyEmbedding::~PyEmbedding() {}
 
-void PyEmbedding::lookup(u_int64_t *keys, int len, Float *data, int n, u_int64_t &global_step)
+u_int64_t PyEmbedding::lookup(unsigned long long *keys, int len, Float *data, int n)
 {
-    embedding_->lookup(keys, len, data, n, global_step);
+    return embedding_->lookup(keys, len, data, n);
 }
-void PyEmbedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_int64_t global_step)
+void PyEmbedding::apply_gradients(unsigned long long *keys, int len, Float *gds, int n, u_int64_t global_step)
 {
     embedding_->apply_gradients(keys, len, gds, n, global_step);
 }

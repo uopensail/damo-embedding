@@ -1,5 +1,5 @@
 #include "initializer.h"
-
+#include <iostream>
 Initializer::Initializer(const Params &initializer_params) : name_(initializer_params.get<std::string>("name")) {}
 
 Initializer::~Initializer() {}
@@ -10,7 +10,7 @@ Zeros::Zeros(const Params &initializer_params) : Initializer(initializer_params)
 
 Zeros::~Zeros() {}
 
-void Zeros::call(Float *data, int &dim)
+void Zeros::call(Float *data, int dim)
 {
     memset(data, 0, sizeof(Float) * dim);
 }
@@ -19,7 +19,7 @@ Ones::Ones(const Params &initializer_params) : Initializer(initializer_params) {
 
 Ones::~Ones() {}
 
-void Ones::call(Float *data, int &dim)
+void Ones::call(Float *data, int dim)
 {
     for (int i = 0; i < dim; i++)
     {
@@ -38,7 +38,7 @@ RandomUniform::RandomUniform(const Params &initializer_params) : Initializer(ini
 
 RandomUniform::~RandomUniform() {}
 
-void RandomUniform::call(Float *data, int &dim)
+void RandomUniform::call(Float *data, int dim)
 {
     for (int i = 0; i < dim; i++)
     {
@@ -57,7 +57,7 @@ RandomNormal::RandomNormal(const Params &initializer_params) : Initializer(initi
 
 RandomNormal::~RandomNormal() {}
 
-void RandomNormal::call(Float *data, int &dim)
+void RandomNormal::call(Float *data, int dim)
 {
     for (int i = 0; i < dim; i++)
     {
@@ -76,7 +76,7 @@ TruncateNormal::TruncateNormal(const Params &initializer_params) : Initializer(i
 
 TruncateNormal::~TruncateNormal() {}
 
-void TruncateNormal::call(Float *data, int &dim)
+void TruncateNormal::call(Float *data, int dim)
 {
     double tmp;
     for (int i = 0; i < dim; i++)

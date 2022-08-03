@@ -25,8 +25,8 @@ public:
     virtual int get_space(int dim);
     //初始化相关操作
     virtual void init_helper(Float *data, int dim);
-    inline Float get_decay_rate(long long global_step, Float learning_rate);
-    virtual void call(Float *data, Float *gds, int dim, long long global_step) = 0;
+    inline Float get_decay_rate(u_int64_t global_step, Float learning_rate);
+    virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step) = 0;
 };
 
 class SGDOptimizer : public Optimizer
@@ -40,7 +40,7 @@ public:
     SGDOptimizer(const SGDOptimizer &&) = delete;
     SGDOptimizer(const Params &optimizer_params, const Params &decay_params);
     virtual ~SGDOptimizer();
-    virtual void call(Float *data, Float *gds, int dim, long long global_step);
+    virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
 class FTRLOptimizer : public Optimizer
@@ -58,7 +58,7 @@ public:
     FTRLOptimizer(const Params &optimizer_params, const Params &decay_params);
     virtual ~FTRLOptimizer();
     virtual int get_space(int dim);
-    virtual void call(Float *data, Float *gds, int dim, long long global_step);
+    virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
 class AdamOptimizer : public Optimizer
@@ -77,7 +77,7 @@ public:
     virtual ~AdamOptimizer();
     virtual int get_space(int dim);
     virtual void init_helper(Float *data, int dim);
-    virtual void call(Float *data, Float *gds, int dim, long long global_step);
+    virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
 class AmsGradOptimizer : public Optimizer
@@ -96,7 +96,7 @@ public:
     virtual ~AmsGradOptimizer();
     virtual int get_space(int dim);
     virtual void init_helper(Float *data, int dim);
-    virtual void call(Float *data, Float *gds, int dim, long long global_step);
+    virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
 const std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params, const Params &decay_params);

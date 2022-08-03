@@ -22,7 +22,7 @@ Embedding::Embedding(int dim, u_int64_t step_lag, std::string data_dir,
     std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
 }
 
-Embedding::~Embedding() { delete db; }
+Embedding::~Embedding() { delete db_; }
 
 //创建一条记录
 void Embedding::create(u_int64_t &key, std::string &value)
@@ -53,13 +53,13 @@ void Embedding::update(MetaData *ptr, Float *gds, u_int64_t global_step)
     optimizer_->call(ptr->data, gds, dim_, ptr->update_logic_time);
 }
 
-void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n, u_int64_t &global_step)
+u_int64_t Embedding::lookup(u_int64_t *keys, int len, Float *data, int n)
 {
     //在lookup的时候不加锁
     std::vector<rocksdb::Slice> s_keys;
     std::vector<std::string> result;
     std::vector<int> exists(len);
-    global_step = 1;
+    u_int64_t global_step = 1;
     int j = 0;
     for (int i = 0; i < len; i++)
     {
@@ -123,6 +123,7 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n, u_int64_t &
         batch.Put(s_put_keys[i], put_result[i]);
     }
     db_->Write(put_options, &batch);
+    return global_step;
 }
 
 void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_int64_t global_step)
@@ -175,7 +176,7 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_i
             }
         }
         //写回到rocksdb
-        auto status = db_->Write(put_options, &batch);
+        db_->Write(put_options, &batch);
         lockers_[i].unlock();
         s_keys_per_lock[i].clear();
         gds_per_lock[i].clear();

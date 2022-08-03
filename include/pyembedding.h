@@ -23,9 +23,11 @@ public:
     void insert(std::string key, std::string value);
     void insert(std::string key, int value);
     void insert(std::string key, double value);
+    void insert(std::string key, bool value);
 };
 
 class PyEmbedding;
+
 class PyInitializer
 {
 private:
@@ -38,6 +40,7 @@ public:
     PyInitializer(const PyInitializer &p);
     PyInitializer(const PyInitializer &&p);
     PyInitializer &operator=(const PyInitializer &p);
+    void call(float *w, int wn);
     ~PyInitializer();
 };
 
@@ -54,6 +57,7 @@ public:
     PyOptimizer(const PyOptimizer &p);
     PyOptimizer(const PyOptimizer &&p);
     PyOptimizer &operator=(const PyOptimizer &p);
+    void call(float *w, int wn, float *gds, int gn, unsigned long long global_step);
     ~PyOptimizer();
 };
 
@@ -69,6 +73,8 @@ public:
     PyFilter(const PyFilter &p);
     PyFilter(const PyFilter &&p);
     PyFilter &operator=(const PyFilter &p);
+    bool check(unsigned long long key);
+    void add(unsigned long long key, unsigned long long num);
     ~PyFilter();
 };
 
@@ -98,9 +104,9 @@ public:
     // len: keys的长度
     // data: 返回的数据
     // n: 返回的数据长度
-    // global_step: 全局step
-    void lookup(u_int64_t *keys, int len, Float *data, int n, u_int64_t &global_step);
-    void apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_int64_t global_step);
+    // return global_step: 全局step
+    u_int64_t lookup(unsigned long long *keys, int kn, float *w, int wn);
+    void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn, unsigned long long global_step);
     void dump(std::string path, int expires);
 };
 

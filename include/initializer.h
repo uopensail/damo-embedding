@@ -17,7 +17,7 @@ public:
     Initializer(const Params &initializer_params);
     virtual ~Initializer();
     const std::string &get_name();
-    virtual void call(Float *data, int &dim) = 0;
+    virtual void call(Float *data, int dim) = 0;
 };
 
 class Zeros : public Initializer
@@ -28,7 +28,7 @@ public:
     Zeros(const Zeros &&) = delete;
     Zeros(const Params &initializer_params);
     virtual ~Zeros();
-    virtual void call(Float *data, int &dim);
+    virtual void call(Float *data, int dim);
 };
 
 class Ones : public Initializer
@@ -39,7 +39,7 @@ public:
     Ones(const Ones &&) = delete;
     Ones(const Params &initializer_params);
     virtual ~Ones();
-    virtual void call(Float *data, int &dim);
+    virtual void call(Float *data, int dim);
 };
 
 class RandomUniform : public Initializer
@@ -56,7 +56,7 @@ public:
     RandomUniform(const RandomUniform &&) = delete;
     RandomUniform(const Params &initializer_params);
     virtual ~RandomUniform();
-    virtual void call(Float *data, int &dim);
+    virtual void call(Float *data, int dim);
 };
 
 class RandomNormal : public Initializer
@@ -73,7 +73,7 @@ public:
     RandomNormal(const RandomNormal &&) = delete;
     RandomNormal(const Params &initializer_params);
     virtual ~RandomNormal();
-    virtual void call(Float *data, int &dim);
+    virtual void call(Float *data, int dim);
 };
 
 class TruncateNormal : public Initializer
@@ -90,7 +90,7 @@ public:
     TruncateNormal(const TruncateNormal &&) = delete;
     TruncateNormal(const Params &initializer_params);
     virtual ~TruncateNormal();
-    virtual void call(Float *data, int &dim);
+    virtual void call(Float *data, int dim);
 };
 
 const std::shared_ptr<Initializer> get_initializers(const Params &p);

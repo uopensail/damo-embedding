@@ -12,7 +12,7 @@ void Optimizer::init_helper(Float *data, int dim) {}
 
 int Optimizer::get_space(int dim) { return dim; }
 
-inline Float Optimizer::get_decay_rate(long long global_step, Float learning_rate_)
+inline Float Optimizer::get_decay_rate(u_int64_t global_step, Float learning_rate_)
 {
     if (function_)
     {
@@ -26,7 +26,7 @@ SGDOptimizer::SGDOptimizer(const Params &optimizer_params, const Params &decay_p
 
 SGDOptimizer::~SGDOptimizer() {}
 
-void SGDOptimizer::call(Float *data, Float *gds, int dim, long long global_step)
+void SGDOptimizer::call(Float *data, Float *gds, int dim, u_int64_t global_step)
 {
     auto decay = get_decay_rate(global_step, eta);
     for (int i = 0; i < dim; i++)
@@ -47,7 +47,7 @@ FTRLOptimizer::~FTRLOptimizer() {}
 
 int FTRLOptimizer::get_space(int dim) { return 3 * dim; }
 
-void FTRLOptimizer::call(Float *data, Float *gds, int dim, long long global_step)
+void FTRLOptimizer::call(Float *data, Float *gds, int dim, u_int64_t global_step)
 {
     Float *w = data;
     Float *z = &(data[dim]);
@@ -97,7 +97,7 @@ void AdamOptimizer::init_helper(Float *data, int dim)
     data[dim * 3 + 1] = 1.0;
 }
 
-void AdamOptimizer::call(Float *data, Float *gds, int dim, long long global_step)
+void AdamOptimizer::call(Float *data, Float *gds, int dim, u_int64_t global_step)
 {
     Float *w = data;
     Float *m = &(data[dim]);
@@ -142,7 +142,7 @@ void AmsGradOptimizer::init_helper(Float *data, int dim)
     data[dim * 3 + 1] = 1.0;
 }
 
-void AmsGradOptimizer::call(Float *data, Float *gds, int dim, long long global_step)
+void AmsGradOptimizer::call(Float *data, Float *gds, int dim, u_int64_t global_step)
 {
     Float *w = data;
     Float *m = &(data[dim]);

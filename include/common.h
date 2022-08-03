@@ -54,13 +54,12 @@ private:
     std::shared_ptr<cpptoml::table> table;
 
 public:
-    Params() = delete;
+    Params()=delete;
     Params(std::shared_ptr<cpptoml::table> &table);
     Params(std::shared_ptr<cpptoml::table> &&table);
     Params(const Params &p);
     Params(const Params &&p);
     Params &operator=(const Params &p);
-
     //模板函数要放在头文件中，放在src中就会出现链接问题
     template <class T>
     T get(std::string key) const

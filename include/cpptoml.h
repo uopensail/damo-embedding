@@ -1543,6 +1543,14 @@ namespace cpptoml
             insert(key, make_value(std::forward<T>(val)));
         }
 
+        template <class T>
+        void insert_copy(const std::string &key, T val,
+                         typename value_traits<T>::type * = 0)
+        {
+            T newValue{val};
+            insert(key, make_value(std::forward<T>(newValue)));
+        }
+
         /**
          * Removes an element from the table.
          */

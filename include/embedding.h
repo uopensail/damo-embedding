@@ -32,8 +32,8 @@ public:
     Embedding(int dim, u_int64_t step_lag, std::string data_dir, std::shared_ptr<Optimizer> optimizer, std::shared_ptr<Initializer> initializer,
               std::shared_ptr<CountBloomFilter> filter);
     ~Embedding();
-    void lookup(u_int64_t *keys, int len, Float *data, int n, u_int64_t &global_step);
-    void apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_int64_t global_step);
+    u_int64_t lookup(u_int64_t *keys, int len, Float *data, int n);
+    void apply_gradients(u_int64_t *keys, int len, Float *gds, int n, u_int64_t global_steps);
     void dump(std::string path, int expires);
 };
 

@@ -1,13 +1,13 @@
 #include "decay_learning_rate.h"
 
-Float exponential_decay(Float learning_rate, long long global_step, const Params &params)
+Float exponential_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto decay_steps = params.get<double>("decay_steps");
     auto decay_rate = params.get<double>("decay_rate");
     return learning_rate - learning_rate * powf(decay_rate, global_step / decay_steps);
 }
 
-Float polynomial_decay(Float learning_rate, long long global_step, const Params &params)
+Float polynomial_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto end_learning_rate = params.get<double>("end_learning_rate");
     auto power = params.get<double>("power");
@@ -17,27 +17,27 @@ Float polynomial_decay(Float learning_rate, long long global_step, const Params 
            end_learning_rate;
 }
 
-Float nature_exp_decay(Float learning_rate, long long global_step, const Params &params)
+Float nature_exp_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto decay_rate = params.get<double>("decay_rate");
     return learning_rate - learning_rate * expf(-decay_rate * global_step);
 }
 
-Float inverse_time_decay(Float learning_rate, long long global_step, const Params &params)
+Float inverse_time_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto decay_steps = params.get<double>("decay_steps");
     auto decay_rate = params.get<double>("decay_rate");
     return learning_rate - learning_rate / (1.0 + decay_rate * global_step / decay_steps);
 }
 
-Float cosine_decay(Float learning_rate, long long global_step, const Params &params)
+Float cosine_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto decay_steps = params.get<double>("decay_steps");
     auto gstep = global_step < decay_steps ? global_step : decay_steps;
     return learning_rate - learning_rate * 0.5 * (1.0 + cosf(M_PI * gstep / decay_steps));
 }
 
-Float liner_cosine_decay(Float learning_rate, long long global_step, const Params &params)
+Float liner_cosine_decay(Float learning_rate, u_int64_t global_step, const Params &params)
 {
     auto alpha = params.get<double>("alpha");
     auto beta = params.get<double>("beta");
