@@ -2696,9 +2696,8 @@ SWIGINTERN PyObject *SWIG_PyStaticMethod_New(PyObject *SWIGUNUSEDPARM(self), PyO
 #define SWIGTYPE_p_PyOptimizer swig_types[4]
 #define SWIGTYPE_p_char swig_types[5]
 #define SWIGTYPE_p_std__shared_ptrT_cpptoml__table_t swig_types[6]
-#define SWIGTYPE_p_u_int64_t swig_types[7]
-static swig_type_info *swig_types[9];
-static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
+static swig_type_info *swig_types[8];
+static swig_module_info swig_module = {swig_types, 7, 0, 0, 0, 0};
 #define SWIG_TypeQuery(name) SWIG_TypeQueryModule(&swig_module, &swig_module, name)
 #define SWIG_MangledTypeQuery(name) SWIG_MangledTypeQueryModule(&swig_module, &swig_module, name)
 
@@ -3711,6 +3710,16 @@ SWIGINTERNINLINE PyObject*
 {
   return PyBool_FromLong(value ? 1 : 0);
 }
+
+
+#ifdef SWIG_LONG_LONG_AVAILABLE
+SWIGINTERNINLINE PyObject* 
+SWIG_From_unsigned_SS_long_SS_long  (unsigned long long value)
+{
+  return (value > LONG_MAX) ?
+    PyLong_FromUnsignedLongLong(value) : PyInt_FromLong(static_cast< long >(value));
+}
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -4895,76 +4904,84 @@ SWIGINTERN PyObject *PyFilter_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   int arg1 ;
-  std::string arg2 ;
-  PyFilter arg3 ;
-  PyOptimizer arg4 ;
-  PyInitializer arg5 ;
+  unsigned long long arg2 ;
+  std::string arg3 ;
+  PyFilter arg4 ;
+  PyOptimizer arg5 ;
+  PyInitializer arg6 ;
   int val1 ;
   int ecode1 = 0 ;
-  void *argp3 ;
-  int res3 = 0 ;
+  unsigned long long val2 ;
+  int ecode2 = 0 ;
   void *argp4 ;
   int res4 = 0 ;
   void *argp5 ;
   int res5 = 0 ;
-  PyObject *swig_obj[5] ;
+  void *argp6 ;
+  int res6 = 0 ;
+  PyObject *swig_obj[6] ;
   PyEmbedding *result = 0 ;
   
-  if (!SWIG_Python_UnpackTuple(args, "new_PyEmbedding", 5, 5, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "new_PyEmbedding", 6, 6, swig_obj)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(swig_obj[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "new_PyEmbedding" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast< int >(val1);
+  ecode2 = SWIG_AsVal_unsigned_SS_long_SS_long(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "unsigned long long""'");
+  } 
+  arg2 = static_cast< unsigned long long >(val2);
   {
     std::string *ptr = (std::string *)0;
-    int res = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
+    int res = SWIG_AsPtr_std_string(swig_obj[2], &ptr);
     if (!SWIG_IsOK(res) || !ptr) {
-      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "std::string""'"); 
+      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "std::string""'"); 
     }
-    arg2 = *ptr;
+    arg3 = *ptr;
     if (SWIG_IsNewObj(res)) delete ptr;
   }
   {
-    res3 = SWIG_ConvertPtr(swig_obj[2], &argp3, SWIGTYPE_p_PyFilter,  0  | 0);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyFilter""'"); 
-    }  
-    if (!argp3) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyFilter""'");
-    } else {
-      PyFilter * temp = reinterpret_cast< PyFilter * >(argp3);
-      arg3 = *temp;
-      if (SWIG_IsNewObj(res3)) delete temp;
-    }
-  }
-  {
-    res4 = SWIG_ConvertPtr(swig_obj[3], &argp4, SWIGTYPE_p_PyOptimizer,  0  | 0);
+    res4 = SWIG_ConvertPtr(swig_obj[3], &argp4, SWIGTYPE_p_PyFilter,  0  | 0);
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "PyOptimizer""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "PyFilter""'"); 
     }  
     if (!argp4) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "PyOptimizer""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "PyFilter""'");
     } else {
-      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp4);
+      PyFilter * temp = reinterpret_cast< PyFilter * >(argp4);
       arg4 = *temp;
       if (SWIG_IsNewObj(res4)) delete temp;
     }
   }
   {
-    res5 = SWIG_ConvertPtr(swig_obj[4], &argp5, SWIGTYPE_p_PyInitializer,  0  | 0);
+    res5 = SWIG_ConvertPtr(swig_obj[4], &argp5, SWIGTYPE_p_PyOptimizer,  0  | 0);
     if (!SWIG_IsOK(res5)) {
-      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "new_PyEmbedding" "', argument " "5"" of type '" "PyInitializer""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "new_PyEmbedding" "', argument " "5"" of type '" "PyOptimizer""'"); 
     }  
     if (!argp5) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "5"" of type '" "PyInitializer""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "5"" of type '" "PyOptimizer""'");
     } else {
-      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp5);
+      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp5);
       arg5 = *temp;
       if (SWIG_IsNewObj(res5)) delete temp;
     }
   }
-  result = (PyEmbedding *)new PyEmbedding(arg1,arg2,arg3,arg4,arg5);
+  {
+    res6 = SWIG_ConvertPtr(swig_obj[5], &argp6, SWIGTYPE_p_PyInitializer,  0  | 0);
+    if (!SWIG_IsOK(res6)) {
+      SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "new_PyEmbedding" "', argument " "6"" of type '" "PyInitializer""'"); 
+    }  
+    if (!argp6) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "6"" of type '" "PyInitializer""'");
+    } else {
+      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp6);
+      arg6 = *temp;
+      if (SWIG_IsNewObj(res6)) delete temp;
+    }
+  }
+  result = (PyEmbedding *)new PyEmbedding(arg1,arg2,arg3,arg4,arg5,arg6);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyEmbedding, SWIG_POINTER_NEW |  0 );
   return resultobj;
 fail:
@@ -5008,7 +5025,7 @@ SWIGINTERN PyObject *_wrap_PyEmbedding_lookup(PyObject *SWIGUNUSEDPARM(self), Py
   PyArrayObject *array4 = NULL ;
   int i4 = 1 ;
   PyObject *swig_obj[3] ;
-  u_int64_t result;
+  unsigned long long result;
   
   if (!SWIG_Python_UnpackTuple(args, "PyEmbedding_lookup", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyEmbedding, 0 |  0 );
@@ -5036,8 +5053,8 @@ SWIGINTERN PyObject *_wrap_PyEmbedding_lookup(PyObject *SWIGUNUSEDPARM(self), Py
     arg5 = 1;
     for (i4=0; i4 < array_numdims(array4); ++i4) arg5 *= array_size(array4,i4);
   }
-  result = (arg1)->lookup(arg2,arg3,arg4,arg5);
-  resultobj = SWIG_NewPointerObj((new u_int64_t(static_cast< const u_int64_t& >(result))), SWIGTYPE_p_u_int64_t, SWIG_POINTER_OWN |  0 );
+  result = (unsigned long long)(arg1)->lookup(arg2,arg3,arg4,arg5);
+  resultobj = SWIG_From_unsigned_SS_long_SS_long(static_cast< unsigned long long >(result));
   {
     if (is_new_object2 && array2)
     {
@@ -5240,7 +5257,6 @@ static swig_type_info _swigt__p_PyInitializer = {"_p_PyInitializer", "PyInitiali
 static swig_type_info _swigt__p_PyOptimizer = {"_p_PyOptimizer", "PyOptimizer *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_char = {"_p_char", "char *", 0, 0, (void*)0, 0};
 static swig_type_info _swigt__p_std__shared_ptrT_cpptoml__table_t = {"_p_std__shared_ptrT_cpptoml__table_t", "std::shared_ptr< cpptoml::table > *", 0, 0, (void*)0, 0};
-static swig_type_info _swigt__p_u_int64_t = {"_p_u_int64_t", "u_int64_t *", 0, 0, (void*)0, 0};
 
 static swig_type_info *swig_type_initial[] = {
   &_swigt__p_Parameters,
@@ -5250,7 +5266,6 @@ static swig_type_info *swig_type_initial[] = {
   &_swigt__p_PyOptimizer,
   &_swigt__p_char,
   &_swigt__p_std__shared_ptrT_cpptoml__table_t,
-  &_swigt__p_u_int64_t,
 };
 
 static swig_cast_info _swigc__p_Parameters[] = {  {&_swigt__p_Parameters, 0, 0, 0},{0, 0, 0, 0}};
@@ -5260,7 +5275,6 @@ static swig_cast_info _swigc__p_PyInitializer[] = {  {&_swigt__p_PyInitializer, 
 static swig_cast_info _swigc__p_PyOptimizer[] = {  {&_swigt__p_PyOptimizer, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_char[] = {  {&_swigt__p_char, 0, 0, 0},{0, 0, 0, 0}};
 static swig_cast_info _swigc__p_std__shared_ptrT_cpptoml__table_t[] = {  {&_swigt__p_std__shared_ptrT_cpptoml__table_t, 0, 0, 0},{0, 0, 0, 0}};
-static swig_cast_info _swigc__p_u_int64_t[] = {  {&_swigt__p_u_int64_t, 0, 0, 0},{0, 0, 0, 0}};
 
 static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_Parameters,
@@ -5270,7 +5284,6 @@ static swig_cast_info *swig_cast_initial[] = {
   _swigc__p_PyOptimizer,
   _swigc__p_char,
   _swigc__p_std__shared_ptrT_cpptoml__table_t,
-  _swigc__p_u_int64_t,
 };
 
 

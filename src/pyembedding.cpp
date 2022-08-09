@@ -146,17 +146,23 @@ void PyFilter::add(u_int64_t key, u_int64_t num)
 PyFilter::~PyFilter() {}
 
 // PyEmbedding实现
-PyEmbedding::PyEmbedding(int dim, std::string data_dir, PyFilter filter,
+PyEmbedding::PyEmbedding(int dim, unsigned long long max_lag, std::string data_dir, PyFilter filter,
                          PyOptimizer optimizer, PyInitializer initializer)
 {
+
+    auto empedding_ptr = new Embedding(dim, (u_int64_t)max_lag, data_dir,
+                                       optimizer.optimizer_, initializer.initializer_, filter.filter_);
+
+    embedding_ = std::shared_ptr<Embedding>(empedding_ptr);
 }
+
 PyEmbedding::~PyEmbedding() {}
 
-u_int64_t PyEmbedding::lookup(unsigned long long *keys, int len, Float *data, int n)
+unsigned long long PyEmbedding::lookup(unsigned long long *keys, int len, Float *data, int n)
 {
-    return embedding_->lookup(keys, len, data, n);
+    return (unsigned long long)embedding_->lookup(keys, len, data, n);
 }
-void PyEmbedding::apply_gradients(unsigned long long *keys, int len, Float *gds, int n, u_int64_t global_step)
+void PyEmbedding::apply_gradients(unsigned long long *keys, int len, Float *gds, int n, unsigned long long global_step)
 {
     embedding_->apply_gradients(keys, len, gds, n, global_step);
 }

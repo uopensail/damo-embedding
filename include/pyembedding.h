@@ -92,11 +92,12 @@ public:
 public:
     // 初始化embedding
     // dim: 维度
+    // max_lag: 最大滞后步数
     // data_dir: 数据存放的路径
     // filter: 频控, 可为空
     // optimizer: 优化算子
     // initializer: 初始化算子
-    PyEmbedding(int dim, std::string data_dir, PyFilter filter,
+    PyEmbedding(int dim, unsigned long long max_lag, std::string data_dir, PyFilter filter,
                 PyOptimizer optimizer, PyInitializer initializer);
     ~PyEmbedding();
     // 查询
@@ -105,7 +106,7 @@ public:
     // data: 返回的数据
     // n: 返回的数据长度
     // return global_step: 全局step
-    u_int64_t lookup(unsigned long long *keys, int kn, float *w, int wn);
+    unsigned long long lookup(unsigned long long *keys, int kn, float *w, int wn);
     void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn, unsigned long long global_step);
     void dump(std::string path, int expires);
 };

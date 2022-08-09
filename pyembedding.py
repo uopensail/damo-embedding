@@ -125,11 +125,11 @@ class PyEmbedding(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, dim: "int", data_dir: "std::string", filter: "PyFilter", optimizer: "PyOptimizer", initializer: "PyInitializer"):
-        _pyEmbedding.PyEmbedding_swiginit(self, _pyEmbedding.new_PyEmbedding(dim, data_dir, filter, optimizer, initializer))
+    def __init__(self, dim: "int", max_lag: "unsigned long long", data_dir: "std::string", filter: "PyFilter", optimizer: "PyOptimizer", initializer: "PyInitializer"):
+        _pyEmbedding.PyEmbedding_swiginit(self, _pyEmbedding.new_PyEmbedding(dim, max_lag, data_dir, filter, optimizer, initializer))
     __swig_destroy__ = _pyEmbedding.delete_PyEmbedding
 
-    def lookup(self, keys: "unsigned long long *", w: "float *") -> "u_int64_t":
+    def lookup(self, keys: "unsigned long long *", w: "float *") -> "unsigned long long":
         return _pyEmbedding.PyEmbedding_lookup(self, keys, w)
 
     def apply_gradients(self, keys: "unsigned long long *", gds: "float *", global_step: "unsigned long long") -> "void":

@@ -11,7 +11,7 @@
 #include <rocksdb/write_batch.h>
 
 //最大的锁的个数
-#define max_lock_num 1024
+#define max_lock_num 16
 
 class Embedding
 {
