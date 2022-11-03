@@ -36,6 +36,7 @@ if is_new_osx():
 else:
     COMPILE_OPTIONS.append("-std=c++17")
     LINK_OPTIONS.append("-lrocksdb")
+    LINK_OPTIONS.append("-lpthread")
     LINK_OPTIONS.append("-Wl,-rpath=/usr/local/lib")
 
 pyEmbeddingModule = Extension(
