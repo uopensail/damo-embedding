@@ -30,10 +30,10 @@
 #include "optimizer.h"
 
 class Parameters {
- public:
+public:
   std::shared_ptr<cpptoml::table> params_;
 
- public:
+public:
   Parameters();
   Parameters(const Parameters &p);
   Parameters &operator=(const Parameters &p);
@@ -47,11 +47,11 @@ class Parameters {
 class PyEmbedding;
 
 class PyInitializer {
- private:
+private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
 
- public:
+public:
   PyInitializer();
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
@@ -61,11 +61,11 @@ class PyInitializer {
 };
 
 class PyOptimizer {
- private:
+private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
 
- public:
+public:
   PyOptimizer();
   PyOptimizer(Parameters op_params);
   PyOptimizer(Parameters op_params, Parameters decay_params);
@@ -77,11 +77,11 @@ class PyOptimizer {
 };
 
 class PyFilter {
- private:
+private:
   std::shared_ptr<CountBloomFilter> filter_;
   friend class PyEmbedding;
 
- public:
+public:
   PyFilter();
   PyFilter(Parameters params);
   PyFilter(const PyFilter &p);
@@ -92,36 +92,60 @@ class PyFilter {
 };
 
 class PyEmbedding {
- private:
+private:
   std::shared_ptr<Embedding> embedding_;
 
- public:
+public:
   PyEmbedding() = delete;
   PyEmbedding(const PyEmbedding &p) = delete;
   PyFilter &operator=(const PyFilter &p) = delete;
 
- public:
-  // 初始化embedding
-  // dim: 维度
-  // max_lag: 最大滞后步数
-  // data_dir: 数据存放的路径
-  // filter: 频控, 可为空
-  // optimizer: 优化算子
-  // initializer: 初始化算子
-  PyEmbedding(int dim, unsigned long long max_lag, std::string data_dir,
+public:
+  /**
+   * @brief Construct a new Py Embedding object
+   *
+   * @param dim 维度
+   * @param max_lag 最大滞后步数
+   * @param data_dir 数据存放的路径
+   * @param filter  频控, 可为空
+   * @param optimizer 优化算子
+   * @param initializer 初始化算子
+   */
+  PyEmbedding(int gid, int dim, unsigned long long max_lag, std::string data_dir,
               PyFilter filter, PyOptimizer optimizer,
               PyInitializer initializer);
   ~PyEmbedding();
-  // 查询
-  // keys: 需要查询的keys
-  // len: keys的长度
-  // data: 返回的数据
-  // n: 返回的数据长度
-  // return global_step: 全局step
+
+  /**
+   * @brief 查询
+   *
+   * @param keys 需要查询的keys
+   * @param kn keys的长度
+   * @param w 返回的数据
+   * @param wn 返回的数据长度
+   * @return unsigned long long
+   */
   unsigned long long lookup(unsigned long long *keys, int kn, float *w, int wn);
+
+  /**
+   * @brief
+   *
+   * @param keys 需要更新的keys
+   * @param kn keys的长度
+   * @param gds 梯度
+   * @param gn 梯度权重的长度
+   * @param global_step 全局step
+   */
   void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn,
                        unsigned long long global_step);
+
+  /**
+   * @brief 保存权重到磁盘
+   *
+   * @param path 路径
+   * @param expires out of days, 过期天数
+   */
   void dump(std::string path, int expires);
 };
 
-#endif  // DAMO_EMBEDDING_PY_EMBEDDING_H
+#endif // DAMO_EMBEDDING_PY_EMBEDDING_H

@@ -1,15 +1,12 @@
 #include "embedding.h"
 
-Embedding::Embedding(int dim, u_int64_t step_lag, std::string data_dir,
+Embedding::Embedding(u_int64_t group, int dim, u_int64_t step_lag,
+                     std::string data_dir,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer,
                      const std::shared_ptr<CountBloomFilter> &filter)
-    : db_(nullptr),
-      dim_(dim),
-      lag_(step_lag),
-      optimizer_(optimizer),
-      initializer_(initializer),
-      filter_(filter) {
+    : db_(nullptr), group_(group), dim_(dim), lag_(step_lag),
+      optimizer_(optimizer), initializer_(initializer), filter_(filter) {
   rocksdb::Options options;
   options.create_if_missing = true;
   rocksdb::Status status = rocksdb::DB::Open(options, data_dir, &this->db_);
@@ -24,18 +21,19 @@ Embedding::Embedding(int dim, u_int64_t step_lag, std::string data_dir,
 Embedding::~Embedding() { delete this->db_; }
 
 //创建一条记录
-void Embedding::create(u_int64_t &key, std::string &value) {
+std::string *Embedding::create(u_int64_t &key) {
   int size = sizeof(MetaData) +
              sizeof(Float) * this->optimizer_->get_space(this->dim_);
-  value.resize(size);
-  MetaData *ptr = (MetaData *)&(value[0]);
+  std::string *value = new std::string(size, '\0');
+  MetaData *ptr = (MetaData *)&((*value)[0]);
   this->initializer_->call(ptr->data, this->dim_);
   ptr->update_num = 1;
   ptr->update_logic_time = 1;
-  ptr->key = key;
+  ptr->key = mask_group(this->group_, key);
   ptr->dim = dim_;
   ptr->update_real_time = get_current_time();
   this->optimizer_->init_helper(ptr->data, this->dim_);
+  return value;
 }
 
 //更新记录
@@ -57,10 +55,12 @@ u_int64_t Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<int> exists(len);
   u_int64_t global_step = 1;
   int j = 0;
+  u_int64_t key;
   for (int i = 0; i < len; i++) {
+    key = mask_group(this->group_, keys[i]);
     //不配置filter的情况下也可以
-    if (filter_ == nullptr || filter_->check(keys[i])) {
-      s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+    if (filter_ == nullptr || filter_->check(key)) {
+      s_keys.emplace_back(rocksdb::Slice((char *)&key, sizeof(u_int64_t)));
       exists[i] = j;
       j++;
     } else {
@@ -89,13 +89,13 @@ u_int64_t Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
       global_step = std::max(global_step, ptr->update_logic_time);
     } else {
       //需要初始化
-      std::string tmpValue;
-      this->create(keys[i], tmpValue);
-      s_put_keys.emplace_back(
-          rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      put_result.emplace_back(tmpValue);
-      ptr = (MetaData *)&(tmpValue[0]);
+      key = mask_group(this->group_, keys[i]);
+      std::string *tmpValue = this->create(key);
+      s_put_keys.emplace_back(rocksdb::Slice((char *)&key, sizeof(u_int64_t)));
+      put_result.emplace_back(*tmpValue);
+      ptr = (MetaData *)&((*tmpValue)[0]);
       memcpy(&(data[offset]), ptr->data, sizeof(Float) * this->dim_);
+      delete tmpValue;
     }
     offset += this->dim_;
   }
@@ -116,18 +116,20 @@ u_int64_t Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
 void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
                                 u_int64_t global_step) {
   //写入的时候需要加锁,将key按照锁进行分组
-  std::vector<rocksdb::Slice> s_keys_per_lock[max_lock_num];  //分组的key
-  std::vector<Float *> gds_per_lock[max_lock_num];            //分组的gd
+  std::vector<rocksdb::Slice> s_keys_per_lock[max_lock_num]; //分组的key
+  std::vector<Float *> gds_per_lock[max_lock_num];           //分组的gd
   int locker_id;
+  u_int64_t key;
   for (int i = 0; i < len; i++) {
     //能够push进去的,必须要filter check ok
-    if (filter_ == nullptr || filter_->check(keys[i])) {
-      locker_id = keys[i] & (max_lock_num - 1);
+    key = mask_group(this->group_, keys[i]);
+    if (filter_ == nullptr || filter_->check(key)) {
+      locker_id = key & (max_lock_num - 1);
       gds_per_lock[locker_id].emplace_back(&(gds[i * dim_]));
       s_keys_per_lock[locker_id].emplace_back(
-          rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+          rocksdb::Slice((char *)&key, sizeof(u_int64_t)));
     } else {
-      filter_->add(keys[i]);
+      filter_->add(key);
     }
   }
 
@@ -178,6 +180,7 @@ void Embedding::dump(std::string path, int expires) {
   char *data;
   int all_length = sizeof(u_int64_t) + this->dim_ * sizeof(Float);
   int data_length = this->dim_ * sizeof(Float);
+
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
     if (ptr->update_real_time < oldest_timestamp) {
@@ -205,7 +208,7 @@ void Embedding::dump(std::string path, int expires) {
   std::sort(cache.begin(), cache.end(), cmp);
   size_t size = cache.size();
   std::ofstream writer(path, std::ios::out | std::ios::binary);
-  //写值
+  //写值  int(dim), size_t(size),data
   writer.write((char *)(&this->dim_), sizeof(int));
   writer.write((char *)&size, sizeof(size_t));
   for (size_t i = 0; i < size; i++) {

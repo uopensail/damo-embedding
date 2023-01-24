@@ -47,6 +47,8 @@
 
 // 获得每个特征的group-id
 #define groupof(x) ((x) >> 56)
+#define value_mask 0xFFFFFFFFFFFFFFul
+#define mask_group(group, key) ((key & value_mask) + (group << 56))
 
 // 最大的group数量
 #define max_group 256
@@ -59,9 +61,9 @@
 #pragma pack(1)
 struct MetaData {
   u_int64_t key;
-  u_int64_t update_logic_time;  //更新的逻辑时间
-  u_int64_t update_real_time;   //更新时间
-  u_int64_t update_num;         //更新次数
+  u_int64_t update_logic_time; //更新的逻辑时间
+  u_int64_t update_real_time;  //更新时间
+  u_int64_t update_num;        //更新次数
   int dim;
   Float data[];
 };
@@ -76,17 +78,16 @@ static u_int64_t get_current_time() {
 }
 
 class Params {
- private:
+private:
   std::shared_ptr<cpptoml::table> table;
 
- public:
+public:
   Params() = delete;
   Params(const std::shared_ptr<cpptoml::table> &table);
   Params(const Params &p);
   Params &operator=(const Params &p);
   //模板函数要放在头文件中，放在src中就会出现链接问题
-  template <class T>
-  T get(std::string key) const {
+  template <class T> T get(std::string key) const {
     if (table->contains(key)) {
       return *table->get_as<T>(key);
     }
@@ -95,4 +96,4 @@ class Params {
   ~Params();
 };
 
-#endif  // DAMO_COMMON_H
+#endif // DAMO_COMMON_H

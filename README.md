@@ -8,3 +8,4 @@
 2. 安装命令: python3 setup.py install
 
 ### 使用方法
+每一个embedding要单独设置，在代码里面key使用多个embedding，互相不干扰。

@@ -136,14 +136,12 @@ void PyFilter::add(u_int64_t key, u_int64_t num) {
 PyFilter::~PyFilter() {}
 
 // PyEmbedding实现
-PyEmbedding::PyEmbedding(int dim, unsigned long long max_lag,
+PyEmbedding::PyEmbedding(int group, int dim, unsigned long long max_lag,
                          std::string data_dir, PyFilter filter,
                          PyOptimizer optimizer, PyInitializer initializer) {
-  auto empedding_ptr =
-      new Embedding(dim, (u_int64_t)max_lag, data_dir, optimizer.optimizer_,
-                    initializer.initializer_, filter.filter_);
-
-  this->embedding_ = std::shared_ptr<Embedding>(empedding_ptr);
+  this->embedding_ = std::make_shared<Embedding>(
+      (u_int64_t)group, dim, (u_int64_t)max_lag, data_dir, optimizer.optimizer_,
+      initializer.initializer_, filter.filter_);
 }
 
 PyEmbedding::~PyEmbedding() {}
@@ -152,10 +150,12 @@ unsigned long long PyEmbedding::lookup(unsigned long long *keys, int len,
                                        Float *data, int n) {
   return (unsigned long long)this->embedding_->lookup(keys, len, data, n);
 }
+
 void PyEmbedding::apply_gradients(unsigned long long *keys, int len, Float *gds,
                                   int n, unsigned long long global_step) {
   embedding_->apply_gradients(keys, len, gds, n, global_step);
 }
+
 void PyEmbedding::dump(std::string path, int expires) {
   this->embedding_->dump(path, expires);
 }
