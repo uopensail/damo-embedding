@@ -56,7 +56,7 @@ PyInitializer &PyInitializer::operator=(const PyInitializer &p) {
   return *this;
 }
 
-void PyInitializer::call(Float *data, int dim) {
+void PyInitializer::call(float *data, int dim) {
   initializer_->call(data, dim);
 }
 
@@ -92,8 +92,9 @@ PyOptimizer &PyOptimizer::operator=(const PyOptimizer &p) {
   return *this;
 }
 PyOptimizer::~PyOptimizer() {}
-void PyOptimizer::call(Float *data, int wn, Float *gds, int gn,
-                       u_int64_t global_step) {
+
+void PyOptimizer::call(float *data, int wn, float *gds, int gn,
+                       unsigned long long global_step) {
   assert(wn == gn);
   optimizer_->call(data, gds, wn, global_step);
 }
@@ -121,41 +122,70 @@ PyFilter &PyFilter::operator=(const PyFilter &p) {
   return *this;
 }
 
-bool PyFilter::check(u_int64_t key) {
-  if (filter_ == nullptr) {
+bool PyFilter::check(unsigned long long key) {
+  if (this->filter_ == nullptr) {
     return true;
   }
   return filter_->check(key);
 }
-void PyFilter::add(u_int64_t key, u_int64_t num) {
-  if (filter_ != nullptr) {
-    filter_->add(key, num);
+void PyFilter::add(unsigned long long key, unsigned long long num) {
+  if (this->filter_ != nullptr) {
+    this->filter_->add(key, num);
   }
 }
 
 PyFilter::~PyFilter() {}
 
-// PyEmbedding实现
-PyEmbedding::PyEmbedding(int group, int dim, unsigned long long max_lag,
-                         std::string data_dir, PyFilter filter,
-                         PyOptimizer optimizer, PyInitializer initializer) {
-  this->embedding_ = std::make_shared<Embedding>(
-      (u_int64_t)group, dim, (u_int64_t)max_lag, data_dir, optimizer.optimizer_,
+PyEmbeddingFactory::PyEmbeddingFactory(unsigned long long max_lag,
+                                       std::string data_dir, PyFilter filter,
+                                       PyOptimizer optimizer,
+                                       PyInitializer initializer) {
+  this->embeddings_ = std::make_shared<Embeddings>(
+      (u_int64_t)max_lag, data_dir, optimizer.optimizer_,
       initializer.initializer_, filter.filter_);
 }
 
-PyEmbedding::~PyEmbedding() {}
+PyEmbeddingFactory::~PyEmbeddingFactory() {}
+
+PyEmbedding PyEmbeddingFactory::regist(int group, int dim) {
+  return PyEmbedding(this, group, dim);
+}
+
+void PyEmbeddingFactory::dump(std::string path, int expires) {
+  this->embeddings_->dump(path, expires);
+}
+
+PyEmbedding::PyEmbedding(PyEmbeddingFactory *factory, int group, int dim)
+    : factory_(factory), group_(group), dim_(dim) {
+  factory->embeddings_->add_group(group, dim);
+}
+PyEmbedding::PyEmbedding(const PyEmbedding &p) {
+  if (&p != this) {
+    this->factory_ = p.factory_;
+    this->group_ = p.group_;
+    this->dim_ = p.dim_;
+  }
+}
+
+PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
+  if (&p != this) {
+    this->factory_ = p.factory_;
+    this->group_ = p.group_;
+    this->dim_ = p.dim_;
+  }
+  return *this;
+}
+
+PyEmbedding::~PyEmbedding() { this->factory_ = nullptr; }
 
 unsigned long long PyEmbedding::lookup(unsigned long long *keys, int len,
-                                       Float *data, int n) {
-  return (unsigned long long)this->embedding_->lookup(keys, len, data, n);
+                                       float *data, int n) {
+  return (unsigned long long)this->factory_->embeddings_->lookup(
+      (u_int64_t *)keys, len, data, n);
 }
 
-void PyEmbedding::apply_gradients(unsigned long long *keys, int len, Float *gds,
+void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,
                                   int n, unsigned long long global_step) {
-  embedding_->apply_gradients(keys, len, gds, n, global_step);
-}
-
-void PyEmbedding::dump(std::string path, int expires) {
-  this->embedding_->dump(path, expires);
+  this->factory_->embeddings_->apply_gradients((u_int64_t *)keys, len, gds, n,
+                                               global_step);
 }

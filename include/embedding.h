@@ -35,39 +35,42 @@
 //最大的锁的个数
 #define max_lock_num 16
 
-class Embedding {
+typedef struct EmbeddingMeta {
+  int dim;
+  u_int64_t group;
+} EmbeddingMeta;
+
+class Embeddings {
 private:
   rocksdb::DB *db_;
-  int dim_;
-  u_int64_t group_;
   u_int64_t lag_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
   std::shared_ptr<CountBloomFilter> filter_;
   std::mutex lockers_[max_lock_num];
+  EmbeddingMeta metas_[max_group];
 
 private:
   std::string *create(u_int64_t &key);
-  void update(MetaData *ptr, Float *gds, u_int64_t global_step);
+  void update(u_int64_t &key, MetaData *ptr, Float *gds, u_int64_t global_step);
 
 public:
   /**
    * @brief Construct a new Embedding object
    *
-   * @param group
-   * 该embedding对应的组，默认的情况下，会把所有的key的高8位置为group
-   * @param dim 数据的宽度
    * @param step_lag 最大的滞后步数
    * @param data_dir 数据存放的路径
    * @param optimizer 优化算子
    * @param initializer 初始化算子
    * @param filter 频控
    */
-  Embedding(u_int64_t group, int dim, u_int64_t step_lag, std::string data_dir,
-            const std::shared_ptr<Optimizer> &optimizer,
-            const std::shared_ptr<Initializer> &initializer,
-            const std::shared_ptr<CountBloomFilter> &filter);
-  ~Embedding();
+  Embeddings(u_int64_t step_lag, std::string data_dir,
+             const std::shared_ptr<Optimizer> &optimizer,
+             const std::shared_ptr<Initializer> &initializer,
+             const std::shared_ptr<CountBloomFilter> &filter);
+
+  void add_group(int group, int dim);
+  ~Embeddings();
 
   /**
    * @brief 查找

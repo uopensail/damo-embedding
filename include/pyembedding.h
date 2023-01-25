@@ -45,11 +45,13 @@ public:
 };
 
 class PyEmbedding;
+class PyEmbeddingFactory;
 
 class PyInitializer {
 private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
+  friend class PyEmbeddingFactory;
 
 public:
   PyInitializer();
@@ -64,6 +66,7 @@ class PyOptimizer {
 private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
+  friend class PyEmbeddingFactory;
 
 public:
   PyOptimizer();
@@ -80,6 +83,7 @@ class PyFilter {
 private:
   std::shared_ptr<CountBloomFilter> filter_;
   friend class PyEmbedding;
+  friend class PyEmbeddingFactory;
 
 public:
   PyFilter();
@@ -91,29 +95,39 @@ public:
   ~PyFilter();
 };
 
+class PyEmbeddingFactory {
+private:
+  std::shared_ptr<Embeddings> embeddings_;
+  friend class PyEmbedding;
+
+public:
+  PyEmbeddingFactory(unsigned long long max_lag, std::string data_dir,
+                     PyFilter filter, PyOptimizer optimizer,
+                     PyInitializer initializer);
+  ~PyEmbeddingFactory();
+
+  PyEmbedding regist(int group, int dim);
+
+  /**
+   * @brief 保存权重到磁盘
+   *
+   * @param path 路径
+   * @param expires out of days, 过期天数
+   */
+  void dump(std::string path, int expires);
+};
+
 class PyEmbedding {
 private:
-  std::shared_ptr<Embedding> embedding_;
+  PyEmbeddingFactory *factory_;
+  int group_;
+  int dim_;
 
 public:
   PyEmbedding() = delete;
-  PyEmbedding(const PyEmbedding &p) = delete;
-  PyFilter &operator=(const PyFilter &p) = delete;
-
-public:
-  /**
-   * @brief Construct a new Py Embedding object
-   *
-   * @param dim 维度
-   * @param max_lag 最大滞后步数
-   * @param data_dir 数据存放的路径
-   * @param filter  频控, 可为空
-   * @param optimizer 优化算子
-   * @param initializer 初始化算子
-   */
-  PyEmbedding(int gid, int dim, unsigned long long max_lag, std::string data_dir,
-              PyFilter filter, PyOptimizer optimizer,
-              PyInitializer initializer);
+  PyEmbedding(PyEmbeddingFactory *factory, int group, int dim);
+  PyEmbedding(const PyEmbedding &p);
+  PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();
 
   /**
@@ -138,14 +152,6 @@ public:
    */
   void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn,
                        unsigned long long global_step);
-
-  /**
-   * @brief 保存权重到磁盘
-   *
-   * @param path 路径
-   * @param expires out of days, 过期天数
-   */
-  void dump(std::string path, int expires);
 };
 
 #endif // DAMO_EMBEDDING_PY_EMBEDDING_H
