@@ -106,8 +106,6 @@ public:
                      PyInitializer initializer);
   ~PyEmbeddingFactory();
 
-  PyEmbedding regist(int group, int dim);
-
   /**
    * @brief 保存权重到磁盘
    *
@@ -119,13 +117,13 @@ public:
 
 class PyEmbedding {
 private:
-  PyEmbeddingFactory *factory_;
+  std::shared_ptr<Embeddings> embeddings_;
   int group_;
   int dim_;
 
 public:
   PyEmbedding() = delete;
-  PyEmbedding(PyEmbeddingFactory *factory, int group, int dim);
+  PyEmbedding(PyEmbeddingFactory factory, int group, int dim);
   PyEmbedding(const PyEmbedding &p);
   PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();

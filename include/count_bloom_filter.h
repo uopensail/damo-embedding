@@ -44,9 +44,11 @@
 
 #define FFP 0.0002
 #define MaxCount 15
-#define HighMask 8589934591ul  // 2^33-1
-#define LowMask 2147483647ul   // 2^31-1
-#define hash_func(x) ((((x) >> 31) & HighMask) + ((x)&LowMask) << 33)
+#define HighMask 8589934591ul // 2^33-1
+#define LowMask 2147483647ul  // 2^31-1
+#define hash_func(x)                                                           \
+  (((static_cast<u_int64_t>(x) >> 31) & HighMask) |                            \
+   (static_cast<u_int64_t>(x) & LowMask) << 33)
 
 struct BiCounter {
   unsigned char m1 : 4;
@@ -59,30 +61,31 @@ using BiCounter = struct BiCounter;
 static std::atomic<bool> CountBloomFilterGlobalStatus(true);
 
 class CountBloomFilter {
- private:
-  double ffp_;                               //假阳率
-  size_t capacity_;                          //过滤器的容量
-  std::string filename_;                     //持久化文件
-  int count_;                                //最小数量
-  size_t size_;                              //申请的空间大小
-  int k_;                                    // hash函数的个数
-  int fp_;                                   //打开的文件描述符
-  BiCounter *data_;                          //具体的存储的数据
-  std::thread flush_thread_;                 //定期刷到磁盘的线程
-  std::thread::native_handle_type handler_;  //退出线程的处理
+private:
+  double ffp_;                              //假阳率
+  size_t capacity_;                         //过滤器的容量
+  std::string filename_;                    //持久化文件
+  int count_;                               //最小数量
+  size_t size_;                             //申请的空间大小
+  int k_;                                   // hash函数的个数
+  int fp_;                                  //打开的文件描述符
+  BiCounter *data_;                         //具体的存储的数据
+  std::thread flush_thread_;                //定期刷到磁盘的线程
+  std::thread::native_handle_type handler_; //退出线程的处理
 
- public:
+public:
   CountBloomFilter() = delete;
   CountBloomFilter(const CountBloomFilter &) = delete;
   CountBloomFilter(size_t capacity, int count, std::string filename,
                    bool reload = false, double ffp = FFP);
-
-  void dump();                       // mmp的数据写入磁盘
-  bool check(const u_int64_t &key);  //检查在不在，次数是否大于count
-  void add(const u_int64_t &key, u_int64_t num = 1);
   ~CountBloomFilter();
+
+public:
+  void dump();                      // mmp的数据写入磁盘
+  bool check(const u_int64_t &key); //检查在不在，次数是否大于count
+  void add(const u_int64_t &key, u_int64_t num = 1); //添加
 };
 
 void flush_thread_func(CountBloomFilter *filter);
 
-#endif  // DAMO_EMBEDDING_COUNTBLOOMFILTER_H
+#endif // DAMO_EMBEDDING_COUNTBLOOMFILTER_H

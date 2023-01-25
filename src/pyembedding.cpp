@@ -147,21 +147,17 @@ PyEmbeddingFactory::PyEmbeddingFactory(unsigned long long max_lag,
 
 PyEmbeddingFactory::~PyEmbeddingFactory() {}
 
-PyEmbedding PyEmbeddingFactory::regist(int group, int dim) {
-  return PyEmbedding(this, group, dim);
-}
-
 void PyEmbeddingFactory::dump(std::string path, int expires) {
   this->embeddings_->dump(path, expires);
 }
 
-PyEmbedding::PyEmbedding(PyEmbeddingFactory *factory, int group, int dim)
-    : factory_(factory), group_(group), dim_(dim) {
-  factory->embeddings_->add_group(group, dim);
+PyEmbedding::PyEmbedding(PyEmbeddingFactory factory, int group, int dim)
+    : embeddings_(factory.embeddings_), group_(group), dim_(dim) {
+  this->embeddings_->add_group(group, dim);
 }
 PyEmbedding::PyEmbedding(const PyEmbedding &p) {
   if (&p != this) {
-    this->factory_ = p.factory_;
+    this->embeddings_ = p.embeddings_;
     this->group_ = p.group_;
     this->dim_ = p.dim_;
   }
@@ -169,23 +165,23 @@ PyEmbedding::PyEmbedding(const PyEmbedding &p) {
 
 PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
   if (&p != this) {
-    this->factory_ = p.factory_;
+    this->embeddings_ = p.embeddings_;
     this->group_ = p.group_;
     this->dim_ = p.dim_;
   }
   return *this;
 }
 
-PyEmbedding::~PyEmbedding() { this->factory_ = nullptr; }
+PyEmbedding::~PyEmbedding() {}
 
 unsigned long long PyEmbedding::lookup(unsigned long long *keys, int len,
                                        float *data, int n) {
-  return (unsigned long long)this->factory_->embeddings_->lookup(
-      (u_int64_t *)keys, len, data, n);
+  return (unsigned long long)this->embeddings_->lookup((u_int64_t *)keys, len,
+                                                       data, n);
 }
 
 void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,
                                   int n, unsigned long long global_step) {
-  this->factory_->embeddings_->apply_gradients((u_int64_t *)keys, len, gds, n,
-                                               global_step);
+  this->embeddings_->apply_gradients((u_int64_t *)keys, len, gds, n,
+                                     global_step);
 }
