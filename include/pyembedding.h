@@ -30,10 +30,10 @@
 #include "optimizer.h"
 
 class Parameters {
-public:
+ public:
   std::shared_ptr<cpptoml::table> params_;
 
-public:
+ public:
   Parameters();
   Parameters(const Parameters &p);
   Parameters &operator=(const Parameters &p);
@@ -48,12 +48,12 @@ class PyEmbedding;
 class PyEmbeddingFactory;
 
 class PyInitializer {
-private:
+ private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
   friend class PyEmbeddingFactory;
 
-public:
+ public:
   PyInitializer();
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
@@ -63,12 +63,12 @@ public:
 };
 
 class PyOptimizer {
-private:
+ private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
   friend class PyEmbeddingFactory;
 
-public:
+ public:
   PyOptimizer();
   PyOptimizer(Parameters op_params);
   PyOptimizer(Parameters op_params, Parameters decay_params);
@@ -80,12 +80,12 @@ public:
 };
 
 class PyFilter {
-private:
+ private:
   std::shared_ptr<CountBloomFilter> filter_;
   friend class PyEmbedding;
   friend class PyEmbeddingFactory;
 
-public:
+ public:
   PyFilter();
   PyFilter(Parameters params);
   PyFilter(const PyFilter &p);
@@ -96,12 +96,13 @@ public:
 };
 
 class PyEmbeddingFactory {
-private:
+ private:
   std::shared_ptr<Embeddings> embeddings_;
   friend class PyEmbedding;
 
-public:
-  PyEmbeddingFactory(unsigned long long max_lag, std::string data_dir,
+ public:
+  PyEmbeddingFactory(const std::string &config_file);
+  PyEmbeddingFactory(unsigned long long max_lag, int ttl, std::string data_dir,
                      PyFilter filter, PyOptimizer optimizer,
                      PyInitializer initializer);
   ~PyEmbeddingFactory();
@@ -116,12 +117,12 @@ public:
 };
 
 class PyEmbedding {
-private:
+ private:
   std::shared_ptr<Embeddings> embeddings_;
   int group_;
   int dim_;
 
-public:
+ public:
   PyEmbedding() = delete;
   PyEmbedding(PyEmbeddingFactory factory, int group, int dim);
   PyEmbedding(const PyEmbedding &p);
@@ -152,4 +153,4 @@ public:
                        unsigned long long global_step);
 };
 
-#endif // DAMO_EMBEDDING_PY_EMBEDDING_H
+#endif  // DAMO_EMBEDDING_PY_EMBEDDING_H

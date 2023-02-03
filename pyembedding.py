@@ -70,7 +70,7 @@ class Parameters(object):
         _pyEmbedding.Parameters_swiginit(self, _pyEmbedding.new_Parameters(*args))
     __swig_destroy__ = _pyEmbedding.delete_Parameters
 
-    def insert(self, *args) -> "void":
+    def insert(self, *args):
         return _pyEmbedding.Parameters_insert(self, *args)
 
 # Register Parameters in _pyEmbedding:
@@ -83,7 +83,7 @@ class PyInitializer(object):
     def __init__(self, *args):
         _pyEmbedding.PyInitializer_swiginit(self, _pyEmbedding.new_PyInitializer(*args))
 
-    def call(self, w: "float *") -> "void":
+    def call(self, w):
         return _pyEmbedding.PyInitializer_call(self, w)
     __swig_destroy__ = _pyEmbedding.delete_PyInitializer
 
@@ -97,7 +97,7 @@ class PyOptimizer(object):
     def __init__(self, *args):
         _pyEmbedding.PyOptimizer_swiginit(self, _pyEmbedding.new_PyOptimizer(*args))
 
-    def call(self, w: "float *", gds: "float *", global_step: "unsigned long long") -> "void":
+    def call(self, w, gds, global_step):
         return _pyEmbedding.PyOptimizer_call(self, w, gds, global_step)
     __swig_destroy__ = _pyEmbedding.delete_PyOptimizer
 
@@ -111,32 +111,43 @@ class PyFilter(object):
     def __init__(self, *args):
         _pyEmbedding.PyFilter_swiginit(self, _pyEmbedding.new_PyFilter(*args))
 
-    def check(self, key: "unsigned long long") -> "bool":
+    def check(self, key):
         return _pyEmbedding.PyFilter_check(self, key)
 
-    def add(self, key: "unsigned long long", num: "unsigned long long") -> "void":
+    def add(self, key, num):
         return _pyEmbedding.PyFilter_add(self, key, num)
     __swig_destroy__ = _pyEmbedding.delete_PyFilter
 
 # Register PyFilter in _pyEmbedding:
 _pyEmbedding.PyFilter_swigregister(PyFilter)
 
+class PyEmbeddingFactory(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _pyEmbedding.PyEmbeddingFactory_swiginit(self, _pyEmbedding.new_PyEmbeddingFactory(*args))
+    __swig_destroy__ = _pyEmbedding.delete_PyEmbeddingFactory
+
+    def dump(self, path, expires):
+        return _pyEmbedding.PyEmbeddingFactory_dump(self, path, expires)
+
+# Register PyEmbeddingFactory in _pyEmbedding:
+_pyEmbedding.PyEmbeddingFactory_swigregister(PyEmbeddingFactory)
+
 class PyEmbedding(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, dim: "int", max_lag: "unsigned long long", data_dir: "std::string", filter: "PyFilter", optimizer: "PyOptimizer", initializer: "PyInitializer"):
-        _pyEmbedding.PyEmbedding_swiginit(self, _pyEmbedding.new_PyEmbedding(dim, max_lag, data_dir, filter, optimizer, initializer))
+    def __init__(self, *args):
+        _pyEmbedding.PyEmbedding_swiginit(self, _pyEmbedding.new_PyEmbedding(*args))
     __swig_destroy__ = _pyEmbedding.delete_PyEmbedding
 
-    def lookup(self, keys: "unsigned long long *", w: "float *") -> "unsigned long long":
+    def lookup(self, keys, w):
         return _pyEmbedding.PyEmbedding_lookup(self, keys, w)
 
-    def apply_gradients(self, keys: "unsigned long long *", gds: "float *", global_step: "unsigned long long") -> "void":
+    def apply_gradients(self, keys, gds, global_step):
         return _pyEmbedding.PyEmbedding_apply_gradients(self, keys, gds, global_step)
-
-    def dump(self, path: "std::string", expires: "int") -> "void":
-        return _pyEmbedding.PyEmbedding_dump(self, path, expires)
 
 # Register PyEmbedding in _pyEmbedding:
 _pyEmbedding.PyEmbedding_swigregister(PyEmbedding)

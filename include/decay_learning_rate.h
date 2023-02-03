@@ -21,8 +21,9 @@
 #ifndef DAMO_EMBEDDING_DECAY_LEARNING_RATE_H
 #define DAMO_EMBEDDING_DECAY_LEARNING_RATE_H
 
-#include "common.h"
 #include <functional>
+
+#include "common.h"
 using decay_lr_func = std::function<Float(
     Float learning_rate, u_int64_t global_step, const Params &params)>;
 
@@ -43,4 +44,4 @@ Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
                          const Params &params);
 decay_lr_func get_decay_lr_func(const Params &p);
 
-#endif // DAMO_EMBEDDING_DECAY_LEARNING_RATE_H
+#endif  // DAMO_EMBEDDING_DECAY_LEARNING_RATE_H

@@ -1,14 +1,21 @@
 #include "embedding.h"
 
-Embeddings::Embeddings(u_int64_t step_lag, std::string data_dir,
+Embeddings::Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
                        const std::shared_ptr<Optimizer> &optimizer,
                        const std::shared_ptr<Initializer> &initializer,
                        const std::shared_ptr<CountBloomFilter> &filter)
-    : db_(nullptr), lag_(step_lag), optimizer_(optimizer),
-      initializer_(initializer), filter_(filter) {
+    : db_(nullptr),
+      lag_(step_lag),
+      ttl_(ttl),
+      optimizer_(optimizer),
+      initializer_(initializer),
+      filter_(filter) {
   rocksdb::Options options;
   options.create_if_missing = true;
-  rocksdb::Status status = rocksdb::DB::Open(options, data_dir, &this->db_);
+  rocksdb::Status status =
+      rocksdb::DBWithTTL::Open(options, data_dir, &this->db_, this->ttl_);
+
+  // rocksdb::Status status = rocksdb::DB::Open(options, data_dir, &this->db_);
   if (!status.ok()) {
     std::cerr << "open leveldb error: " << status.ToString() << std::endl;
     exit(-1);
@@ -125,8 +132,8 @@ u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
 void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
                                  u_int64_t global_step) {
   //写入的时候需要加锁,将key按照锁进行分组
-  std::vector<rocksdb::Slice> s_keys_per_lock[max_lock_num]; //分组的key
-  std::vector<Float *> gds_per_lock[max_lock_num];           //分组的gd
+  std::vector<rocksdb::Slice> s_keys_per_lock[max_lock_num];  //分组的key
+  std::vector<Float *> gds_per_lock[max_lock_num];            //分组的gd
   int locker_id;
   for (int i = 0; i < len; i++) {
     //能够push进去的,必须要filter check ok
@@ -177,7 +184,6 @@ void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
 
 //保存
 void Embeddings::dump(std::string path, int expires) {
-
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   auto oldest_timestamp = get_current_time() - 86400 * expires;
   rocksdb::ReadOptions read_option;

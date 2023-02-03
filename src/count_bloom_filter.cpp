@@ -7,6 +7,11 @@ void flush_thread_func(CountBloomFilter *filter) {
   }
 }
 
+CountBloomFilter::CountBloomFilter(const Params &config)
+    : CountBloomFilter(
+          config.get<u_int64_t>("capacity"), config.get<int>("count"),
+          config.get<std::string>("path"), config.get<bool>("reload")) {}
+
 CountBloomFilter::CountBloomFilter(size_t capacity, int count,
                                    std::string filename, bool reload,
                                    double ffp)

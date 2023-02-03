@@ -136,12 +136,26 @@ void PyFilter::add(unsigned long long key, unsigned long long num) {
 
 PyFilter::~PyFilter() {}
 
-PyEmbeddingFactory::PyEmbeddingFactory(unsigned long long max_lag,
+PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
+  std::shared_ptr<cpptoml::table> g = cpptoml::parse_file(config_file);
+  Params p_optimizer(g->get_table("optimizer"));
+  Params p_decay(g->get_table("decay"));
+  Params p_initializer(g->get_table("initializer"));
+  Params p_filter(g->get_table("filter"));
+  Params p_config(g->get_table("config"));
+
+  auto filter = std::make_shared<CountBloomFilter>(p_filter);
+  this->embeddings_ = std::make_shared<Embeddings>(
+      p_config.get<u_int64_t>("lag"), p_config.get<int>("ttl"),
+      p_config.get<std::string>("path"), get_optimizers(p_optimizer, p_decay),
+      get_initializers(p_initializer), filter);
+}
+PyEmbeddingFactory::PyEmbeddingFactory(unsigned long long max_lag, int ttl,
                                        std::string data_dir, PyFilter filter,
                                        PyOptimizer optimizer,
                                        PyInitializer initializer) {
   this->embeddings_ = std::make_shared<Embeddings>(
-      (u_int64_t)max_lag, data_dir, optimizer.optimizer_,
+      (u_int64_t)max_lag, ttl, data_dir, optimizer.optimizer_,
       initializer.initializer_, filter.filter_);
 }
 

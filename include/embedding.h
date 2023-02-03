@@ -24,6 +24,7 @@
 #pragma once
 
 #include <rocksdb/db.h>
+#include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
 #include <mutex>
@@ -41,20 +42,22 @@ typedef struct EmbeddingMeta {
 } EmbeddingMeta;
 
 class Embeddings {
-private:
-  rocksdb::DB *db_;
+ private:
+  // rocksdb::DB *db_;
+  rocksdb::DBWithTTL *db_;
   u_int64_t lag_;
+  int ttl_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
   std::shared_ptr<CountBloomFilter> filter_;
   std::mutex lockers_[max_lock_num];
   EmbeddingMeta metas_[max_group];
 
-private:
+ private:
   std::string *create(u_int64_t &key);
   void update(u_int64_t &key, MetaData *ptr, Float *gds, u_int64_t global_step);
 
-public:
+ public:
   /**
    * @brief Construct a new Embedding object
    *
@@ -64,7 +67,7 @@ public:
    * @param initializer 初始化算子
    * @param filter 频控
    */
-  Embeddings(u_int64_t step_lag, std::string data_dir,
+  Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
              const std::shared_ptr<Initializer> &initializer,
              const std::shared_ptr<CountBloomFilter> &filter);
@@ -97,4 +100,4 @@ public:
   void dump(std::string path, int expires);
 };
 
-#endif // DAMO_EMBEDDING_EMBEDDING_H
+#endif  // DAMO_EMBEDDING_EMBEDDING_H
