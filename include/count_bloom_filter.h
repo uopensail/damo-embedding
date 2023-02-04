@@ -33,6 +33,7 @@
 #include <unistd.h>
 
 #include <atomic>
+#include <bitset>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
@@ -43,19 +44,15 @@
 #include "common.h"
 
 #define FFP 0.0002
-#define MaxCount 15
+#define BitSize 4
+#define MaxCount (1 << BitSize) - 1
 #define HighMask 8589934591ull  // 2^33-1
 #define LowMask 2147483647ull   // 2^31-1
 #define hash_func(x)                                \
   (((static_cast<u_int64_t>(x) >> 31) & HighMask) | \
    (static_cast<u_int64_t>(x) & LowMask) << 33)
 
-struct BiCounter {
-  unsigned char m1 : 4;
-  unsigned char m2 : 4;
-};
-
-using BiCounter = struct BiCounter;
+using Counter = std::bitset<BitSize>;
 
 //定义全局的线程状态
 static std::atomic<bool> CountBloomFilterGlobalStatus(true);
@@ -69,7 +66,7 @@ class CountBloomFilter {
   size_t size_;                              //申请的空间大小
   int k_;                                    // hash函数的个数
   int fp_;                                   //打开的文件描述符
-  BiCounter *data_;                          //具体的存储的数据
+  Counter *data_;                            //具体的存储的数据
   std::thread flush_thread_;                 //定期刷到磁盘的线程
   std::thread::native_handle_type handler_;  //退出线程的处理
 

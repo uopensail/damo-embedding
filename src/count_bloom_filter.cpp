@@ -22,7 +22,7 @@ CountBloomFilter::CountBloomFilter(size_t capacity, int count,
   if (this->size_ & 1) {
     this->size_++;
   }
-  auto half = this->size_ >> 1;
+
   //计算hash函数的个数：k=ln(2)*m/n
   this->k_ = int(log(2.0) * double(this->size_) / double(this->capacity_));
 
@@ -32,7 +32,7 @@ CountBloomFilter::CountBloomFilter(size_t capacity, int count,
       struct stat info;
       stat(filename.c_str(), &info);
       //判定是否符合条件, 是否要创建文件
-      if (size_t(info.st_size) == half * sizeof(BiCounter)) {
+      if (size_t(info.st_size) == this->size_ * sizeof(Counter)) {
         need_create_file = false;
       } else {
         remove(filename.c_str());
@@ -44,20 +44,20 @@ CountBloomFilter::CountBloomFilter(size_t capacity, int count,
   if (need_create_file) {
     FILE *w = fopen(filename.c_str(), "wb");
     char tmp = '\0';
-    fseek(w, half * sizeof(BiCounter) - 1, SEEK_SET);
+    fseek(w, this->size_ * sizeof(Counter) - 1, SEEK_SET);
     fwrite(&tmp, 1, 1, w);
     fclose(w);
   }
 
   this->fp_ = open(filename.c_str(), O_RDWR, 0777);
-  this->data_ = (BiCounter *)mmap(0, half * sizeof(BiCounter),
-                                  PROT_READ | PROT_WRITE, MAP_SHARED, fp_, 0);
+  this->data_ = (Counter *)mmap(0, this->size_ * sizeof(Counter),
+                                PROT_READ | PROT_WRITE, MAP_SHARED, fp_, 0);
   if (this->data_ == MAP_FAILED) {
     exit(-1);
   }
 
   if (need_create_file) {
-    memset(this->data_, 0, half * sizeof(BiCounter));
+    memset(this->data_, 0, this->size_ * sizeof(Counter));
   }
 
   this->flush_thread_ = std::thread(flush_thread_func, this);
@@ -67,24 +67,18 @@ CountBloomFilter::CountBloomFilter(size_t capacity, int count,
 
 void CountBloomFilter::dump() {
   auto half = this->size_ >> 1;
-  msync((void *)this->data_, sizeof(BiCounter) * half, MS_ASYNC);
+  msync((void *)this->data_, this->size_ * sizeof(Counter), MS_ASYNC);
 }
 
 //检查在不在，次数是否大于count
 bool CountBloomFilter::check(const u_int64_t &key) {
   int min_count = MaxCount;
   u_int64_t hash = key;
+  unsigned char *value;
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->size_;
-    if (idx & 1) {
-      idx >>= 1;
-      min_count =
-          this->data_[idx].m2 < min_count ? this->data_[idx].m2 : min_count;
-    } else {
-      idx >>= 1;
-      min_count =
-          this->data_[idx].m1 < min_count ? this->data_[idx].m1 : min_count;
-    }
+    value = (unsigned char *)&(this->data_[idx]);
+    min_count = *value < min_count ? *value : min_count;
     hash = hash_func(hash);
   }
   return min_count >= count_;
@@ -92,19 +86,13 @@ bool CountBloomFilter::check(const u_int64_t &key) {
 
 void CountBloomFilter::add(const u_int64_t &key, u_int64_t num) {
   u_int64_t hash = key;
+  unsigned char *value;
+  int tmp;
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->size_;
-    if (idx & 1) {
-      idx >>= 1;
-      this->data_[idx].m2 = this->data_[idx].m2 + num < MaxCount
-                                ? this->data_[idx].m2 + num
-                                : MaxCount;
-    } else {
-      idx >>= 1;
-      this->data_[idx].m1 = this->data_[idx].m1 + num < MaxCount
-                                ? this->data_[idx].m1 + num
-                                : MaxCount;
-    }
+    value = (unsigned char *)&(this->data_[idx]);
+    tmp = *value + num;
+    *value = tmp < MaxCount ? tmp : MaxCount;
     hash = hash_func(hash);
   }
 }
@@ -112,8 +100,7 @@ void CountBloomFilter::add(const u_int64_t &key, u_int64_t num) {
 CountBloomFilter::~CountBloomFilter() {
   CountBloomFilterGlobalStatus.store(false);
   this->dump();
-  auto half = this->size_ >> 1;
-  munmap((void *)this->data_, sizeof(BiCounter) * half);
+  munmap((void *)this->data_, sizeof(Counter) * this->size_);
   close(this->fp_);
   pthread_cancel(this->handler_);
 }

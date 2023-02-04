@@ -43,7 +43,6 @@ typedef struct EmbeddingMeta {
 
 class Embeddings {
  private:
-  // rocksdb::DB *db_;
   rocksdb::DBWithTTL *db_;
   u_int64_t lag_;
   int ttl_;

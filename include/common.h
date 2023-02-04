@@ -47,8 +47,6 @@
 
 // 获得每个特征的group-id
 #define groupof(x) ((x) >> 56)
-//#define value_mask 0xFFFFFFFFFFFFFFul
-//#define mask_group(group, key) ((key & value_mask) + (group << 56))
 
 // 最大的group数量
 #define max_group 256

@@ -27,9 +27,6 @@
 using decay_lr_func = std::function<Float(
     Float learning_rate, u_int64_t global_step, const Params &params)>;
 
-// using decay_lr_func = Float (*)(Float learning_rate, u_int64_t global_step,
-//                                 const Params &params);
-
 Float exponential_decay(Float learning_rate, u_int64_t global_step,
                         const Params &params);
 Float polynomial_decay(Float learning_rate, u_int64_t global_step,
