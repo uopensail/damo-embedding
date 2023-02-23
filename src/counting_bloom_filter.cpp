@@ -1,20 +1,20 @@
-#include "count_bloom_filter.h"
+#include "counting_bloom_filter.h"
 
-void flush_thread_func(CountBloomFilter *filter) {
+void flush_thread_func(CountingBloomFilter *filter) {
   for (; CountBloomFilterGlobalStatus.load();) {
     std::this_thread::sleep_for(std::chrono::seconds(120));
     filter->dump();
   }
 }
 
-CountBloomFilter::CountBloomFilter(const Params &config)
-    : CountBloomFilter(
+CountingBloomFilter::CountingBloomFilter(const Params &config)
+    : CountingBloomFilter(
           config.get<u_int64_t>("capacity"), config.get<int>("count"),
           config.get<std::string>("path"), config.get<bool>("reload")) {}
 
-CountBloomFilter::CountBloomFilter(size_t capacity, int count,
-                                   std::string filename, bool reload,
-                                   double ffp)
+CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
+                                         std::string filename, bool reload,
+                                         double ffp)
     : ffp_(ffp), capacity_(capacity), filename_(filename), count_(count) {
   //计算需要的空间: -(n*ln(p))/ (ln2)^2
   this->size_ =
@@ -65,13 +65,13 @@ CountBloomFilter::CountBloomFilter(size_t capacity, int count,
   this->flush_thread_.detach();
 }
 
-void CountBloomFilter::dump() {
+void CountingBloomFilter::dump() {
   auto half = this->size_ >> 1;
   msync((void *)this->data_, this->size_ * sizeof(Counter), MS_ASYNC);
 }
 
 //检查在不在，次数是否大于count
-bool CountBloomFilter::check(const u_int64_t &key) {
+bool CountingBloomFilter::check(const u_int64_t &key) {
   int min_count = MaxCount;
   u_int64_t hash = key;
   unsigned char *value;
@@ -84,7 +84,7 @@ bool CountBloomFilter::check(const u_int64_t &key) {
   return min_count >= count_;
 }
 
-void CountBloomFilter::add(const u_int64_t &key, u_int64_t num) {
+void CountingBloomFilter::add(const u_int64_t &key, u_int64_t num) {
   u_int64_t hash = key;
   unsigned char *value;
   int tmp;
@@ -97,7 +97,7 @@ void CountBloomFilter::add(const u_int64_t &key, u_int64_t num) {
   }
 }
 
-CountBloomFilter::~CountBloomFilter() {
+CountingBloomFilter::~CountingBloomFilter() {
   CountBloomFilterGlobalStatus.store(false);
   this->dump();
   munmap((void *)this->data_, sizeof(Counter) * this->size_);

@@ -3,7 +3,7 @@
 Embeddings::Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
                        const std::shared_ptr<Optimizer> &optimizer,
                        const std::shared_ptr<Initializer> &initializer,
-                       const std::shared_ptr<CountBloomFilter> &filter)
+                       const std::shared_ptr<CountingBloomFilter> &filter)
     : db_(nullptr),
       lag_(step_lag),
       ttl_(ttl),
@@ -41,11 +41,9 @@ std::string *Embeddings::create(u_int64_t &key) {
   MetaData *ptr = (MetaData *)&((*value)[0]);
   this->initializer_->call(ptr->data, dim);
   ptr->update_num = 1;
-  ptr->update_logic_time = 1;
   ptr->key = key;
   ptr->dim = dim;
-  ptr->update_real_time = get_current_time();
-  this->optimizer_->init_helper(ptr->data, dim);
+  ptr->update_time = get_current_time();
   return value;
 }
 
@@ -53,14 +51,9 @@ std::string *Embeddings::create(u_int64_t &key) {
 void Embeddings::update(u_int64_t &key, MetaData *ptr, Float *gds,
                         u_int64_t global_step) {
   const int &dim = this->metas_[groupof(key)].dim;
-  //太滞后的数据就抛掉
-  if (ptr->update_logic_time > this->lag_ + global_step) {
-    return;
-  }
-  ptr->update_logic_time = std::max(ptr->update_logic_time, global_step);
   ptr->update_num++;
-  ptr->update_real_time = get_current_time();
-  this->optimizer_->call(ptr->data, gds, dim, ptr->update_logic_time);
+  ptr->update_time = get_current_time();
+  this->optimizer_->call(ptr->data, gds, dim, global_step);
 }
 
 u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
@@ -101,7 +94,6 @@ u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
       ptr = (MetaData *)&(result[j][0]);
       memcpy(&(data[offset]), ptr->data,
              sizeof(Float) * this->metas_[groupof(keys[i])].dim);
-      global_step = std::max(global_step, ptr->update_logic_time);
     } else {
       //需要初始化
       std::string *tmpValue = this->create(keys[i]);
@@ -204,9 +196,6 @@ void Embeddings::dump(std::string path, int expires) {
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
-    if (ptr->update_real_time < oldest_timestamp) {
-      continue;
-    }
     group_counts[groupof(ptr->key)]++;
     writer.write((char *)&ptr->key, sizeof(u_int64_t));
     writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);

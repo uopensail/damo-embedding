@@ -29,7 +29,7 @@
 
 #include <mutex>
 
-#include "count_bloom_filter.h"
+#include "counting_bloom_filter.h"
 #include "initializer.h"
 #include "optimizer.h"
 
@@ -48,7 +48,7 @@ class Embeddings {
   int ttl_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
-  std::shared_ptr<CountBloomFilter> filter_;
+  std::shared_ptr<CountingBloomFilter> filter_;
   std::mutex lockers_[max_lock_num];
   EmbeddingMeta metas_[max_group];
 
@@ -69,7 +69,7 @@ class Embeddings {
   Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
              const std::shared_ptr<Initializer> &initializer,
-             const std::shared_ptr<CountBloomFilter> &filter);
+             const std::shared_ptr<CountingBloomFilter> &filter);
 
   void add_group(int group, int dim);
   ~Embeddings();

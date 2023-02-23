@@ -9,8 +9,6 @@ const std::string &Optimizer::get_name() { return name_; }
 
 Optimizer::~Optimizer(){};
 
-void Optimizer::init_helper(Float *data, int dim) {}
-
 int Optimizer::get_space(int dim) { return dim; }
 
 inline Float Optimizer::get_decay_rate(u_int64_t global_step,
@@ -72,65 +70,52 @@ void FTRLOptimizer::call(Float *data, Float *gds, int dim,
 AdamOptimizer::AdamOptimizer(const Params &optimizer_params,
                              const Params &decay_params)
     : Optimizer(optimizer_params, decay_params),
-      alpha(optimizer_params.get<double>("alpha")),
-      beta1(optimizer_params.get<double>("beta1")),
-      beta2(optimizer_params.get<double>("beta2")),
-      epsilon(Epsilon) {
-  try {
-    epsilon = optimizer_params.get<double>("epsilon");
-  } catch (...) {
-  }
-}
+      alpha(optimizer_params.get<double>("alpha", 0.001)),
+      beta1(optimizer_params.get<double>("beta1", 0.9)),
+      beta2(optimizer_params.get<double>("beta2", 0.999)),
+      lambda(optimizer_params.get<double>("lambda")),
+      epsilon(optimizer_params.get<double>("epsilon", 1e-8)) {}
 
 AdamOptimizer::~AdamOptimizer() {}
 
-int AdamOptimizer::get_space(int dim) { return 3 * dim + 2; }
-
-void AdamOptimizer::init_helper(Float *data, int dim) {
-  data[dim * 3] = 1.0;
-  data[dim * 3 + 1] = 1.0;
-}
+/**
+ * @brief get the space
+ *
+ * @param dim
+ * @return int
+ */
+int AdamOptimizer::get_space(int dim) { return 3 * dim; }
 
 void AdamOptimizer::call(Float *data, Float *gds, int dim,
                          u_int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim << 1]);
-  auto decay = get_decay_rate(global_step, alpha);
-  Float &beta1_t = data[dim * 3], &beta2_t = data[dim * 3 + 1];
-  beta1_t = beta1_t <= epsilon ? 0.0 : beta1_t * beta1;
-  beta2_t = beta2_t <= epsilon ? 0.0 : beta2_t * beta2;
-  Float lr = alpha * safe_sqrt(1.0 - beta2_t) / (1.0 - beta1_t);
+  Float beta1_t = powf(beta1, global_step);
+  Float beta2_t = powf(beta2, global_step);
+  Float lr = get_decay_rate(global_step, alpha) * safe_sqrt(1.0 - beta2_t) /
+             (1.0 - beta1_t);
 
   for (int i = 0; i < dim; i++) {
+    gds[i] += lambda * w[i];  // L2 regularization
     m[i] = beta1 * m[i] + (1.0 - beta1) * gds[i];
     v[i] = beta2 * v[i] + (1.0 - beta2) * gds[i] * gds[i];
-
-    w[i] -= lr * m[i] / (safe_sqrt(v[i]) + epsilon) + decay * w[i];
+    w[i] -= lr * m[i] / (safe_sqrt(v[i]) + epsilon);
   }
 }
 
 AmsGradOptimizer::AmsGradOptimizer(const Params &optimizer_params,
                                    const Params &decay_params)
     : Optimizer(optimizer_params, decay_params),
-      alpha(optimizer_params.get<double>("alpha")),
-      beta1(optimizer_params.get<double>("beta1")),
-      beta2(optimizer_params.get<double>("beta2")),
-      epsilon(Epsilon) {
-  try {
-    epsilon = optimizer_params.get<double>("epsilon");
-  } catch (...) {
-  }
-}
+      alpha(optimizer_params.get<double>("alpha", 0.001)),
+      beta1(optimizer_params.get<double>("beta1", 0.9)),
+      beta2(optimizer_params.get<double>("beta2", 0.999)),
+      lambda(optimizer_params.get<double>("lambda")),
+      epsilon(optimizer_params.get<double>("epsilon", 1e-8)) {}
 
 AmsGradOptimizer::~AmsGradOptimizer() {}
 
-int AmsGradOptimizer::get_space(int dim) { return 4 * dim + 2; }
-
-void AmsGradOptimizer::init_helper(Float *data, int dim) {
-  data[dim * 3] = 1.0;
-  data[dim * 3 + 1] = 1.0;
-}
+int AmsGradOptimizer::get_space(int dim) { return 4 * dim; }
 
 void AmsGradOptimizer::call(Float *data, Float *gds, int dim,
                             u_int64_t global_step) {
@@ -139,16 +124,49 @@ void AmsGradOptimizer::call(Float *data, Float *gds, int dim,
   Float *v = &(data[dim * 2]);
   Float *max_v = &(data[dim * 3]);
 
-  auto decay = get_decay_rate(global_step, alpha);
-  Float &beta1_t = data[dim * 3], &beta2_t = data[dim * 3 + 1];
-  beta1_t = beta1_t <= epsilon ? 0.0 : beta1_t * beta1;
-  beta2_t = beta2_t <= epsilon ? 0.0 : beta2_t * beta2;
-  Float lr = alpha * safe_sqrt(1.0 - beta2_t) / (1.0 - beta1_t);
+  Float beta1_t = powf(beta1, global_step);
+  Float beta2_t = powf(beta2, global_step);
+
+  Float lr = get_decay_rate(global_step, alpha) * safe_sqrt(1.0 - beta2_t) /
+             (1.0 - beta1_t);
+
   for (int i = 0; i < dim; i++) {
+    gds[i] += lambda * w[i];  // L2 regularization
     m[i] = beta1 * m[i] + (1.0 - beta1) * gds[i];
     v[i] = beta2 * v[i] + (1.0 - beta2) * gds[i] * gds[i];
     max_v[i] = max_v[i] < v[i] ? v[i] : max_v[i];
-    w[i] -= lr * m[i] / (safe_sqrt(max_v[i]) + epsilon) + decay * w[i];
+    w[i] -= lr * m[i] / (safe_sqrt(max_v[i]) + epsilon);
+  }
+}
+
+AdamWOptimizer::AdamWOptimizer(const Params &optimizer_params,
+                               const Params &decay_params)
+    : Optimizer(optimizer_params, decay_params),
+      alpha(optimizer_params.get<double>("alpha", 0.001)),
+      beta1(optimizer_params.get<double>("beta1", 0.9)),
+      beta2(optimizer_params.get<double>("beta2", 0.999)),
+      lambda(optimizer_params.get<double>("lambda")),
+      epsilon(optimizer_params.get<double>("epsilon", 1e-8)) {}
+
+AdamWOptimizer::~AdamWOptimizer() {}
+
+int AdamWOptimizer::get_space(int dim) { return 3 * dim; }
+
+void AdamWOptimizer::call(Float *data, Float *gds, int dim,
+                          u_int64_t global_step) {
+  Float *w = data;
+  Float *m = &(data[dim]);
+  Float *v = &(data[dim << 1]);
+  Float beta1_t = powf(beta1, global_step);
+  Float beta2_t = powf(beta2, global_step);
+  Float lr = get_decay_rate(global_step, alpha) * safe_sqrt(1.0 - beta2_t) /
+             (1.0 - beta1_t);
+  Float decay = get_decay_rate(global_step, lambda);
+
+  for (int i = 0; i < dim; i++) {
+    m[i] = beta1 * m[i] + (1.0 - beta1) * gds[i];
+    v[i] = beta2 * v[i] + (1.0 - beta2) * gds[i] * gds[i];
+    w[i] -= lr * m[i] / (safe_sqrt(v[i]) + epsilon) + decay * w[i];
   }
 }
 
@@ -167,6 +185,9 @@ std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
   } else if (name == "amsgrad") {
     return std::shared_ptr<Optimizer>(
         new AmsGradOptimizer{optimizer_params, decay_params});
+  } else if (name == "adamw") {
+    return std::shared_ptr<Optimizer>(
+        new AdamWOptimizer{optimizer_params, decay_params});
   } else {
     std::cout << "No Such Optimizer: " << name << std::endl;
     exit(-3);

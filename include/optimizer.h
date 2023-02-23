@@ -42,8 +42,6 @@ class Optimizer {
   virtual ~Optimizer();
   const std::string &get_name();
   virtual int get_space(int dim);
-  //初始化相关操作
-  virtual void init_helper(Float *data, int dim);
   inline Float get_decay_rate(u_int64_t global_step, Float learning_rate);
   virtual void call(Float *data, Float *gds, int dim,
                     u_int64_t global_step) = 0;
@@ -77,11 +75,16 @@ class FTRLOptimizer : public Optimizer {
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
+/**
+ * @brief this is Adam with L2 regularization
+ *
+ */
 class AdamOptimizer : public Optimizer {
  private:
-  Float alpha;
+  Float alpha;  // lr
   Float beta1;
   Float beta2;
+  Float lambda;  // L2 regularization param
   Float epsilon;
 
  public:
@@ -90,7 +93,6 @@ class AdamOptimizer : public Optimizer {
   AdamOptimizer(const Params &optimizer_params, const Params &decay_params);
   virtual ~AdamOptimizer();
   virtual int get_space(int dim);
-  virtual void init_helper(Float *data, int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
@@ -99,6 +101,7 @@ class AmsGradOptimizer : public Optimizer {
   Float alpha;
   Float beta1;
   Float beta2;
+  Float lambda;
   Float epsilon;
 
  public:
@@ -107,7 +110,23 @@ class AmsGradOptimizer : public Optimizer {
   AmsGradOptimizer(const Params &optimizer_params, const Params &decay_params);
   virtual ~AmsGradOptimizer();
   virtual int get_space(int dim);
-  virtual void init_helper(Float *data, int dim);
+  virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+};
+
+class AdamWOptimizer : public Optimizer {
+ private:
+  Float alpha;
+  Float beta1;
+  Float beta2;
+  Float lambda;
+  Float epsilon;
+
+ public:
+  AdamWOptimizer() = delete;
+  AdamWOptimizer(const AdamWOptimizer &) = delete;
+  AdamWOptimizer(const Params &optimizer_params, const Params &decay_params);
+  virtual ~AdamWOptimizer();
+  virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 

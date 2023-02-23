@@ -23,7 +23,7 @@
 
 #pragma once
 
-#include "count_bloom_filter.h"
+#include "counting_bloom_filter.h"
 #include "cpptoml.h"
 #include "embedding.h"
 #include "initializer.h"
@@ -81,7 +81,7 @@ class PyOptimizer {
 
 class PyFilter {
  private:
-  std::shared_ptr<CountBloomFilter> filter_;
+  std::shared_ptr<CountingBloomFilter> filter_;
   friend class PyEmbedding;
   friend class PyEmbeddingFactory;
 

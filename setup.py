@@ -52,7 +52,7 @@ pyEmbeddingModule = Extension(
         "src/initializer.cpp",
         "src/embedding.cpp",
         "src/optimizer.cpp",
-        "src/count_bloom_filter.cpp",
+        "src/counting_bloom_filter.cpp",
         "src/common.cpp",
     ],
     extra_compile_args=COMPILE_OPTIONS,

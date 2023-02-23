@@ -105,11 +105,11 @@ PyFilter::PyFilter(Parameters params) {
       params.params_->get_as<size_t>("capacity").value_or(min_size);
   int count = params.params_->get_as<int>("count").value_or(1);
   std::string filename = params.params_->get_as<std::string>("filename")
-                             .value_or("/tmp/COUNTBLOOMFILTERDATA");
+                             .value_or("/tmp/COUNTING_BLOOM_FILTER_DATA");
   bool reload = params.params_->get_as<bool>("reload").value_or(true);
   double ffp = params.params_->get_as<double>("ffp").value_or(FFP);
-  filter_ = std::shared_ptr<CountBloomFilter>(
-      new CountBloomFilter(capacity, count, filename, reload, ffp));
+  filter_ = std::shared_ptr<CountingBloomFilter>(
+      new CountingBloomFilter(capacity, count, filename, reload, ffp));
 }
 
 PyFilter::PyFilter(const PyFilter &p) : filter_(p.filter_) {}
@@ -144,7 +144,7 @@ PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
   Params p_filter(g->get_table("filter"));
   Params p_config(g->get_table("config"));
 
-  auto filter = std::make_shared<CountBloomFilter>(p_filter);
+  auto filter = std::make_shared<CountingBloomFilter>(p_filter);
   this->embeddings_ = std::make_shared<Embeddings>(
       p_config.get<u_int64_t>("lag"), p_config.get<int>("ttl"),
       p_config.get<std::string>("path"), get_optimizers(p_optimizer, p_decay),

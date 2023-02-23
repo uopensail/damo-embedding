@@ -18,8 +18,8 @@
 // along with `Damo-Embedding`.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef DAMO_EMBEDDING_COUNTBLOOMFILTER_H
-#define DAMO_EMBEDDING_COUNTBLOOMFILTER_H
+#ifndef DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H
+#define DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H
 
 #pragma once
 
@@ -57,7 +57,7 @@ using Counter = std::bitset<BitSize>;
 //定义全局的线程状态
 static std::atomic<bool> CountBloomFilterGlobalStatus(true);
 
-class CountBloomFilter {
+class CountingBloomFilter {
  private:
   double ffp_;                               //假阳率
   size_t capacity_;                          //过滤器的容量
@@ -71,12 +71,12 @@ class CountBloomFilter {
   std::thread::native_handle_type handler_;  //退出线程的处理
 
  public:
-  CountBloomFilter() = delete;
-  CountBloomFilter(const Params &config);
-  CountBloomFilter(const CountBloomFilter &) = delete;
-  CountBloomFilter(size_t capacity, int count, std::string filename,
-                   bool reload = false, double ffp = FFP);
-  ~CountBloomFilter();
+  CountingBloomFilter() = delete;
+  CountingBloomFilter(const Params &config);
+  CountingBloomFilter(const CountingBloomFilter &) = delete;
+  CountingBloomFilter(size_t capacity, int count, std::string filename,
+                      bool reload = false, double ffp = FFP);
+  ~CountingBloomFilter();
 
  public:
   void dump();                       // mmp的数据写入磁盘
@@ -84,6 +84,6 @@ class CountBloomFilter {
   void add(const u_int64_t &key, u_int64_t num = 1);  //添加
 };
 
-void flush_thread_func(CountBloomFilter *filter);
+void flush_thread_func(CountingBloomFilter *filter);
 
-#endif  // DAMO_EMBEDDING_COUNTBLOOMFILTER_H
+#endif  // DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H

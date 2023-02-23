@@ -37,7 +37,7 @@
 #include "cpptoml.h"
 
 #define Float float
-#define Epsilon 1e-7
+#define Epsilon 1e-8
 
 #ifdef __APPLE__
 #define u_int64_t __uint64_t
@@ -59,9 +59,8 @@
 #pragma pack(1)
 struct MetaData {
   u_int64_t key;
-  u_int64_t update_logic_time;  //更新的逻辑时间
-  u_int64_t update_real_time;   //更新时间
-  u_int64_t update_num;         //更新次数
+  u_int64_t update_time;  //更新时间
+  u_int64_t update_num;   //更新次数
   int dim;
   Float data[];
 };
@@ -91,6 +90,14 @@ class Params {
       return *table->get_as<T>(key);
     }
     throw std::out_of_range(key + " is not a valid key");
+  }
+
+  template <class T>
+  T get(std::string key, const T &default_value) const {
+    if (table->contains(key)) {
+      return *table->get_as<T>(key);
+    }
+    return default_value;
   }
   ~Params();
 };
