@@ -41,15 +41,15 @@
 
 using u_int64_t = unsigned long long;
 
-// 获得每个特征的group-id
-#define groupof(x) ((x) >> 56)
-
 // 最大的group数量
 const int max_group = 256;
 const u_int64_t min_size = 2147483648ull;
 
-#define sign(x) ((x) >= 0.0 ? 1.0 : -1.0)
-#define safe_sqrt(x) ((x) >= 0.0 ? sqrtf((x)) : 0.0)
+u_int64_t get_current_time();
+Float safe_sqrt(Float x);
+Float sign(Float x);
+// 获得每个特征的group-id
+u_int64_t groupof(const u_int64_t &x);
 
 //存放数据的结构
 #pragma pack(push)
@@ -64,12 +64,6 @@ struct MetaData {
 #pragma pack(pop)
 
 using MetaData = struct MetaData;
-
-static u_int64_t get_current_time() {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return u_int64_t(tv.tv_sec * 1000 + tv.tv_usec / 1000);
-}
 
 class Params {
  private:

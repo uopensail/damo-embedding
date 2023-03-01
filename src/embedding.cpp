@@ -30,21 +30,6 @@ void Embeddings::add_group(int group, int dim) {
   this->metas_[group].group = group;
 }
 
-//创建一条记录
-std::shared_ptr<std::string> Embeddings::create(const u_int64_t &key) {
-  const int &dim = this->metas_[groupof(key)].dim;
-  int size =
-      sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim);
-  auto value = std::make_shared<std::string>(size, '\0');
-  MetaData *ptr = (MetaData *)&((*value)[0]);
-  this->initializer_->call(ptr->data, dim);
-  ptr->update_num = 1;
-  ptr->key = key;
-  ptr->dim = dim;
-  ptr->update_time = get_current_time();
-  return value;
-}
-
 //更新记录
 void Embeddings::update(const u_int64_t &key, MetaData *ptr, Float *gds,
                         const u_int64_t &global_step) {
@@ -57,7 +42,7 @@ void Embeddings::update(const u_int64_t &key, MetaData *ptr, Float *gds,
 void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
-  std::vector<int> exists(len);
+  std::vector<int> exists(len, -1);
   int j = 0;
   for (int i = 0; i < len; i++) {
     //不配置filter的情况下也可以
@@ -65,8 +50,6 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
       s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
       exists[i] = j;
       j++;
-    } else {
-      exists[i] = -1;
     }
   }
   size_t offset = 0;
@@ -77,30 +60,36 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<std::string> put_result;
   rocksdb::ReadOptions get_options;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
+  int dim;
   for (int i = 0; i < len; i++) {
+    dim = this->metas_[groupof(keys[i])].dim;
     // filter检查没有就置为0
     if (exists[i] == -1) {
-      memset(&(data[offset]), 0,
-             sizeof(Float) * this->metas_[groupof(keys[i])].dim);
-      offset += this->metas_[groupof(keys[i])].dim;
+      memset(&(data[offset]), 0, sizeof(Float) * dim);
+      offset += dim;
       continue;
     }
     j = exists[i];
     if (status[j].ok()) {
       ptr = (MetaData *)&(result[j][0]);
-      memcpy(&(data[offset]), ptr->data,
-             sizeof(Float) * this->metas_[groupof(keys[i])].dim);
+      memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
     } else {
       //需要初始化
-      auto t_value = this->create(keys[i]);
+      std::string value(
+          sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim),
+          '\0');
+      MetaData *ptr = (MetaData *)(&value[0]);
+      this->initializer_->call(ptr->data, dim);
+      ptr->update_num = 1;
+      ptr->key = keys[i];
+      ptr->dim = dim;
+      ptr->update_time = get_current_time();
       s_put_keys.emplace_back(
           rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      put_result.emplace_back(*t_value);
-      ptr = (MetaData *)&((*t_value)[0]);
-      memcpy(&(data[offset]), ptr->data,
-             sizeof(Float) * this->metas_[groupof(keys[i])].dim);
+      put_result.emplace_back(value);
+      memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
     }
-    offset += this->metas_[groupof(keys[i])].dim;
+    offset += dim;
   }
 
   assert(offset == n);

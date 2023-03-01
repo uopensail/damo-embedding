@@ -2,15 +2,19 @@
 
 void flush_thread_func(
     const std::weak_ptr<CountingBloomFilter> &counting_bloom_filter) {
-  for (; CountBloomFilterGlobalStatus.load();) {
+  while (1) {
     std::this_thread::sleep_for(std::chrono::seconds(120));
     auto filter = counting_bloom_filter.lock();
     if (filter) {
       filter->dump();
     } else {
-      break;
+      return;
     }
   }
+}
+
+u_int64_t hash_func(const u_int64_t &x) {
+  return ((x >> 31) & HighMask) | ((x & LowMask) << 33);
 }
 
 CountingBloomFilter::CountingBloomFilter(const Params &config)
@@ -58,6 +62,7 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   this->fp_ = open(filename.c_str(), O_RDWR, 0777);
   this->data_ = (Counter *)mmap(0, this->size_ * sizeof(Counter),
                                 PROT_READ | PROT_WRITE, MAP_SHARED, fp_, 0);
+
   if (this->data_ == MAP_FAILED) {
     exit(-1);
   }
@@ -65,12 +70,9 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   if (need_create_file) {
     memset(this->data_, 0, this->size_ * sizeof(Counter));
   }
-}
-
-void CountingBloomFilter::start() {
-  flush_thread =
-      std::make_shared<std::thread>(flush_thread_func, weak_from_this());
-  flush_thread->detach();
+  this->flush_thread_ = std::thread(flush_thread_func, weak_from_this());
+  this->handler_ = this->flush_thread_.native_handle();
+  this->flush_thread_.detach();
 }
 
 void CountingBloomFilter::dump() {
@@ -105,7 +107,7 @@ void CountingBloomFilter::add(const u_int64_t &key, const u_int64_t &num) {
 }
 
 CountingBloomFilter::~CountingBloomFilter() {
-  CountBloomFilterGlobalStatus.store(false);
+  pthread_cancel(this->handler_);
   this->dump();
   munmap((void *)this->data_, sizeof(Counter) * this->size_);
   close(this->fp_);

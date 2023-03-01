@@ -46,7 +46,6 @@ class Embeddings {
   EmbeddingMeta metas_[max_group];
 
  private:
-  std::shared_ptr<std::string> create(const u_int64_t &key);
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
               const u_int64_t &global_step);
 
