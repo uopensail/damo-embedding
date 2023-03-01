@@ -66,7 +66,6 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
 }
 
 void CountingBloomFilter::dump() {
-  auto half = this->size_ >> 1;
   msync((void *)this->data_, this->size_ * sizeof(Counter), MS_ASYNC);
 }
 

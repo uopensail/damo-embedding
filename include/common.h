@@ -39,11 +39,7 @@
 #define Float float
 #define Epsilon 1e-8
 
-#ifdef __APPLE__
-#define u_int64_t __uint64_t
-#elif __linux__
-#define u_int64_t uint64_t
-#endif
+using u_int64_t = unsigned long long;
 
 // 获得每个特征的group-id
 #define groupof(x) ((x) >> 56)

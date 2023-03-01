@@ -1,11 +1,10 @@
 #include "embedding.h"
 
-Embeddings::Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
+Embeddings::Embeddings(int ttl, std::string data_dir,
                        const std::shared_ptr<Optimizer> &optimizer,
                        const std::shared_ptr<Initializer> &initializer,
                        const std::shared_ptr<CountingBloomFilter> &filter)
     : db_(nullptr),
-      lag_(step_lag),
       ttl_(ttl),
       optimizer_(optimizer),
       initializer_(initializer),
@@ -14,8 +13,6 @@ Embeddings::Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
   options.create_if_missing = true;
   rocksdb::Status status =
       rocksdb::DBWithTTL::Open(options, data_dir, &this->db_, this->ttl_);
-
-  // rocksdb::Status status = rocksdb::DB::Open(options, data_dir, &this->db_);
   if (!status.ok()) {
     std::cerr << "open leveldb error: " << status.ToString() << std::endl;
     exit(-1);
@@ -56,8 +53,7 @@ void Embeddings::update(u_int64_t &key, MetaData *ptr, Float *gds,
   this->optimizer_->call(ptr->data, gds, dim, global_step);
 }
 
-u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
-  //在lookup的时候不加锁
+void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
   std::vector<int> exists(len);
@@ -96,14 +92,14 @@ u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
              sizeof(Float) * this->metas_[groupof(keys[i])].dim);
     } else {
       //需要初始化
-      std::string *tmpValue = this->create(keys[i]);
+      std::string *t_value = this->create(keys[i]);
       s_put_keys.emplace_back(
           rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      put_result.emplace_back(*tmpValue);
-      ptr = (MetaData *)&((*tmpValue)[0]);
+      put_result.emplace_back(*t_value);
+      ptr = (MetaData *)&((*t_value)[0]);
       memcpy(&(data[offset]), ptr->data,
              sizeof(Float) * this->metas_[groupof(keys[i])].dim);
-      delete tmpValue;
+      delete t_value;
     }
     offset += this->metas_[groupof(keys[i])].dim;
   }
@@ -118,60 +114,42 @@ u_int64_t Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
     batch.Put(s_put_keys[i], put_result[i]);
   }
   this->db_->Write(put_options, &batch);
-  return global_step;
+  return;
 }
 
 void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
                                  u_int64_t global_step) {
-  //写入的时候需要加锁,将key按照锁进行分组
-  std::vector<rocksdb::Slice> s_keys_per_lock[max_lock_num];  //分组的key
-  std::vector<Float *> gds_per_lock[max_lock_num];            //分组的gd
-  int locker_id;
+  std::vector<rocksdb::Slice> s_keys;
+  std::vector<std::string> result;
+  std::vector<Float *> t_gds;
+  size_t offset = 0;
   for (int i = 0; i < len; i++) {
     //能够push进去的,必须要filter check ok
     if (this->filter_ == nullptr || this->filter_->check(keys[i])) {
-      locker_id = keys[i] & (max_lock_num - 1);
-      gds_per_lock[locker_id].emplace_back(
-          &(gds[i * this->metas_[groupof(keys[i])].dim]));
-      s_keys_per_lock[locker_id].emplace_back(
-          rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+      s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+      t_gds.push_back(&gds[offset]);
     } else {
       this->filter_->add(keys[i]);
     }
+    offset += this->metas_[groupof(keys[i])].dim;
   }
 
   //先从rocksdb中进行查找
   rocksdb::ReadOptions get_options;
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
-  std::vector<std::string> result;
+  MetaData *meta = nullptr;
   rocksdb::WriteBatch batch;
-  for (int i = 0; i < max_lock_num; i++) {
-    if (s_keys_per_lock[i].size() == 0) {
+  auto status = this->db_->MultiGet(get_options, s_keys, &result);
+  for (size_t i = 0; i < status.size(); i++) {
+    if (!status[i].ok()) {
       continue;
     }
-
-    //加锁
-    result.clear();
-    batch.Clear();
-    lockers_[i].lock();
-    auto status = this->db_->MultiGet(get_options, s_keys_per_lock[i], &result);
-    //遍历所有,更新值
-    for (size_t j = 0; j < s_keys_per_lock[i].size(); j++) {
-      if (status[j].ok()) {
-        //更新数据
-        this->update(*(u_int64_t *)(s_keys_per_lock[i][j].data()),
-                     (MetaData *)&(result[j][0]), gds_per_lock[i][j],
-                     global_step);
-        batch.Put(s_keys_per_lock[i][j], result[i]);
-      }
-    }
-    //写回到rocksdb
-    this->db_->Write(put_options, &batch);
-    lockers_[i].unlock();
-    s_keys_per_lock[i].clear();
-    gds_per_lock[i].clear();
+    meta = (MetaData *)&(result[i][0]);
+    this->update(meta->key, meta, t_gds[i], global_step);
+    batch.Put(s_keys[i], result[i]);
   }
+  this->db_->Write(put_options, &batch);
 }
 
 //保存

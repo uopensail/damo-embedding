@@ -27,14 +27,9 @@
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
-#include <mutex>
-
 #include "counting_bloom_filter.h"
 #include "initializer.h"
 #include "optimizer.h"
-
-//最大的锁的个数
-#define max_lock_num 16
 
 typedef struct EmbeddingMeta {
   int dim;
@@ -44,12 +39,10 @@ typedef struct EmbeddingMeta {
 class Embeddings {
  private:
   rocksdb::DBWithTTL *db_;
-  u_int64_t lag_;
   int ttl_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
   std::shared_ptr<CountingBloomFilter> filter_;
-  std::mutex lockers_[max_lock_num];
   EmbeddingMeta metas_[max_group];
 
  private:
@@ -66,7 +59,7 @@ class Embeddings {
    * @param initializer 初始化算子
    * @param filter 频控
    */
-  Embeddings(u_int64_t step_lag, int ttl, std::string data_dir,
+  Embeddings(int ttl, std::string data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
              const std::shared_ptr<Initializer> &initializer,
              const std::shared_ptr<CountingBloomFilter> &filter);
@@ -81,9 +74,9 @@ class Embeddings {
    * @param len 长度
    * @param data 返回的数据
    * @param n 返回的长度
-   * @return u_int64_t 全局的step
+   * @return
    */
-  u_int64_t lookup(u_int64_t *keys, int len, Float *data, int n);
+  void lookup(u_int64_t *keys, int len, Float *data, int n);
 
   /**
    * @brief 更新梯度

@@ -146,17 +146,16 @@ PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
 
   auto filter = std::make_shared<CountingBloomFilter>(p_filter);
   this->embeddings_ = std::make_shared<Embeddings>(
-      p_config.get<u_int64_t>("lag"), p_config.get<int>("ttl"),
-      p_config.get<std::string>("path"), get_optimizers(p_optimizer, p_decay),
-      get_initializers(p_initializer), filter);
+      p_config.get<int>("ttl"), p_config.get<std::string>("path"),
+      get_optimizers(p_optimizer, p_decay), get_initializers(p_initializer),
+      filter);
 }
-PyEmbeddingFactory::PyEmbeddingFactory(unsigned long long max_lag, int ttl,
-                                       std::string data_dir, PyFilter filter,
-                                       PyOptimizer optimizer,
+PyEmbeddingFactory::PyEmbeddingFactory(int ttl, std::string data_dir,
+                                       PyFilter filter, PyOptimizer optimizer,
                                        PyInitializer initializer) {
-  this->embeddings_ = std::make_shared<Embeddings>(
-      (u_int64_t)max_lag, ttl, data_dir, optimizer.optimizer_,
-      initializer.initializer_, filter.filter_);
+  this->embeddings_ =
+      std::make_shared<Embeddings>(ttl, data_dir, optimizer.optimizer_,
+                                   initializer.initializer_, filter.filter_);
 }
 
 PyEmbeddingFactory::~PyEmbeddingFactory() {}
@@ -188,10 +187,9 @@ PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
 
 PyEmbedding::~PyEmbedding() {}
 
-unsigned long long PyEmbedding::lookup(unsigned long long *keys, int len,
-                                       float *data, int n) {
-  return (unsigned long long)this->embeddings_->lookup((u_int64_t *)keys, len,
-                                                       data, n);
+void PyEmbedding::lookup(unsigned long long *keys, int len, float *data,
+                         int n) {
+  this->embeddings_->lookup((u_int64_t *)keys, len, data, n);
 }
 
 void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,

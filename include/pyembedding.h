@@ -102,9 +102,8 @@ class PyEmbeddingFactory {
 
  public:
   PyEmbeddingFactory(const std::string &config_file);
-  PyEmbeddingFactory(unsigned long long max_lag, int ttl, std::string data_dir,
-                     PyFilter filter, PyOptimizer optimizer,
-                     PyInitializer initializer);
+  PyEmbeddingFactory(int ttl, std::string data_dir, PyFilter filter,
+                     PyOptimizer optimizer, PyInitializer initializer);
   ~PyEmbeddingFactory();
 
   /**
@@ -136,9 +135,9 @@ class PyEmbedding {
    * @param kn keys的长度
    * @param w 返回的数据
    * @param wn 返回的数据长度
-   * @return unsigned long long
+   * @return
    */
-  unsigned long long lookup(unsigned long long *keys, int kn, float *w, int wn);
+  void lookup(unsigned long long *keys, int kn, float *w, int wn);
 
   /**
    * @brief
