@@ -19,8 +19,10 @@ u_int64_t hash_func(const u_int64_t &x) {
 
 CountingBloomFilter::CountingBloomFilter(const Params &config)
     : CountingBloomFilter(
-          config.get<u_int64_t>("capacity"), config.get<int>("count"),
-          config.get<std::string>("path"), config.get<bool>("reload")) {}
+          config.get<u_int64_t>("capacity", min_size),
+          config.get<int>("count", MaxCount),
+          config.get<std::string>("path", "/tmp/COUNTING_BLOOM_FILTER_DATA"),
+          config.get<bool>("reload", true), config.get<double>("ffp", FFP)) {}
 
 CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
                                          const std::string &filename,

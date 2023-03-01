@@ -73,7 +73,6 @@ class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
   ~CountingBloomFilter();
 
  public:
-  void start();                      //开启线程
   void dump();                       // mmp的数据写入磁盘
   bool check(const u_int64_t &key);  //检查在不在，次数是否大于count
   void add(const u_int64_t &key, const u_int64_t &num = 1);  //添加

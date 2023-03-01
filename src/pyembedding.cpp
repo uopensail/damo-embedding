@@ -100,17 +100,8 @@ void PyOptimizer::call(float *data, int wn, float *gds, int gn,
 }
 // PyFilter的实现
 PyFilter::PyFilter() : filter_(nullptr) {}
-PyFilter::PyFilter(Parameters params) {
-  size_t capacity =
-      params.params_->get_as<size_t>("capacity").value_or(min_size);
-  int count = params.params_->get_as<int>("count").value_or(1);
-  std::string filename = params.params_->get_as<std::string>("filename")
-                             .value_or("/tmp/COUNTING_BLOOM_FILTER_DATA");
-  bool reload = params.params_->get_as<bool>("reload").value_or(true);
-  double ffp = params.params_->get_as<double>("ffp").value_or(FFP);
-  filter_ = std::shared_ptr<CountingBloomFilter>(
-      new CountingBloomFilter(capacity, count, filename, reload, ffp));
-}
+PyFilter::PyFilter(Parameters params)
+    : filter_(std::make_shared<CountingBloomFilter>(params.params_)) {}
 
 PyFilter::PyFilter(const PyFilter &p) : filter_(p.filter_) {}
 

@@ -19,7 +19,6 @@ Embeddings::Embeddings(int ttl, const std::string &data_dir,
   }
   assert(this->db_ != nullptr);
   std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
-  filter->start();
 }
 
 Embeddings::~Embeddings() { delete this->db_; }
