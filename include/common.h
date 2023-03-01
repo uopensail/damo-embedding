@@ -45,8 +45,9 @@ using u_int64_t = unsigned long long;
 #define groupof(x) ((x) >> 56)
 
 // 最大的group数量
-#define max_group 256
-#define min_size 2147483648ull
+const int max_group = 256;
+const u_int64_t min_size = 2147483648ull;
+
 #define sign(x) ((x) >= 0.0 ? 1.0 : -1.0)
 #define safe_sqrt(x) ((x) >= 0.0 ? sqrtf((x)) : 0.0)
 

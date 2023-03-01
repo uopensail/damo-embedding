@@ -1,6 +1,6 @@
 #include "embedding.h"
 
-Embeddings::Embeddings(int ttl, std::string data_dir,
+Embeddings::Embeddings(int ttl, const std::string &data_dir,
                        const std::shared_ptr<Optimizer> &optimizer,
                        const std::shared_ptr<Initializer> &initializer,
                        const std::shared_ptr<CountingBloomFilter> &filter)
@@ -19,6 +19,7 @@ Embeddings::Embeddings(int ttl, std::string data_dir,
   }
   assert(this->db_ != nullptr);
   std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
+  filter->start();
 }
 
 Embeddings::~Embeddings() { delete this->db_; }
@@ -30,11 +31,11 @@ void Embeddings::add_group(int group, int dim) {
 }
 
 //创建一条记录
-std::string *Embeddings::create(u_int64_t &key) {
+std::shared_ptr<std::string> Embeddings::create(const u_int64_t &key) {
   const int &dim = this->metas_[groupof(key)].dim;
   int size =
       sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim);
-  std::string *value = new std::string(size, '\0');
+  auto value = std::make_shared<std::string>(size, '\0');
   MetaData *ptr = (MetaData *)&((*value)[0]);
   this->initializer_->call(ptr->data, dim);
   ptr->update_num = 1;
@@ -45,8 +46,8 @@ std::string *Embeddings::create(u_int64_t &key) {
 }
 
 //更新记录
-void Embeddings::update(u_int64_t &key, MetaData *ptr, Float *gds,
-                        u_int64_t global_step) {
+void Embeddings::update(const u_int64_t &key, MetaData *ptr, Float *gds,
+                        const u_int64_t &global_step) {
   const int &dim = this->metas_[groupof(key)].dim;
   ptr->update_num++;
   ptr->update_time = get_current_time();
@@ -57,7 +58,6 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
   std::vector<int> exists(len);
-  u_int64_t global_step = 1;
   int j = 0;
   for (int i = 0; i < len; i++) {
     //不配置filter的情况下也可以
@@ -92,14 +92,13 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
              sizeof(Float) * this->metas_[groupof(keys[i])].dim);
     } else {
       //需要初始化
-      std::string *t_value = this->create(keys[i]);
+      auto t_value = this->create(keys[i]);
       s_put_keys.emplace_back(
           rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
       put_result.emplace_back(*t_value);
       ptr = (MetaData *)&((*t_value)[0]);
       memcpy(&(data[offset]), ptr->data,
              sizeof(Float) * this->metas_[groupof(keys[i])].dim);
-      delete t_value;
     }
     offset += this->metas_[groupof(keys[i])].dim;
   }
@@ -118,7 +117,7 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
 }
 
 void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                                 u_int64_t global_step) {
+                                 const u_int64_t &global_step) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
   std::vector<Float *> t_gds;
@@ -153,7 +152,7 @@ void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
 }
 
 //保存
-void Embeddings::dump(std::string path, int expires) {
+void Embeddings::dump(const std::string &path, int expires) {
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   auto oldest_timestamp = get_current_time() - 86400 * expires;
   rocksdb::ReadOptions read_option;
@@ -174,11 +173,15 @@ void Embeddings::dump(std::string path, int expires) {
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
+    if (ptr->update_time < oldest_timestamp) {
+      continue;
+    }
     group_counts[groupof(ptr->key)]++;
     writer.write((char *)&ptr->key, sizeof(u_int64_t));
     writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
   }
-
+  assert(it->status().ok());
+  delete it;
   this->db_->ReleaseSnapshot(sp);
   //更新counts
   writer.seekp(sizeof(int) * max_group, std::ios::beg);

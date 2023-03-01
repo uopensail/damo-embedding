@@ -1,9 +1,15 @@
 #include "counting_bloom_filter.h"
 
-void flush_thread_func(CountingBloomFilter *filter) {
+void flush_thread_func(
+    const std::weak_ptr<CountingBloomFilter> &counting_bloom_filter) {
   for (; CountBloomFilterGlobalStatus.load();) {
     std::this_thread::sleep_for(std::chrono::seconds(120));
-    filter->dump();
+    auto filter = counting_bloom_filter.lock();
+    if (filter) {
+      filter->dump();
+    } else {
+      break;
+    }
   }
 }
 
@@ -13,8 +19,8 @@ CountingBloomFilter::CountingBloomFilter(const Params &config)
           config.get<std::string>("path"), config.get<bool>("reload")) {}
 
 CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
-                                         std::string filename, bool reload,
-                                         double ffp)
+                                         const std::string &filename,
+                                         bool reload, double ffp)
     : ffp_(ffp), capacity_(capacity), filename_(filename), count_(count) {
   //计算需要的空间: -(n*ln(p))/ (ln2)^2
   this->size_ =
@@ -59,10 +65,12 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   if (need_create_file) {
     memset(this->data_, 0, this->size_ * sizeof(Counter));
   }
+}
 
-  this->flush_thread_ = std::thread(flush_thread_func, this);
-  this->handler_ = flush_thread_.native_handle();
-  this->flush_thread_.detach();
+void CountingBloomFilter::start() {
+  flush_thread =
+      std::make_shared<std::thread>(flush_thread_func, weak_from_this());
+  flush_thread->detach();
 }
 
 void CountingBloomFilter::dump() {
@@ -83,7 +91,7 @@ bool CountingBloomFilter::check(const u_int64_t &key) {
   return min_count >= count_;
 }
 
-void CountingBloomFilter::add(const u_int64_t &key, u_int64_t num) {
+void CountingBloomFilter::add(const u_int64_t &key, const u_int64_t &num) {
   u_int64_t hash = key;
   unsigned char *value;
   int tmp;
@@ -101,5 +109,4 @@ CountingBloomFilter::~CountingBloomFilter() {
   this->dump();
   munmap((void *)this->data_, sizeof(Counter) * this->size_);
   close(this->fp_);
-  pthread_cancel(this->handler_);
 }

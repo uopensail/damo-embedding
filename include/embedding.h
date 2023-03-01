@@ -46,8 +46,9 @@ class Embeddings {
   EmbeddingMeta metas_[max_group];
 
  private:
-  std::string *create(u_int64_t &key);
-  void update(u_int64_t &key, MetaData *ptr, Float *gds, u_int64_t global_step);
+  std::shared_ptr<std::string> create(const u_int64_t &key);
+  void update(const u_int64_t &key, MetaData *ptr, Float *gds,
+              const u_int64_t &global_step);
 
  public:
   /**
@@ -59,7 +60,7 @@ class Embeddings {
    * @param initializer 初始化算子
    * @param filter 频控
    */
-  Embeddings(int ttl, std::string data_dir,
+  Embeddings(int ttl, const std::string &data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
              const std::shared_ptr<Initializer> &initializer,
              const std::shared_ptr<CountingBloomFilter> &filter);
@@ -88,8 +89,8 @@ class Embeddings {
    * @param global_steps 全局的step，太滞后的step就不会更新
    */
   void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                       u_int64_t global_steps);
-  void dump(std::string path, int expires);
+                       const u_int64_t &global_steps);
+  void dump(const std::string &path, int expires);
 };
 
 #endif  // DAMO_EMBEDDING_EMBEDDING_H
