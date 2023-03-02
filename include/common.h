@@ -37,7 +37,7 @@
 #include "cpptoml.h"
 
 #define Float float
-#define Epsilon 1e-8
+const Float Epsilon = 1e-8f;
 
 using u_int64_t = unsigned long long;
 
@@ -76,7 +76,7 @@ class Params {
   Params &operator=(const Params &p);
   //模板函数要放在头文件中，放在src中就会出现链接问题
   template <class T>
-  T get(std::string key) const {
+  T get(const std::string &key) const {
     if (table->contains(key)) {
       return *table->get_as<T>(key);
     }
@@ -84,7 +84,7 @@ class Params {
   }
 
   template <class T>
-  T get(std::string key, const T &default_value) const {
+  T get(const std::string &key, const T &default_value) const {
     if (table->contains(key)) {
       return *table->get_as<T>(key);
     }

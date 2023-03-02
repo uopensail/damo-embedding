@@ -39,7 +39,6 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <thread>
 
 #include "common.h"
 
@@ -53,16 +52,14 @@ using Counter = std::bitset<BitSize>;
 
 class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
  private:
-  double ffp_;                               //假阳率
-  size_t capacity_;                          //过滤器的容量
-  std::string filename_;                     //持久化文件
-  int count_;                                //最小数量
-  size_t size_;                              //申请的空间大小
-  int k_;                                    // hash函数的个数
-  int fp_;                                   //打开的文件描述符
-  Counter *data_;                            //具体的存储的数据
-  std::thread flush_thread_;                 //刷磁盘的线程
-  std::thread::native_handle_type handler_;  //退出线程的处理
+  double ffp_;            //假阳率
+  size_t capacity_;       //过滤器的容量
+  std::string filename_;  //持久化文件
+  int count_;             //最小数量
+  size_t size_;           //申请的空间大小
+  int k_;                 // hash函数的个数
+  int fp_;                //打开的文件描述符
+  Counter *data_;         //具体的存储的数据
 
  public:
   CountingBloomFilter() = delete;
@@ -73,10 +70,8 @@ class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
   ~CountingBloomFilter();
 
  public:
-  void dump();                       // mmp的数据写入磁盘
   bool check(const u_int64_t &key);  //检查在不在，次数是否大于count
   void add(const u_int64_t &key, const u_int64_t &num = 1);  //添加
 };
 u_int64_t hash_func(const u_int64_t &x);
-void flush_thread_func(const std::weak_ptr<CountingBloomFilter> &filter);
 #endif  // DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H

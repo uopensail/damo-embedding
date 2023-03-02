@@ -1,18 +1,5 @@
 #include "counting_bloom_filter.h"
 
-void flush_thread_func(
-    const std::weak_ptr<CountingBloomFilter> &counting_bloom_filter) {
-  while (1) {
-    std::this_thread::sleep_for(std::chrono::seconds(120));
-    auto filter = counting_bloom_filter.lock();
-    if (filter) {
-      filter->dump();
-    } else {
-      return;
-    }
-  }
-}
-
 u_int64_t hash_func(const u_int64_t &x) {
   return ((x >> 31) & HighMask) | ((x & LowMask) << 33);
 }
@@ -72,13 +59,6 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   if (need_create_file) {
     memset(this->data_, 0, this->size_ * sizeof(Counter));
   }
-  this->flush_thread_ = std::thread(flush_thread_func, weak_from_this());
-  this->handler_ = this->flush_thread_.native_handle();
-  this->flush_thread_.detach();
-}
-
-void CountingBloomFilter::dump() {
-  msync((void *)this->data_, this->size_ * sizeof(Counter), MS_ASYNC);
 }
 
 //检查在不在，次数是否大于count
@@ -109,8 +89,7 @@ void CountingBloomFilter::add(const u_int64_t &key, const u_int64_t &num) {
 }
 
 CountingBloomFilter::~CountingBloomFilter() {
-  pthread_cancel(this->handler_);
-  this->dump();
+  msync((void *)this->data_, this->size_ * sizeof(Counter), MS_ASYNC);
   munmap((void *)this->data_, sizeof(Counter) * this->size_);
   close(this->fp_);
 }

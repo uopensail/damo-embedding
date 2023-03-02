@@ -115,9 +115,8 @@ void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
     if (this->filter_ == nullptr || this->filter_->check(keys[i])) {
       s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
       t_gds.push_back(&gds[offset]);
-    } else {
-      this->filter_->add(keys[i]);
     }
+    this->filter_->add(keys[i]);
     offset += this->metas_[groupof(keys[i])].dim;
   }
 
