@@ -43,12 +43,11 @@ pyEmbeddingModule = Extension(
     name="_pyEmbedding",
     include_dirs=[
         "include/",
-        # "/usr/local/lib/python3.8/dist-packages/numpy/core/include",
     ],
     sources=[
         "src/pyembedding.cpp",
         "pyembedding_wrap.cxx",
-        "src/decay_learning_rate.cpp",
+        "src/learning_rate_scheduler.cpp",
         "src/initializer.cpp",
         "src/embedding.cpp",
         "src/optimizer.cpp",

@@ -26,51 +26,68 @@
 #include <iostream>
 
 #include "common.h"
-#include "decay_learning_rate.h"
 #include "initializer.h"
+#include "learning_rate_scheduler.h"
 
 class Optimizer {
  protected:
   std::string name_;
-  decay_lr_func function_;
-  Params decay_params_;
+  lr_scheduler function_;
+  Params scheduler_;
 
  public:
   Optimizer() = delete;
   Optimizer(const Optimizer &) = delete;
-  Optimizer(const Params &optimizer_params, const Params &decay_params);
+  Optimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~Optimizer();
   const std::string &get_name();
   virtual int get_space(int dim);
-  inline Float get_decay_rate(u_int64_t global_step, Float learning_rate);
+  inline Float get_lr(u_int64_t global_step, Float learning_rate);
   virtual void call(Float *data, Float *gds, int dim,
                     u_int64_t global_step) = 0;
 };
 
 class SGDOptimizer : public Optimizer {
  private:
-  Float eta;
+  Float gamma_;
+  Float lambda_;
 
  public:
   SGDOptimizer() = delete;
   SGDOptimizer(const SGDOptimizer &) = delete;
-  SGDOptimizer(const Params &optimizer_params, const Params &decay_params);
+  SGDOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~SGDOptimizer();
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
 class FTRLOptimizer : public Optimizer {
  private:
-  Float alpha;
-  Float beta;
-  Float lambda1;
-  Float lambda2;
+  Float alpha_;
+  Float beta_;
+  Float lambda1_;
+  Float lambda2_;
 
  public:
   FTRLOptimizer() = delete;
   FTRLOptimizer(const FTRLOptimizer &) = delete;
-  FTRLOptimizer(const Params &optimizer_params, const Params &decay_params);
+  FTRLOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~FTRLOptimizer();
+  virtual int get_space(int dim);
+  virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+};
+
+class AdagradOptimizer : public Optimizer {
+ private:
+  Float gamma_;
+  Float lambda_;
+  Float eta_;
+  Float epsilon_;
+
+ public:
+  AdagradOptimizer() = delete;
+  AdagradOptimizer(const AdagradOptimizer &) = delete;
+  AdagradOptimizer(const Params &optimizer_params, const Params &scheduler);
+  virtual ~AdagradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
@@ -81,16 +98,16 @@ class FTRLOptimizer : public Optimizer {
  */
 class AdamOptimizer : public Optimizer {
  private:
-  Float alpha;  // lr
-  Float beta1;
-  Float beta2;
-  Float lambda;  // L2 regularization param
-  Float epsilon;
+  Float gamma_;
+  Float beta1_;
+  Float beta2_;
+  Float lambda_;
+  Float epsilon_;
 
  public:
   AdamOptimizer() = delete;
   AdamOptimizer(const AdamOptimizer &) = delete;
-  AdamOptimizer(const Params &optimizer_params, const Params &decay_params);
+  AdamOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~AdamOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
@@ -98,16 +115,16 @@ class AdamOptimizer : public Optimizer {
 
 class AmsGradOptimizer : public Optimizer {
  private:
-  Float alpha;
-  Float beta1;
-  Float beta2;
-  Float lambda;
-  Float epsilon;
+  Float gamma_;
+  Float beta1_;
+  Float beta2_;
+  Float lambda_;
+  Float epsilon_;
 
  public:
   AmsGradOptimizer() = delete;
   AmsGradOptimizer(const AmsGradOptimizer &) = delete;
-  AmsGradOptimizer(const Params &optimizer_params, const Params &decay_params);
+  AmsGradOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~AmsGradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
@@ -115,22 +132,38 @@ class AmsGradOptimizer : public Optimizer {
 
 class AdamWOptimizer : public Optimizer {
  private:
-  Float alpha;
-  Float beta1;
-  Float beta2;
-  Float lambda;
-  Float epsilon;
+  Float gamma_;
+  Float beta1_;
+  Float beta2_;
+  Float lambda_;
+  Float epsilon_;
 
  public:
   AdamWOptimizer() = delete;
   AdamWOptimizer(const AdamWOptimizer &) = delete;
-  AdamWOptimizer(const Params &optimizer_params, const Params &decay_params);
+  AdamWOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~AdamWOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 };
 
+class LionOptimizer : public Optimizer {
+ private:
+  Float eta_;
+  Float beta1_;
+  Float beta2_;
+  Float lambda_;
+
+ public:
+  LionOptimizer() = delete;
+  LionOptimizer(const LionOptimizer &) = delete;
+  LionOptimizer(const Params &optimizer_params, const Params &scheduler);
+  virtual ~LionOptimizer();
+  virtual int get_space(int dim);
+  virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+};
+
 std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
-                                          const Params &decay_params);
+                                          const Params &scheduler);
 
 #endif  // DAMO_EMBEDDING_OPTIMIZER_H

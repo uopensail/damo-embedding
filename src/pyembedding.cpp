@@ -130,15 +130,15 @@ PyFilter::~PyFilter() {}
 PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
   std::shared_ptr<cpptoml::table> g = cpptoml::parse_file(config_file);
   Params p_optimizer(g->get_table("optimizer"));
-  Params p_decay(g->get_table("decay"));
+  Params p_scheduler(g->get_table("scheduler"));
   Params p_initializer(g->get_table("initializer"));
   Params p_filter(g->get_table("filter"));
-  Params p_config(g->get_table("config"));
+  Params p_storage(g->get_table("storage"));
 
   auto filter = std::make_shared<CountingBloomFilter>(p_filter);
   this->embeddings_ = std::make_shared<Embeddings>(
-      p_config.get<int>("ttl"), p_config.get<std::string>("path"),
-      get_optimizers(p_optimizer, p_decay), get_initializers(p_initializer),
+      p_storage.get<int>("ttl"), p_storage.get<std::string>("path"),
+      get_optimizers(p_optimizer, p_scheduler), get_initializers(p_initializer),
       filter);
 }
 PyEmbeddingFactory::PyEmbeddingFactory(int ttl, std::string data_dir,
