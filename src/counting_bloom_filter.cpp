@@ -4,6 +4,12 @@ u_int64_t hash_func(const u_int64_t &x) {
   return ((x >> 31) & HighMask) | ((x & LowMask) << 33);
 }
 
+CountingBloomFilter::CountingBloomFilter()
+    : ffp_(FFP),
+      capacity_(min_size),
+      filename_("/tmp/COUNTING_BLOOM_FILTER_DATA"),
+      count_(MaxCount) {}
+
 CountingBloomFilter::CountingBloomFilter(const Params &config)
     : CountingBloomFilter(
           config.get<u_int64_t>("capacity", min_size),

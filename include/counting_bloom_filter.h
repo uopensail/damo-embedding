@@ -52,17 +52,17 @@ using Counter = std::bitset<BitSize>;
 
 class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
  private:
-  double ffp_;            //假阳率
-  size_t capacity_;       //过滤器的容量
-  std::string filename_;  //持久化文件
-  int count_;             //最小数量
-  size_t size_;           //申请的空间大小
+  double ffp_;            // 假阳率
+  size_t capacity_;       // 过滤器的容量
+  std::string filename_;  // 持久化文件
+  int count_;             // 最小数量
+  size_t size_;           // 申请的空间大小
   int k_;                 // hash函数的个数
-  int fp_;                //打开的文件描述符
-  Counter *data_;         //具体的存储的数据
+  int fp_;                // 打开的文件描述符
+  Counter *data_;         // 具体的存储的数据
 
  public:
-  CountingBloomFilter() = delete;
+  CountingBloomFilter();
   CountingBloomFilter(const Params &config);
   CountingBloomFilter(const CountingBloomFilter &) = delete;
   CountingBloomFilter(size_t capacity, int count, const std::string &filename,

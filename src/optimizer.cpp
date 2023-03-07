@@ -21,7 +21,7 @@ inline Float Optimizer::get_lr(u_int64_t global_step, Float learning_rate_) {
 SGDOptimizer::SGDOptimizer(const Params &optimizer_params,
                            const Params &scheduler)
     : Optimizer(optimizer_params, scheduler),
-      gamma_(optimizer_params.get<double>("gamma")),
+      gamma_(optimizer_params.get<double>("gamma", 0.001)),
       lambda_(optimizer_params.get<double>("lambda", 0.0)) {}
 
 SGDOptimizer::~SGDOptimizer() {}

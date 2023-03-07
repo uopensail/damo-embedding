@@ -54,7 +54,7 @@ Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
 }
 
 lr_scheduler get_lr_scheduler(const Params &p) {
-  if (p.is_nil()) {
+  if (p.isnil()) {
     return nullptr;
   }
   auto name = p.get<std::string>("name");

@@ -28,8 +28,8 @@ void Ones::call(Float *data, int dim) {
 
 RandomUniform::RandomUniform(const Params &initializer_params)
     : Initializer(initializer_params),
-      min_(initializer_params.get<double>("min")),
-      max_(initializer_params.get<double>("max")),
+      min_(initializer_params.get<double>("min", -1.0)),
+      max_(initializer_params.get<double>("max", 1.0)),
       distribution(min_, max_),
       random(time(NULL)) {
   assert(max_ > min_);
@@ -45,8 +45,8 @@ void RandomUniform::call(Float *data, int dim) {
 
 RandomNormal::RandomNormal(const Params &initializer_params)
     : Initializer(initializer_params),
-      mean_(initializer_params.get<double>("mean")),
-      stddev_(initializer_params.get<double>("stddev")),
+      mean_(initializer_params.get<double>("mean", 0.0)),
+      stddev_(initializer_params.get<double>("stddev", 1.0)),
       distribution(mean_, stddev_),
       random(time(NULL)) {
   assert(stddev_ > 0.0);
@@ -62,8 +62,8 @@ void RandomNormal::call(Float *data, int dim) {
 
 TruncateNormal::TruncateNormal(const Params &initializer_params)
     : Initializer(initializer_params),
-      mean_(initializer_params.get<double>("mean")),
-      stddev_(initializer_params.get<double>("stddev")),
+      mean_(initializer_params.get<double>("mean", 0.0)),
+      stddev_(initializer_params.get<double>("stddev", 1.0)),
       distribution(mean_, stddev_),
       random(time(NULL)) {
   assert(stddev_ > 0.0);

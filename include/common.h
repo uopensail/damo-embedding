@@ -41,23 +41,24 @@ const Float Epsilon = 1e-8f;
 
 using u_int64_t = unsigned long long;
 
-// 最大的group数量
+// the feature number must <= 256
 const int max_group = 256;
 const u_int64_t min_size = 2147483648ull;
 
 u_int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);
-// 获得每个特征的group-id
-u_int64_t groupof(const u_int64_t &x);
 
-//存放数据的结构
+// get the group id from the key
+inline u_int64_t groupof(const u_int64_t &key);
+
+// the struct of value in rocksdb
 #pragma pack(push)
 #pragma pack(1)
 struct MetaData {
   u_int64_t key;
-  u_int64_t update_time;  //更新时间
-  u_int64_t update_num;   //更新次数
+  u_int64_t update_time;  // ms
+  u_int64_t update_num;
   int dim;
   Float data[];
 };
@@ -73,13 +74,13 @@ class Params {
   Params() = delete;
   Params(const std::shared_ptr<cpptoml::table> &table);
   Params(const Params &p);
-  const bool is_nil() const;
+  const bool isnil() const;
   Params &operator=(const Params &p);
   Params &operator=(const std::shared_ptr<cpptoml::table> &table);
-  //模板函数要放在头文件中，放在src中就会出现链接问题
+
   template <class T>
   T get(const std::string &key) const {
-    if (table->contains(key)) {
+    if (table != null && table->contains(key)) {
       return *table->get_as<T>(key);
     }
     throw std::out_of_range(key + " is not a valid key");
@@ -87,7 +88,7 @@ class Params {
 
   template <class T>
   T get(const std::string &key, const T &default_value) const {
-    if (table->contains(key)) {
+    if (table != null && table->contains(key)) {
       return *table->get_as<T>(key);
     }
     return default_value;

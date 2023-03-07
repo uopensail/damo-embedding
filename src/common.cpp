@@ -1,12 +1,10 @@
 #include "common.h"
 
-// Params::Params() : table(nullptr) {}
-
 Params::Params(const std::shared_ptr<cpptoml::table> &table) : table(table) {}
 
 Params::Params(const Params &p) : table(p.table) {}
 
-const bool Params::is_nil() const { return this->table == nullptr; }
+const bool Params::isnil() const { return this->table == nullptr; }
 Params &Params::operator=(const Params &p) {
   if (this == &p) {
     return *this;
@@ -32,4 +30,4 @@ Float safe_sqrt(Float x) { return x >= 0.0 ? sqrtf((x)) : 0.0; }
 
 Float sign(Float x) { return x >= 0.0 ? 1.0 : -1.0; }
 
-u_int64_t groupof(const u_int64_t &x) { return x >> 56; }
+inline u_int64_t groupof(const u_int64_t &key) { return x >> 56; }

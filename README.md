@@ -90,7 +90,7 @@ decay_rate: float
 alpha: float 
 beta: float 
 decay_steps: float 
-number_periods: float 
+num_periods: float 
 
 ### Initializer
 
@@ -102,24 +102,24 @@ number_periods: float
 
 #### RandomUniform
 均匀分布, 需要配置如下的一些参数:
-min: 下限
-max: 上限
+min: 下限, default: -1.0
+max: 上限, default: 1.0
 
 #### RandomNormal
 随机正态分布, 需要配置如下的一些参数:
-mean: 均值
-std: 标准差
+mean: 均值, default: 0.0
+std: 标准差, default: 1.0
 
 #### TruncateNormal
 随机正态分布, 且2倍标准差外的数据丢弃重新生成 需要配置如下的一些参数:
-mean: 均值
-std: 标准差
+mean: 均值, default: 0.0
+std: 标准差, default: 1.0
 
 ### Optimizer
 
 #### SGD
 [SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD)需要配置如下的一些参数:
-1. $\gamma$: 学习率, 配置名称: gamma
+1. $\gamma$: 学习率, default: 0.001, 配置名称: gamma
 2. $\lambda$: 权重衰减的系数, default: 0, 配置名称: lambda
 
 #### FTRL
