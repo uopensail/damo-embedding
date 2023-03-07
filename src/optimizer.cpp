@@ -38,10 +38,10 @@ void SGDOptimizer::call(Float *data, Float *gds, int dim,
 FTRLOptimizer::FTRLOptimizer(const Params &optimizer_params,
                              const Params &scheduler)
     : Optimizer(optimizer_params, scheduler),
-      alpha_(optimizer_params.get<double>("alpha")),
-      beta_(optimizer_params.get<double>("beta")),
-      lambda1_(optimizer_params.get<double>("lambda1")),
-      lambda2_(optimizer_params.get<double>("lambda2")) {}
+      alpha_(optimizer_params.get<double>("alpha", 0.005)),
+      beta_(optimizer_params.get<double>("beta", 0.0)),
+      lambda1_(optimizer_params.get<double>("lambda1", 0.0)),
+      lambda2_(optimizer_params.get<double>("lambda2", 0.0)) {}
 
 FTRLOptimizer::~FTRLOptimizer() {}
 

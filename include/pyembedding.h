@@ -101,6 +101,7 @@ class PyEmbeddingFactory {
   friend class PyEmbedding;
 
  public:
+  PyEmbeddingFactory();
   PyEmbeddingFactory(const std::string &config_file);
   PyEmbeddingFactory(int ttl, std::string data_dir, PyFilter filter,
                      PyOptimizer optimizer, PyInitializer initializer);

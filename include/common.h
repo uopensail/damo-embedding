@@ -73,7 +73,9 @@ class Params {
   Params() = delete;
   Params(const std::shared_ptr<cpptoml::table> &table);
   Params(const Params &p);
+  const bool is_nil() const;
   Params &operator=(const Params &p);
+  Params &operator=(const std::shared_ptr<cpptoml::table> &table);
   //模板函数要放在头文件中，放在src中就会出现链接问题
   template <class T>
   T get(const std::string &key) const {

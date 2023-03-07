@@ -66,7 +66,7 @@ PyInitializer::~PyInitializer() {}
 PyOptimizer::PyOptimizer() {
   Parameters sgd, decay;
   sgd.insert("name", std::string("sgd"));
-  sgd.insert("eta", double(0.001));
+  sgd.insert("eta", double(0.0001));
   decay.insert("name", std::string(""));
   this->optimizer_ = get_optimizers(Params(sgd.params_), Params(decay.params_));
 }
@@ -127,20 +127,36 @@ void PyFilter::add(unsigned long long key, unsigned long long num) {
 
 PyFilter::~PyFilter() {}
 
+PyEmbeddingFactory::PyEmbeddingFactory() {
+  PyOptimizer default_optimizer;
+  PyFilter default_filter;
+  PyInitializer default_initializer;
+  this->embeddings_ = std::make_shared<Embeddings>(
+      864000, "/tmp/pyembedding", default_optimizer.optimizer_,
+      default_initializer.initializer_, default_filter.filter_);
+}
+
 PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
   std::shared_ptr<cpptoml::table> g = cpptoml::parse_file(config_file);
   Params p_optimizer(g->get_table("optimizer"));
-  Params p_scheduler(g->get_table("scheduler"));
   Params p_initializer(g->get_table("initializer"));
-  Params p_filter(g->get_table("filter"));
   Params p_storage(g->get_table("storage"));
 
-  auto filter = std::make_shared<CountingBloomFilter>(p_filter);
+  std::shared_ptr<CountingBloomFilter> filter =
+      g->contains("filter")
+          ? std::make_shared<CountingBloomFilter>(g->get_table("filter"))
+          : nullptr;
+
+  std::shared_ptr<Optimizer> optimizer = nullptr;
+  Params p_scheduler(g->contains("scheduler") ? g->get_table("scheduler")
+                                              : nullptr);
+
   this->embeddings_ = std::make_shared<Embeddings>(
       p_storage.get<int>("ttl"), p_storage.get<std::string>("path"),
       get_optimizers(p_optimizer, p_scheduler), get_initializers(p_initializer),
       filter);
 }
+
 PyEmbeddingFactory::PyEmbeddingFactory(int ttl, std::string data_dir,
                                        PyFilter filter, PyOptimizer optimizer,
                                        PyInitializer initializer) {

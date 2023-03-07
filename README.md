@@ -32,10 +32,11 @@ group = Key>>56
 #### Value
 ```c++
 struct MetaData {
-    u_int64_t key;                  // 主键
-    u_int64_t update_time;          // 更新时间
-    u_int64_t update_num;           // 更新此次
-    float data[];                    // 实际数据
+  u_int64_t key;
+  u_int64_t update_time;  //更新时间
+  u_int64_t update_num;   //更新次数
+  int dim;
+  Float data[];
 };
 ```
 
@@ -57,39 +58,39 @@ Counting Bloom Filter的作用是用来过滤低频次特征。互联网的业�
 
 
 ### Scheduler
-不配置scheduler的时候, name为空字符串
+不配置scheduler的时候, name为空字符串   
 
-#### exponential_lr_scheduler
-配置如下的参数:
-decay_steps: float
-decay_rate: float
+#### exponential_decay
+配置如下的参数:    
+decay_steps: float     
+decay_rate: float    
 
-#### polynomial_lr_scheduler
-配置如下的参数:
-end_learning_rate: float
-power: float
-decay_steps: float
+#### polynomial_decay
+配置如下的参数: 
+end_learning_rate: float    
+power: float    
+decay_steps: float    
 
 
-#### nature_exp_lr_scheduler
-配置如下的参数:
-decay_rate: float
+#### nature_exponential_decay
+配置如下的参数:    
+decay_rate: float 
 
-#### inverse_time_lr_scheduler
-配置如下的参数:
-decay_steps: float
-decay_rate: float
+#### inverse_time_decay
+配置如下的参数:  
+decay_steps: float  
+decay_rate: float 
 
-#### cosine_lr_scheduler
-配置如下的参数:
-decay_rate: float
+#### cosine_decay
+配置如下的参数:   
+decay_rate: float   
 
-#### liner_cosine_lr_scheduler
-配置如下的参数:
-alpha: float
-beta: float
-decay_steps: float
-number_periods: float
+#### liner_cosine_decay
+配置如下的参数: 
+alpha: float 
+beta: float 
+decay_steps: float 
+number_periods: float 
 
 ### Initializer
 
@@ -123,7 +124,7 @@ std: 标准差
 
 #### FTRL
 [FTRL](https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/37013.pdf)需要配置如下的一些参数:
-1. $\alpha$: 学习率, default: 0.005, 配置名称: gamma
+1. $\alpha$: 学习率, default: 0.005, 配置名称: alpha
 2. $\beta$: $\beta$参数, default: 0.0, 配置名称: beta
 3. $\lambda_1$: L1正则参数, default: 0.0, 配置名称: lambda1
 4. $\lambda_2$: L2正则参数, default: 0.0, 配置名称: lambda2
@@ -196,21 +197,25 @@ export LIBRARY_PATH=$LIBRARY_PATH:NUMPY_LIBRARY_PATH
 
 ### PyEmbedding安装
 ```shell
-git clone xxx
-cd xxxx
+git clone https://github.com/uopensail/damo-embedding
+cd damo-embedding
+
+# to regenerate pyembedding_warp.cxx
+# swig -python -c++ pyembedding.i
+
 python setup.py install
 ```
 
 ## Configuration
 需要按照toml的格式进行配置, 具体示例配置如下:
 ```toml
-[storage]
+[storage] # 必须配置
 # 过期时间
 ttl=8640000
 # rocksdb数据路径
 path="/tmp/embedding"
 
-[filter]
+[filter] # 可不配置
 # 容量
 capacity=2147483648
 # 过滤次数
@@ -222,18 +227,20 @@ reload=true
 # 假阳性率
 ffp=0.0002
 
-[optimizer]
+[optimizer] # 必须配置
 # 名字必须配置
 name="sgd"
 # 其他配置按照上面的参数配置
+# 如果不配置则用默认参数
+# 文档中没有写默认参数的键, 则必须配置否则会报错
 
-[initializer]
+[initializer] # 必须配置
 # 名字必须配置
 name="zeros"
 # 其他配置按照上面的参数配置
 
 
-[scheduler]
+[scheduler] # 可不配置
 # 名字必须配置
 name=""
 # 其他配置按照上面的参数配置

@@ -27,18 +27,18 @@
 using lr_scheduler = std::function<Float(
     Float learning_rate, u_int64_t global_step, const Params &params)>;
 
-Float exponential_lr_scheduler(Float learning_rate, u_int64_t global_step,
+Float exponential_decay(Float learning_rate, u_int64_t global_step,
+                        const Params &params);
+Float polynomial_decay(Float learning_rate, u_int64_t global_step,
+                       const Params &params);
+Float nature_exponential_decay(Float learning_rate, u_int64_t global_step,
                                const Params &params);
-Float polynomial_lr_scheduler(Float learning_rate, u_int64_t global_step,
-                              const Params &params);
-Float nature_exp_lr_scheduler(Float learning_rate, u_int64_t global_step,
-                              const Params &params);
-Float inverse_time_lr_scheduler(Float learning_rate, u_int64_t global_step,
-                                const Params &params);
-Float cosine_lr_scheduler(Float learning_rate, u_int64_t global_step,
-                          const Params &params);
-Float liner_cosine_lr_scheduler(Float learning_rate, u_int64_t global_step,
-                                const Params &params);
+Float inverse_time_decay(Float learning_rate, u_int64_t global_step,
+                         const Params &params);
+Float cosine__decay(Float learning_rate, u_int64_t global_step,
+                    const Params &params);
+Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
+                         const Params &params);
 lr_scheduler get_lr_scheduler(const Params &p);
 
 #endif  // DAMO_EMBEDDING_LEARNING_RATE_SCHEDULER_H

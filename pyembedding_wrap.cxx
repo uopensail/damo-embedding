@@ -4760,7 +4760,20 @@ SWIGINTERN PyObject *PyFilter_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject 
   return SWIG_Python_InitShadowInstance(args);
 }
 
-SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **SWIGUNUSEDPARM(swig_obj)) {
+  PyObject *resultobj = 0;
+  PyEmbeddingFactory *result = 0 ;
+  
+  if ((nobjs < 0) || (nobjs > 0)) SWIG_fail;
+  result = (PyEmbeddingFactory *)new PyEmbeddingFactory();
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyEmbeddingFactory, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   std::string *arg1 = 0 ;
   int res1 = SWIG_OLDOBJ ;
@@ -4788,7 +4801,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_2(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   int arg1 ;
   std::string arg2 ;
@@ -4875,12 +4888,15 @@ SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory(PyObject *self, PyObject *args
   
   if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyEmbeddingFactory", 0, 5, argv))) SWIG_fail;
   --argc;
+  if (argc == 0) {
+    return _wrap_new_PyEmbeddingFactory__SWIG_0(self, argc, argv);
+  }
   if (argc == 1) {
     int _v;
     int res = SWIG_AsPtr_std_string(argv[0], (std::string**)(0));
     _v = SWIG_CheckState(res);
     if (_v) {
-      return _wrap_new_PyEmbeddingFactory__SWIG_0(self, argc, argv);
+      return _wrap_new_PyEmbeddingFactory__SWIG_1(self, argc, argv);
     }
   }
   if (argc == 5) {
@@ -4902,7 +4918,7 @@ SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory(PyObject *self, PyObject *args
             int res = SWIG_ConvertPtr(argv[4], 0, SWIGTYPE_p_PyInitializer, SWIG_POINTER_NO_NULL | 0);
             _v = SWIG_CheckState(res);
             if (_v) {
-              return _wrap_new_PyEmbeddingFactory__SWIG_1(self, argc, argv);
+              return _wrap_new_PyEmbeddingFactory__SWIG_2(self, argc, argv);
             }
           }
         }
@@ -4913,6 +4929,7 @@ SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory(PyObject *self, PyObject *args
 fail:
   SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'new_PyEmbeddingFactory'.\n"
     "  Possible C/C++ prototypes are:\n"
+    "    PyEmbeddingFactory::PyEmbeddingFactory()\n"
     "    PyEmbeddingFactory::PyEmbeddingFactory(std::string const &)\n"
     "    PyEmbeddingFactory::PyEmbeddingFactory(int,std::string,PyFilter,PyOptimizer,PyInitializer)\n");
   return 0;
@@ -4993,7 +5010,7 @@ SWIGINTERN PyObject *PyEmbeddingFactory_swiginit(PyObject *SWIGUNUSEDPARM(self),
 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
-  SwigValueWrapper< PyEmbeddingFactory > arg1 ;
+  PyEmbeddingFactory arg1 ;
   int arg2 ;
   int arg3 ;
   void *argp1 ;

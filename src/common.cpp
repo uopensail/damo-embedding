@@ -1,14 +1,22 @@
 #include "common.h"
 
+// Params::Params() : table(nullptr) {}
+
 Params::Params(const std::shared_ptr<cpptoml::table> &table) : table(table) {}
 
 Params::Params(const Params &p) : table(p.table) {}
 
+const bool Params::is_nil() const { return this->table == nullptr; }
 Params &Params::operator=(const Params &p) {
   if (this == &p) {
     return *this;
   }
   table = p.table;
+  return *this;
+}
+
+Params &Params::operator=(const std::shared_ptr<cpptoml::table> &table) {
+  this->table = table;
   return *this;
 }
 
