@@ -103,8 +103,9 @@ class PyEmbeddingFactory {
  public:
   PyEmbeddingFactory();
   PyEmbeddingFactory(const std::string &config_file);
-  PyEmbeddingFactory(int ttl, std::string data_dir, PyFilter filter,
-                     PyOptimizer optimizer, PyInitializer initializer);
+  PyEmbeddingFactory(int ttl, int min_count, const std::string &data_dir,
+                     PyFilter filter, PyOptimizer optimizer,
+                     PyInitializer initializer);
   ~PyEmbeddingFactory();
 
   /**
@@ -113,7 +114,7 @@ class PyEmbeddingFactory {
    * @param path 路径
    * @param expires out of days, 过期天数
    */
-  void dump(std::string path, int expires);
+  void dump(const std::string &path, int expires);
 };
 
 class PyEmbedding {

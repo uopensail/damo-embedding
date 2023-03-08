@@ -4804,89 +4804,102 @@ fail:
 SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory__SWIG_2(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   int arg1 ;
-  std::string arg2 ;
-  PyFilter arg3 ;
-  PyOptimizer arg4 ;
-  PyInitializer arg5 ;
+  int arg2 ;
+  std::string *arg3 = 0 ;
+  PyFilter arg4 ;
+  PyOptimizer arg5 ;
+  PyInitializer arg6 ;
   int val1 ;
   int ecode1 = 0 ;
-  void *argp3 ;
-  int res3 = 0 ;
+  int val2 ;
+  int ecode2 = 0 ;
+  int res3 = SWIG_OLDOBJ ;
   void *argp4 ;
   int res4 = 0 ;
   void *argp5 ;
   int res5 = 0 ;
+  void *argp6 ;
+  int res6 = 0 ;
   PyEmbeddingFactory *result = 0 ;
   
-  if ((nobjs < 5) || (nobjs > 5)) SWIG_fail;
+  if ((nobjs < 6) || (nobjs > 6)) SWIG_fail;
   ecode1 = SWIG_AsVal_int(swig_obj[0], &val1);
   if (!SWIG_IsOK(ecode1)) {
     SWIG_exception_fail(SWIG_ArgError(ecode1), "in method '" "new_PyEmbeddingFactory" "', argument " "1"" of type '" "int""'");
   } 
   arg1 = static_cast< int >(val1);
+  ecode2 = SWIG_AsVal_int(swig_obj[1], &val2);
+  if (!SWIG_IsOK(ecode2)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode2), "in method '" "new_PyEmbeddingFactory" "', argument " "2"" of type '" "int""'");
+  } 
+  arg2 = static_cast< int >(val2);
   {
     std::string *ptr = (std::string *)0;
-    int res = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
-    if (!SWIG_IsOK(res) || !ptr) {
-      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "new_PyEmbeddingFactory" "', argument " "2"" of type '" "std::string""'"); 
-    }
-    arg2 = *ptr;
-    if (SWIG_IsNewObj(res)) delete ptr;
-  }
-  {
-    res3 = SWIG_ConvertPtr(swig_obj[2], &argp3, SWIGTYPE_p_PyFilter,  0  | 0);
+    res3 = SWIG_AsPtr_std_string(swig_obj[2], &ptr);
     if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_PyEmbeddingFactory" "', argument " "3"" of type '" "PyFilter""'"); 
-    }  
-    if (!argp3) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "3"" of type '" "PyFilter""'");
-    } else {
-      PyFilter * temp = reinterpret_cast< PyFilter * >(argp3);
-      arg3 = *temp;
-      if (SWIG_IsNewObj(res3)) delete temp;
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_PyEmbeddingFactory" "', argument " "3"" of type '" "std::string const &""'"); 
     }
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "3"" of type '" "std::string const &""'"); 
+    }
+    arg3 = ptr;
   }
   {
-    res4 = SWIG_ConvertPtr(swig_obj[3], &argp4, SWIGTYPE_p_PyOptimizer,  0  | 0);
+    res4 = SWIG_ConvertPtr(swig_obj[3], &argp4, SWIGTYPE_p_PyFilter,  0  | 0);
     if (!SWIG_IsOK(res4)) {
-      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "new_PyEmbeddingFactory" "', argument " "4"" of type '" "PyOptimizer""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res4), "in method '" "new_PyEmbeddingFactory" "', argument " "4"" of type '" "PyFilter""'"); 
     }  
     if (!argp4) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "4"" of type '" "PyOptimizer""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "4"" of type '" "PyFilter""'");
     } else {
-      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp4);
+      PyFilter * temp = reinterpret_cast< PyFilter * >(argp4);
       arg4 = *temp;
       if (SWIG_IsNewObj(res4)) delete temp;
     }
   }
   {
-    res5 = SWIG_ConvertPtr(swig_obj[4], &argp5, SWIGTYPE_p_PyInitializer,  0  | 0);
+    res5 = SWIG_ConvertPtr(swig_obj[4], &argp5, SWIGTYPE_p_PyOptimizer,  0  | 0);
     if (!SWIG_IsOK(res5)) {
-      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "new_PyEmbeddingFactory" "', argument " "5"" of type '" "PyInitializer""'"); 
+      SWIG_exception_fail(SWIG_ArgError(res5), "in method '" "new_PyEmbeddingFactory" "', argument " "5"" of type '" "PyOptimizer""'"); 
     }  
     if (!argp5) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "5"" of type '" "PyInitializer""'");
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "5"" of type '" "PyOptimizer""'");
     } else {
-      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp5);
+      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp5);
       arg5 = *temp;
       if (SWIG_IsNewObj(res5)) delete temp;
     }
   }
-  result = (PyEmbeddingFactory *)new PyEmbeddingFactory(arg1,arg2,arg3,arg4,arg5);
+  {
+    res6 = SWIG_ConvertPtr(swig_obj[5], &argp6, SWIGTYPE_p_PyInitializer,  0  | 0);
+    if (!SWIG_IsOK(res6)) {
+      SWIG_exception_fail(SWIG_ArgError(res6), "in method '" "new_PyEmbeddingFactory" "', argument " "6"" of type '" "PyInitializer""'"); 
+    }  
+    if (!argp6) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbeddingFactory" "', argument " "6"" of type '" "PyInitializer""'");
+    } else {
+      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp6);
+      arg6 = *temp;
+      if (SWIG_IsNewObj(res6)) delete temp;
+    }
+  }
+  result = (PyEmbeddingFactory *)new PyEmbeddingFactory(arg1,arg2,(std::string const &)*arg3,arg4,arg5,arg6);
   resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyEmbeddingFactory, SWIG_POINTER_NEW |  0 );
+  if (SWIG_IsNewObj(res3)) delete arg3;
   return resultobj;
 fail:
+  if (SWIG_IsNewObj(res3)) delete arg3;
   return NULL;
 }
 
 
 SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory(PyObject *self, PyObject *args) {
   Py_ssize_t argc;
-  PyObject *argv[6] = {
+  PyObject *argv[7] = {
     0
   };
   
-  if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyEmbeddingFactory", 0, 5, argv))) SWIG_fail;
+  if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyEmbeddingFactory", 0, 6, argv))) SWIG_fail;
   --argc;
   if (argc == 0) {
     return _wrap_new_PyEmbeddingFactory__SWIG_0(self, argc, argv);
@@ -4899,26 +4912,32 @@ SWIGINTERN PyObject *_wrap_new_PyEmbeddingFactory(PyObject *self, PyObject *args
       return _wrap_new_PyEmbeddingFactory__SWIG_1(self, argc, argv);
     }
   }
-  if (argc == 5) {
+  if (argc == 6) {
     int _v;
     {
       int res = SWIG_AsVal_int(argv[0], NULL);
       _v = SWIG_CheckState(res);
     }
     if (_v) {
-      int res = SWIG_AsPtr_std_string(argv[1], (std::string**)(0));
-      _v = SWIG_CheckState(res);
+      {
+        int res = SWIG_AsVal_int(argv[1], NULL);
+        _v = SWIG_CheckState(res);
+      }
       if (_v) {
-        int res = SWIG_ConvertPtr(argv[2], 0, SWIGTYPE_p_PyFilter, SWIG_POINTER_NO_NULL | 0);
+        int res = SWIG_AsPtr_std_string(argv[2], (std::string**)(0));
         _v = SWIG_CheckState(res);
         if (_v) {
-          int res = SWIG_ConvertPtr(argv[3], 0, SWIGTYPE_p_PyOptimizer, SWIG_POINTER_NO_NULL | 0);
+          int res = SWIG_ConvertPtr(argv[3], 0, SWIGTYPE_p_PyFilter, SWIG_POINTER_NO_NULL | 0);
           _v = SWIG_CheckState(res);
           if (_v) {
-            int res = SWIG_ConvertPtr(argv[4], 0, SWIGTYPE_p_PyInitializer, SWIG_POINTER_NO_NULL | 0);
+            int res = SWIG_ConvertPtr(argv[4], 0, SWIGTYPE_p_PyOptimizer, SWIG_POINTER_NO_NULL | 0);
             _v = SWIG_CheckState(res);
             if (_v) {
-              return _wrap_new_PyEmbeddingFactory__SWIG_2(self, argc, argv);
+              int res = SWIG_ConvertPtr(argv[5], 0, SWIGTYPE_p_PyInitializer, SWIG_POINTER_NO_NULL | 0);
+              _v = SWIG_CheckState(res);
+              if (_v) {
+                return _wrap_new_PyEmbeddingFactory__SWIG_2(self, argc, argv);
+              }
             }
           }
         }
@@ -4931,7 +4950,7 @@ fail:
     "  Possible C/C++ prototypes are:\n"
     "    PyEmbeddingFactory::PyEmbeddingFactory()\n"
     "    PyEmbeddingFactory::PyEmbeddingFactory(std::string const &)\n"
-    "    PyEmbeddingFactory::PyEmbeddingFactory(int,std::string,PyFilter,PyOptimizer,PyInitializer)\n");
+    "    PyEmbeddingFactory::PyEmbeddingFactory(int,int,std::string const &,PyFilter,PyOptimizer,PyInitializer)\n");
   return 0;
 }
 
@@ -4961,10 +4980,11 @@ fail:
 SWIGINTERN PyObject *_wrap_PyEmbeddingFactory_dump(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   PyEmbeddingFactory *arg1 = (PyEmbeddingFactory *) 0 ;
-  std::string arg2 ;
+  std::string *arg2 = 0 ;
   int arg3 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
+  int res2 = SWIG_OLDOBJ ;
   int val3 ;
   int ecode3 = 0 ;
   PyObject *swig_obj[3] ;
@@ -4977,22 +4997,26 @@ SWIGINTERN PyObject *_wrap_PyEmbeddingFactory_dump(PyObject *SWIGUNUSEDPARM(self
   arg1 = reinterpret_cast< PyEmbeddingFactory * >(argp1);
   {
     std::string *ptr = (std::string *)0;
-    int res = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
-    if (!SWIG_IsOK(res) || !ptr) {
-      SWIG_exception_fail(SWIG_ArgError((ptr ? res : SWIG_TypeError)), "in method '" "PyEmbeddingFactory_dump" "', argument " "2"" of type '" "std::string""'"); 
+    res2 = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyEmbeddingFactory_dump" "', argument " "2"" of type '" "std::string const &""'"); 
     }
-    arg2 = *ptr;
-    if (SWIG_IsNewObj(res)) delete ptr;
+    if (!ptr) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyEmbeddingFactory_dump" "', argument " "2"" of type '" "std::string const &""'"); 
+    }
+    arg2 = ptr;
   }
   ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
   if (!SWIG_IsOK(ecode3)) {
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyEmbeddingFactory_dump" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  (arg1)->dump(arg2,arg3);
+  (arg1)->dump((std::string const &)*arg2,arg3);
   resultobj = SWIG_Py_Void();
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return resultobj;
 fail:
+  if (SWIG_IsNewObj(res2)) delete arg2;
   return NULL;
 }
 

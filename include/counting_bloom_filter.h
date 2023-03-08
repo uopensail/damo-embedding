@@ -18,22 +18,19 @@
 // along with `Damo-Embedding`.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H
-#define DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H
+#ifndef DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H
+#define DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H
 
 #pragma once
 
 #include <dirent.h>
 #include <fcntl.h>
 #include <math.h>
-#include <pthread.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <atomic>
-#include <bitset>
 #include <chrono>
 #include <cstdio>
 #include <fstream>
@@ -42,24 +39,29 @@
 
 #include "common.h"
 
-const double FFP = 0.0002;
-const int BitSize = 4;
-const int MaxCount = (1 << BitSize) - 1;
-const u_int64_t HighMask = 8589934591ull;  // 2^33-1
-const u_int64_t LowMask = 2147483647ull;   // 2^31-1
+struct Counter {
+  unsigned char m1 : 4;
+  unsigned char m2 : 4;
+};
+using Counter = struct Counter;
 
-using Counter = std::bitset<BitSize>;
+const double FFP = 0.001;
+const int max_count = 15;
+const u_int64_t min_size = 268435456ull;    // 2^28
+const u_int64_t high_mask = 8589934591ull;  // 2^33-1
+const u_int64_t low_mask = 2147483647ull;   // 2^31-1
 
-class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
+class CountingBloomFilter final {
  private:
-  double ffp_;            // 假阳率
-  size_t capacity_;       // 过滤器的容量
-  std::string filename_;  // 持久化文件
-  int count_;             // 最小数量
-  size_t size_;           // 申请的空间大小
-  int k_;                 // hash函数的个数
-  int fp_;                // 打开的文件描述符
-  Counter *data_;         // 具体的存储的数据
+  double ffp_;            // false positive rate
+  size_t capacity_;       // The capacity of the filter
+  std::string filename_;  // persist files
+  int count_;             // minimum count for the filter
+  size_t counter_num_;    // the amount of counter
+  size_t space_;          // memory space for counter
+  int k_;                 // the number of hash functions
+  int fd_;                // file descriptor
+  Counter *data_;         // stored data
 
  public:
   CountingBloomFilter();
@@ -70,8 +72,11 @@ class CountingBloomFilter : std::enable_shared_from_this<CountingBloomFilter> {
   ~CountingBloomFilter();
 
  public:
-  bool check(const u_int64_t &key);  //检查在不在，次数是否大于count
-  void add(const u_int64_t &key, const u_int64_t &num = 1);  //添加
+  bool check(const u_int64_t &key);
+  void add(const u_int64_t &key, const u_int64_t &num = 1);
+  int get_count() const;
 };
 u_int64_t hash_func(const u_int64_t &x);
-#endif  // DAMO_EMBEDDING_COUNTINGBLOOMFILTER_H
+void create_empty_file(const std::string &filename, const size_t &size);
+
+#endif  // DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H

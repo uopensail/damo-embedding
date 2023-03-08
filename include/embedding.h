@@ -40,6 +40,7 @@ class Embeddings {
  private:
   rocksdb::DBWithTTL *db_;
   int ttl_;
+  int min_count_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
   std::shared_ptr<CountingBloomFilter> filter_;
@@ -48,6 +49,12 @@ class Embeddings {
  private:
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
               const u_int64_t &global_step);
+  void apply_gradients_without_filter(u_int64_t *keys, int len, Float *gds,
+                                      int n, const u_int64_t &global_steps);
+  void apply_gradients_with_filter(u_int64_t *keys, int len, Float *gds, int n,
+                                   const u_int64_t &global_steps);
+  void lookup_with_filter(u_int64_t *keys, int len, Float *data, int n);
+  void lookup_without_filter(u_int64_t *keys, int len, Float *data, int n);
 
  public:
   /**
@@ -59,7 +66,7 @@ class Embeddings {
    * @param initializer 初始化算子
    * @param filter 频控
    */
-  Embeddings(int ttl, const std::string &data_dir,
+  Embeddings(int ttl, int min_count, const std::string &data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
              const std::shared_ptr<Initializer> &initializer,
              const std::shared_ptr<CountingBloomFilter> &filter);

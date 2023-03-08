@@ -48,7 +48,7 @@ struct MetaData {
 ### Counting Bloom Filter
 Counting Bloom Filter的作用是用来过滤低频次特征。互联网的业务一般都呈现长尾的特点, 在训练机器学习/深度学习模型的时候, 长尾特征会非常多，其中大部分的长尾特征出现的频次非常低。它们对模型的收敛产生了不小的干扰: 一方面特征频次低导致这些特征无法充分训练, 另一方面它们对存储资源和计算资源消耗也非常大, 所以去掉低频次的特征就显得非常有必要。
 
-如果是离线训练模型, 算法工程师可以进行特征的预处理, 统计特征出现的频次, 然后把这些低频次的特征去掉。但是如果是在线模型, 就无法进行特征的预处理。对稀疏特征进行处理有很多方案, 例如: 基于泊松分布的特征频次估计, 动态调整L1正则过滤等<sup>[1]</sup>。该项目提供了一种相对比较直接的方式, 利用Counting Bloom Filter来记录特征出现的次数实现特征频次过滤。需要说明的是, 项目中采用`std::bitset<4>`来存放每一个数据, 也就是说最大的记录数就是15。因为开发者认为15这个值已经可以满足绝大部分需求了。
+如果是离线训练模型, 算法工程师可以进行特征的预处理, 统计特征出现的频次, 然后把这些低频次的特征去掉。但是如果是在线模型, 就无法进行特征的预处理。对稀疏特征进行处理有很多方案, 例如: 基于泊松分布的特征频次估计, 动态调整L1正则过滤等<sup>[1]</sup>。该项目提供了一种相对比较直接的方式, 利用Counting Bloom Filter来记录特征出现的次数实现特征频次过滤。需要说明的是, 项目中采用半个char来存放每一个数据, 也就是说最大的记录数就是15。因为开发者认为15这个值已经可以满足绝大部分需求了。
 
 另外, 为了避免数据丢失的问题。开发者使用mmap的技术将内存和文件进行了映射。当这次模型训练完结或中途出现崩溃, 模型训练重启的时候, 可以通过加载文件的方式把数据恢复起来。
 
@@ -56,7 +56,17 @@ Counting Bloom Filter的作用是用来过滤低频次特征。互联网的业�
 > When you `mmap` a file, you're basically sharing memory directly between your process and the kernel's page cache — the same cache that holds file data that's been read from disk, or is waiting to be written to disk. A page in the page cache that's different from what's on disk (because it's been written to) is referred to as "dirty".
 > There is a kernel thread that scans for dirty pages and writes them back to disk, under the control of several parameters. One important one is `dirty_expire_centisecs`. If any of the pages for a file have been dirty for longer than `dirty_expire_centisecs` then all of the dirty pages for that file will get written out. The default value is 3000 centisecs (30 seconds).
 
+备注: 
+1. 因为counting bloom filter不支持删除功能, 所以要预估好模型的容量。
+2. 当capacity的值太大的时候, 会大量消耗内存和磁盘, 下面有估算的脚本。e.g: 10亿个特征,错误率在0.001的时候，消耗的内存大概在6.70G。
 
+```python
+def get_space(capacity, ffp):
+    import math
+
+    tmp = int(math.log(1.0 / ffp) * capacity / (math.log(2.0) ** 2)) >> 1
+    print("%.2fG" % (tmp / (2**30)))
+```
 ### Scheduler
 不配置scheduler的时候, name为空字符串   
 
@@ -86,11 +96,11 @@ decay_rate: float
 decay_rate: float   
 
 #### liner_cosine_decay
-配置如下的参数: 
-alpha: float 
-beta: float 
-decay_steps: float 
-num_periods: float 
+配置如下的参数:    
+alpha: float    
+beta: float    
+decay_steps: float    
+num_periods: float    
 
 ### Initializer
 
@@ -101,18 +111,18 @@ num_periods: float
 1初始化
 
 #### RandomUniform
-均匀分布, 需要配置如下的一些参数:
-min: 下限, default: -1.0
+均匀分布, 需要配置如下的一些参数:    
+min: 下限, default: -1.0   
 max: 上限, default: 1.0
 
 #### RandomNormal
-随机正态分布, 需要配置如下的一些参数:
-mean: 均值, default: 0.0
+随机正态分布, 需要配置如下的一些参数:   
+mean: 均值, default: 0.0   
 std: 标准差, default: 1.0
 
 #### TruncateNormal
-随机正态分布, 且2倍标准差外的数据丢弃重新生成 需要配置如下的一些参数:
-mean: 均值, default: 0.0
+随机正态分布, 且2倍标准差外的数据丢弃重新生成 需要配置如下的一些参数:    
+mean: 均值, default: 0.0   
 std: 标准差, default: 1.0
 
 ### Optimizer
@@ -200,7 +210,7 @@ export LIBRARY_PATH=$LIBRARY_PATH:NUMPY_LIBRARY_PATH
 git clone https://github.com/uopensail/damo-embedding
 cd damo-embedding
 
-# to regenerate pyembedding_warp.cxx
+# to regenerate pyembedding_wrap.cxx
 # swig -python -c++ pyembedding.i
 
 python setup.py install
@@ -214,6 +224,7 @@ python setup.py install
 ttl=8640000
 # rocksdb数据路径
 path="/tmp/embedding"
+min_count=15
 
 [filter] # 可不配置
 # 容量

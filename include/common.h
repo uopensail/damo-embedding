@@ -43,14 +43,13 @@ using u_int64_t = unsigned long long;
 
 // the feature number must <= 256
 const int max_group = 256;
-const u_int64_t min_size = 2147483648ull;
 
 u_int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);
 
 // get the group id from the key
-inline u_int64_t groupof(const u_int64_t &key);
+u_int64_t groupof(const u_int64_t &key);
 
 // the struct of value in rocksdb
 #pragma pack(push)
@@ -80,7 +79,7 @@ class Params {
 
   template <class T>
   T get(const std::string &key) const {
-    if (table != null && table->contains(key)) {
+    if (table != nullptr && table->contains(key)) {
       return *table->get_as<T>(key);
     }
     throw std::out_of_range(key + " is not a valid key");
@@ -88,7 +87,7 @@ class Params {
 
   template <class T>
   T get(const std::string &key, const T &default_value) const {
-    if (table != null && table->contains(key)) {
+    if (table != nullptr && table->contains(key)) {
       return *table->get_as<T>(key);
     }
     return default_value;

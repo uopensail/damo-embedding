@@ -56,9 +56,7 @@ PyInitializer &PyInitializer::operator=(const PyInitializer &p) {
   return *this;
 }
 
-void PyInitializer::call(float *data, int dim) {
-  initializer_->call(data, dim);
-}
+void PyInitializer::call(float *w, int wn) { initializer_->call(w, wn); }
 
 PyInitializer::~PyInitializer() {}
 
@@ -66,7 +64,6 @@ PyInitializer::~PyInitializer() {}
 PyOptimizer::PyOptimizer() {
   Parameters sgd, decay;
   sgd.insert("name", std::string("sgd"));
-  sgd.insert("eta", double(0.0001));
   decay.insert("name", std::string(""));
   this->optimizer_ = get_optimizers(Params(sgd.params_), Params(decay.params_));
 }
@@ -95,9 +92,10 @@ PyOptimizer::~PyOptimizer() {}
 
 void PyOptimizer::call(float *data, int wn, float *gds, int gn,
                        unsigned long long global_step) {
-  assert(wn == gn);
+  assert(optimizer_->get_space(gn) == wn);
   optimizer_->call(data, gds, wn, global_step);
 }
+
 // PyFilter的实现
 PyFilter::PyFilter() : filter_(nullptr) {}
 PyFilter::PyFilter(Parameters params)
@@ -119,6 +117,7 @@ bool PyFilter::check(unsigned long long key) {
   }
   return filter_->check(key);
 }
+
 void PyFilter::add(unsigned long long key, unsigned long long num) {
   if (this->filter_ != nullptr) {
     this->filter_->add(key, num);
@@ -132,7 +131,7 @@ PyEmbeddingFactory::PyEmbeddingFactory() {
   PyFilter default_filter;
   PyInitializer default_initializer;
   this->embeddings_ = std::make_shared<Embeddings>(
-      864000, "/tmp/pyembedding", default_optimizer.optimizer_,
+      864000, 15, "/tmp/pyembedding", default_optimizer.optimizer_,
       default_initializer.initializer_, default_filter.filter_);
 }
 
@@ -152,22 +151,24 @@ PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
                                               : nullptr);
 
   this->embeddings_ = std::make_shared<Embeddings>(
-      p_storage.get<int>("ttl"), p_storage.get<std::string>("path"),
+      p_storage.get<int>("ttl", 864000), p_storage.get<int>("min_count", 15),
+      p_storage.get<std::string>("path", "/tmp/pyembedding"),
       get_optimizers(p_optimizer, p_scheduler), get_initializers(p_initializer),
       filter);
 }
 
-PyEmbeddingFactory::PyEmbeddingFactory(int ttl, std::string data_dir,
+PyEmbeddingFactory::PyEmbeddingFactory(int ttl, int min_count,
+                                       const std::string &data_dir,
                                        PyFilter filter, PyOptimizer optimizer,
                                        PyInitializer initializer) {
-  this->embeddings_ =
-      std::make_shared<Embeddings>(ttl, data_dir, optimizer.optimizer_,
-                                   initializer.initializer_, filter.filter_);
+  this->embeddings_ = std::make_shared<Embeddings>(
+      ttl, min_count, data_dir, optimizer.optimizer_, initializer.initializer_,
+      filter.filter_);
 }
 
 PyEmbeddingFactory::~PyEmbeddingFactory() {}
 
-void PyEmbeddingFactory::dump(std::string path, int expires) {
+void PyEmbeddingFactory::dump(const std::string &path, int expires) {
   this->embeddings_->dump(path, expires);
 }
 
