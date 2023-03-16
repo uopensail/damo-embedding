@@ -27,7 +27,6 @@
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
-#include "counting_bloom_filter.h"
 #include "initializer.h"
 #include "optimizer.h"
 
@@ -40,21 +39,15 @@ class Embeddings {
  private:
   rocksdb::DBWithTTL *db_;
   int ttl_;
-  int min_count_;
+  u_int64_t min_count_;
   std::shared_ptr<Optimizer> optimizer_;
   std::shared_ptr<Initializer> initializer_;
-  std::shared_ptr<CountingBloomFilter> filter_;
   EmbeddingMeta metas_[max_group];
 
  private:
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
               const u_int64_t &global_step);
-  void apply_gradients_without_filter(u_int64_t *keys, int len, Float *gds,
-                                      int n, const u_int64_t &global_steps);
-  void apply_gradients_with_filter(u_int64_t *keys, int len, Float *gds, int n,
-                                   const u_int64_t &global_steps);
-  void lookup_with_filter(u_int64_t *keys, int len, Float *data, int n);
-  void lookup_without_filter(u_int64_t *keys, int len, Float *data, int n);
+  void create(const u_int64_t &key, MetaData *ptr);
 
  public:
   /**
@@ -68,8 +61,7 @@ class Embeddings {
    */
   Embeddings(int ttl, int min_count, const std::string &data_dir,
              const std::shared_ptr<Optimizer> &optimizer,
-             const std::shared_ptr<Initializer> &initializer,
-             const std::shared_ptr<CountingBloomFilter> &filter);
+             const std::shared_ptr<Initializer> &initializer);
 
   void add_group(int group, int dim);
   ~Embeddings();

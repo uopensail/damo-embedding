@@ -104,8 +104,7 @@ class PyEmbeddingFactory {
   PyEmbeddingFactory();
   PyEmbeddingFactory(const std::string &config_file);
   PyEmbeddingFactory(int ttl, int min_count, const std::string &data_dir,
-                     PyFilter filter, PyOptimizer optimizer,
-                     PyInitializer initializer);
+                     PyOptimizer optimizer, PyInitializer initializer);
   ~PyEmbeddingFactory();
 
   /**

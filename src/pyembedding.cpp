@@ -128,11 +128,10 @@ PyFilter::~PyFilter() {}
 
 PyEmbeddingFactory::PyEmbeddingFactory() {
   PyOptimizer default_optimizer;
-  PyFilter default_filter;
   PyInitializer default_initializer;
   this->embeddings_ = std::make_shared<Embeddings>(
       864000, 15, "/tmp/pyembedding", default_optimizer.optimizer_,
-      default_initializer.initializer_, default_filter.filter_);
+      default_initializer.initializer_);
 }
 
 PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
@@ -141,11 +140,6 @@ PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
   Params p_initializer(g->get_table("initializer"));
   Params p_storage(g->get_table("storage"));
 
-  std::shared_ptr<CountingBloomFilter> filter =
-      g->contains("filter")
-          ? std::make_shared<CountingBloomFilter>(g->get_table("filter"))
-          : nullptr;
-
   std::shared_ptr<Optimizer> optimizer = nullptr;
   Params p_scheduler(g->contains("scheduler") ? g->get_table("scheduler")
                                               : nullptr);
@@ -153,17 +147,16 @@ PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
   this->embeddings_ = std::make_shared<Embeddings>(
       p_storage.get<int>("ttl", 864000), p_storage.get<int>("min_count", 15),
       p_storage.get<std::string>("path", "/tmp/pyembedding"),
-      get_optimizers(p_optimizer, p_scheduler), get_initializers(p_initializer),
-      filter);
+      get_optimizers(p_optimizer, p_scheduler),
+      get_initializers(p_initializer));
 }
 
 PyEmbeddingFactory::PyEmbeddingFactory(int ttl, int min_count,
                                        const std::string &data_dir,
-                                       PyFilter filter, PyOptimizer optimizer,
+                                       PyOptimizer optimizer,
                                        PyInitializer initializer) {
   this->embeddings_ = std::make_shared<Embeddings>(
-      ttl, min_count, data_dir, optimizer.optimizer_, initializer.initializer_,
-      filter.filter_);
+      ttl, min_count, data_dir, optimizer.optimizer_, initializer.initializer_);
 }
 
 PyEmbeddingFactory::~PyEmbeddingFactory() {}

@@ -2,17 +2,12 @@
 
 Embeddings::Embeddings(int ttl, int min_count, const std::string &data_dir,
                        const std::shared_ptr<Optimizer> &optimizer,
-                       const std::shared_ptr<Initializer> &initializer,
-                       const std::shared_ptr<CountingBloomFilter> &filter)
+                       const std::shared_ptr<Initializer> &initializer)
     : db_(nullptr),
       ttl_(ttl),
       min_count_(min_count),
       optimizer_(optimizer),
-      initializer_(initializer),
-      filter_(filter) {
-  if (filter != nullptr) {
-    min_count_ = filter->get_count();
-  }
+      initializer_(initializer) {
   rocksdb::Options options;
   options.create_if_missing = true;
   rocksdb::Status status =
@@ -41,19 +36,18 @@ void Embeddings::update(const u_int64_t &key, MetaData *ptr, Float *gds,
   this->optimizer_->call(ptr->data, gds, dim, global_step);
 }
 
-void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
-  if (this->filter_ != nullptr) {
-    this->lookup_with_filter(keys, len, data, n);
-  } else {
-    this->lookup_without_filter(keys, len, data, n);
-  }
+void Embeddings::create(const u_int64_t &key, MetaData *ptr) {
+  const int &dim = this->metas_[groupof(key)].dim;
+  this->initializer_->call(ptr->data, dim);
+  ptr->update_num = 1;
+  ptr->key = key;
+  ptr->dim = dim;
+  ptr->update_time = get_current_time();
 }
 
-void Embeddings::lookup_without_filter(u_int64_t *keys, int len, Float *data,
-                                       int n) {
+void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
-  std::vector<int> exists(len, -1);
   for (int i = 0; i < len; i++) {
     s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
   }
@@ -69,78 +63,19 @@ void Embeddings::lookup_without_filter(u_int64_t *keys, int len, Float *data,
     dim = this->metas_[groupof(keys[i])].dim;
     if (status[i].ok()) {
       ptr = (MetaData *)&(result[i][0]);
-      memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
+      if (ptr->update_num >= this->min_count_) {
+        memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
+      } else {
+        memset(&(data[offset]), 0, sizeof(Float) * dim);
+      }
     } else {
       //需要初始化
       std::string value(
           sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim),
           '\0');
       MetaData *ptr = (MetaData *)(&value[0]);
-      this->initializer_->call(ptr->data, dim);
-      ptr->update_num = 1;
-      ptr->key = keys[i];
-      ptr->dim = dim;
-      ptr->update_time = get_current_time();
+      this->create(keys[i], ptr);
       memset(&(data[offset]), 0, sizeof(Float) * dim);
-      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), value);
-    }
-    offset += dim;
-  }
-
-  assert(offset == n);
-
-  //写到rocksdb里面去
-  rocksdb::WriteOptions put_options;
-  put_options.sync = false;
-  this->db_->Write(put_options, &batch);
-  return;
-}
-
-void Embeddings::lookup_with_filter(u_int64_t *keys, int len, Float *data,
-                                    int n) {
-  std::vector<rocksdb::Slice> s_keys;
-  std::vector<std::string> result;
-  std::vector<int> exists(len, -1);
-  int j = 0;
-  for (int i = 0; i < len; i++) {
-    if (this->filter_->check(keys[i])) {
-      s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      exists[i] = j;
-      j++;
-    }
-  }
-  size_t offset = 0;
-  MetaData *ptr;
-
-  //写入
-  rocksdb::WriteBatch batch;
-  rocksdb::ReadOptions get_options;
-  auto status = this->db_->MultiGet(get_options, s_keys, &result);
-  int dim;
-  for (int i = 0; i < len; i++) {
-    dim = this->metas_[groupof(keys[i])].dim;
-    // filter检查没有就置为0
-    if (exists[i] == -1) {
-      memset(&(data[offset]), 0, sizeof(Float) * dim);
-      offset += dim;
-      continue;
-    }
-    j = exists[i];
-    if (status[j].ok()) {
-      ptr = (MetaData *)&(result[j][0]);
-      memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
-    } else {
-      //需要初始化
-      std::string value(
-          sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim),
-          '\0');
-      MetaData *ptr = (MetaData *)(&value[0]);
-      this->initializer_->call(ptr->data, dim);
-      ptr->update_num = this->min_count_;
-      ptr->key = keys[i];
-      ptr->dim = dim;
-      ptr->update_time = get_current_time();
-      memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
       batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), value);
     }
     offset += dim;
@@ -157,16 +92,6 @@ void Embeddings::lookup_with_filter(u_int64_t *keys, int len, Float *data,
 
 void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
                                  const u_int64_t &global_step) {
-  if (this->filter_ != nullptr) {
-    this->apply_gradients_with_filter(keys, len, gds, n, global_step);
-  } else {
-    this->apply_gradients_without_filter(keys, len, gds, n, global_step);
-  }
-}
-
-void Embeddings::apply_gradients_without_filter(u_int64_t *keys, int len,
-                                                Float *gds, int n,
-                                                const u_int64_t &global_step) {
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
   std::vector<Float *> t_gds;
@@ -195,41 +120,6 @@ void Embeddings::apply_gradients_without_filter(u_int64_t *keys, int len,
     } else {
       this->update(meta->key, meta, t_gds[i], global_step);
     }
-    batch.Put(s_keys[i], result[i]);
-  }
-  this->db_->Write(put_options, &batch);
-}
-
-void Embeddings::apply_gradients_with_filter(u_int64_t *keys, int len,
-                                             Float *gds, int n,
-                                             const u_int64_t &global_step) {
-  std::vector<rocksdb::Slice> s_keys;
-  std::vector<std::string> result;
-  std::vector<Float *> t_gds;
-  size_t offset = 0;
-  for (int i = 0; i < len; i++) {
-    //能够push进去的,必须要filter check ok
-    if (this->filter_->check(keys[i])) {
-      s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      t_gds.push_back(&gds[offset]);
-    }
-    this->filter_->add(keys[i]);
-    offset += this->metas_[groupof(keys[i])].dim;
-  }
-
-  //先从rocksdb中进行查找
-  rocksdb::ReadOptions get_options;
-  rocksdb::WriteOptions put_options;
-  put_options.sync = false;
-  MetaData *meta = nullptr;
-  rocksdb::WriteBatch batch;
-  auto status = this->db_->MultiGet(get_options, s_keys, &result);
-  for (size_t i = 0; i < status.size(); i++) {
-    if (!status[i].ok()) {
-      continue;
-    }
-    meta = (MetaData *)&(result[i][0]);
-    this->update(meta->key, meta, t_gds[i], global_step);
     batch.Put(s_keys[i], result[i]);
   }
   this->db_->Write(put_options, &batch);
