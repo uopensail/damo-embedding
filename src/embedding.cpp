@@ -63,9 +63,7 @@ void Embeddings::lookup_without_filter(u_int64_t *keys, int len, Float *data,
   MetaData *ptr;
 
   //写入
-  std::vector<rocksdb::Slice> s_put_keys;
-  std::vector<std::string> put_result;
-
+  rocksdb::WriteBatch batch;
   int dim;
   for (int i = 0; i < len; i++) {
     dim = this->metas_[groupof(keys[i])].dim;
@@ -83,10 +81,8 @@ void Embeddings::lookup_without_filter(u_int64_t *keys, int len, Float *data,
       ptr->key = keys[i];
       ptr->dim = dim;
       ptr->update_time = get_current_time();
-      s_put_keys.emplace_back(
-          rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      put_result.emplace_back(value);
       memset(&(data[offset]), 0, sizeof(Float) * dim);
+      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), value);
     }
     offset += dim;
   }
@@ -96,10 +92,6 @@ void Embeddings::lookup_without_filter(u_int64_t *keys, int len, Float *data,
   //写到rocksdb里面去
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
-  rocksdb::WriteBatch batch;
-  for (size_t i = 0; i < s_put_keys.size(); i++) {
-    batch.Put(s_put_keys[i], put_result[i]);
-  }
   this->db_->Write(put_options, &batch);
   return;
 }
@@ -121,8 +113,7 @@ void Embeddings::lookup_with_filter(u_int64_t *keys, int len, Float *data,
   MetaData *ptr;
 
   //写入
-  std::vector<rocksdb::Slice> s_put_keys;
-  std::vector<std::string> put_result;
+  rocksdb::WriteBatch batch;
   rocksdb::ReadOptions get_options;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
   int dim;
@@ -149,10 +140,8 @@ void Embeddings::lookup_with_filter(u_int64_t *keys, int len, Float *data,
       ptr->key = keys[i];
       ptr->dim = dim;
       ptr->update_time = get_current_time();
-      s_put_keys.emplace_back(
-          rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-      put_result.emplace_back(value);
       memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
+      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), value);
     }
     offset += dim;
   }
@@ -162,10 +151,6 @@ void Embeddings::lookup_with_filter(u_int64_t *keys, int len, Float *data,
   //写到rocksdb里面去
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
-  rocksdb::WriteBatch batch;
-  for (size_t i = 0; i < s_put_keys.size(); i++) {
-    batch.Put(s_put_keys[i], put_result[i]);
-  }
   this->db_->Write(put_options, &batch);
   return;
 }
