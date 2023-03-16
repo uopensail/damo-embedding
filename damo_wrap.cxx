@@ -2710,16 +2710,16 @@ static swig_module_info swig_module = {swig_types, 8, 0, 0, 0, 0};
 #define SWIG_TypeQuery SWIG_Python_TypeQuery
 
 /*-----------------------------------------------
-              @(target):= _pyEmbedding.so
+              @(target):= _damo.so
   ------------------------------------------------*/
 #if PY_VERSION_HEX >= 0x03000000
-#  define SWIG_init    PyInit__pyEmbedding
+#  define SWIG_init    PyInit__damo
 
 #else
-#  define SWIG_init    init_pyEmbedding
+#  define SWIG_init    init_damo
 
 #endif
-#define SWIG_name    "_pyEmbedding"
+#define SWIG_name    "_damo"
 
 #define SWIGVERSION 0x040002 
 #define SWIG_VERSION SWIGVERSION

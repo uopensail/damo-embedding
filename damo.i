@@ -1,4 +1,4 @@
-%module pyEmbedding
+%module damo
 
 %{
 #define SWIG_FILE_WITH_INIT

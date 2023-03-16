@@ -39,14 +39,14 @@ else:
     LINK_OPTIONS.append("-lpthread")
     LINK_OPTIONS.append("-Wl,-rpath=/usr/local/lib")
 
-pyEmbeddingModule = Extension(
-    name="_pyEmbedding",
+damoModule = Extension(
+    name="_damo",
     include_dirs=[
         "include/",
     ],
     sources=[
         "src/pyembedding.cpp",
-        "pyembedding_wrap.cxx",
+        "damo_wrap.cxx",
         "src/learning_rate_scheduler.cpp",
         "src/initializer.cpp",
         "src/embedding.cpp",
@@ -59,7 +59,7 @@ pyEmbeddingModule = Extension(
 )
 
 setup(
-    name="pyEmbedding",
+    name="damo",
     version="1.0.0",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: GLP3",
@@ -67,8 +67,8 @@ setup(
     author_email="",
     url="",
     packages=find_packages(),
-    py_modules=["pyEmbedding"],
-    ext_modules=[pyEmbeddingModule],
+    py_modules=["damo"],
+    ext_modules=[damoModule],
     keywords="sparse embedding using rocksdb",
     long_description="",
     long_description_content_type="text/markdown",
