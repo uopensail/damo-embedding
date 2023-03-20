@@ -1,51 +1,51 @@
 #include "embedding.h"
 
-Embeddings::Embeddings(int ttl, int min_count, const std::string &data_dir,
-                       const std::shared_ptr<Optimizer> &optimizer,
-                       const std::shared_ptr<Initializer> &initializer)
-    : db_(nullptr),
-      ttl_(ttl),
-      min_count_(min_count),
+Embedding::Embedding(Storage &storage,
+                     const std::shared_ptr<Optimizer> &optimizer,
+                     const std::shared_ptr<Initializer> &initializer, int dim,
+                     int count)
+    : dim_(dim),
+      count_(count),
+      db_(storage.db_),
       optimizer_(optimizer),
-      initializer_(initializer) {
-  rocksdb::Options options;
-  options.create_if_missing = true;
-  rocksdb::Status status =
-      rocksdb::DBWithTTL::Open(options, data_dir, &this->db_, this->ttl_);
-  if (!status.ok()) {
-    std::cerr << "open leveldb error: " << status.ToString() << std::endl;
-    exit(-1);
-  }
-  assert(this->db_ != nullptr);
-  std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
-}
+      initializer_(initializer) {}
 
-Embeddings::~Embeddings() { delete this->db_; }
+const int Embedding::get_dim() const { return dim_; }
 
-void Embeddings::add_group(int group, int dim) {
-  assert(group >= 0 && group < max_group);
-  this->metas_[group].dim = dim;
-  this->metas_[group].group = group;
-}
+const u_int64_t Embedding::get_count() const { return this->count_; };
 
-void Embeddings::update(const u_int64_t &key, MetaData *ptr, Float *gds,
-                        const u_int64_t &global_step) {
-  const int &dim = this->metas_[groupof(key)].dim;
-  ptr->update_num++;
-  ptr->update_time = get_current_time();
-  this->optimizer_->call(ptr->data, gds, dim, global_step);
-}
+Embedding::~Embedding() {}
 
-void Embeddings::create(const u_int64_t &key, MetaData *ptr) {
-  const int &dim = this->metas_[groupof(key)].dim;
-  this->initializer_->call(ptr->data, dim);
+std::shared_ptr<std::string> &Embedding::create(const u_int64_t &key) {
+  auto value = std::make_shared<std::string>(
+      sizeof(MetaData) +
+          sizeof(Float) * this->optimizer_->get_space(this->dim_),
+      0);
+  MetaData *ptr = (MetaData *)(value->data());
+  this->initializer_->call(ptr->data, this->dim_);
   ptr->update_num = 1;
   ptr->key = key;
-  ptr->dim = dim;
+  ptr->dim = this->dim_;
+  ptr->update_time = get_current_time();
+  return value;
+}
+
+void Embedding::update(const u_int64_t &key, MetaData *ptr, Float *gds,
+                       const u_int64_t &global_step) {
+  ptr->update_num++;
+  ptr->update_time = get_current_time();
+  this->optimizer_->call(ptr->data, gds, this->dim_, global_step);
+}
+
+void Embedding::update(const u_int64_t &key, MetaData *ptr) {
+  ptr->update_num++;
   ptr->update_time = get_current_time();
 }
 
-void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
+void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
+  assert(len * this->dim_ == n);
+  memset(data, 0, n * sizeof(Float));
+
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
   for (int i = 0; i < len; i++) {
@@ -58,27 +58,18 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
 
   //写入
   rocksdb::WriteBatch batch;
-  int dim;
   for (int i = 0; i < len; i++) {
-    dim = this->metas_[groupof(keys[i])].dim;
     if (status[i].ok()) {
-      ptr = (MetaData *)&(result[i][0]);
-      if (ptr->update_num >= this->min_count_) {
-        memcpy(&(data[offset]), ptr->data, sizeof(Float) * dim);
-      } else {
-        memset(&(data[offset]), 0, sizeof(Float) * dim);
+      ptr = (MetaData *)(result[i].data());
+      if (ptr->update_num >= this->count_) {
+        memcpy(&(data[offset]), ptr->data, sizeof(Float) * this->dim_);
       }
     } else {
       //需要初始化
-      std::string value(
-          sizeof(MetaData) + sizeof(Float) * this->optimizer_->get_space(dim),
-          '\0');
-      MetaData *ptr = (MetaData *)(&value[0]);
-      this->create(keys[i], ptr);
-      memset(&(data[offset]), 0, sizeof(Float) * dim);
-      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), value);
+      auto value = this->create(keys[i]);
+      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), *value);
     }
-    offset += dim;
+    offset += this->dim_;
   }
 
   assert(offset == n);
@@ -90,44 +81,62 @@ void Embeddings::lookup(u_int64_t *keys, int len, Float *data, int n) {
   return;
 }
 
-void Embeddings::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                                 const u_int64_t &global_step) {
+void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
+                                const u_int64_t &global_steps) {
+  assert(len * this->dim_ == n);
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
-  std::vector<Float *> t_gds;
   size_t offset = 0;
   for (int i = 0; i < len; i++) {
     s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
-    t_gds.push_back(&gds[offset]);
-    offset += this->metas_[groupof(keys[i])].dim;
   }
 
   //先从rocksdb中进行查找
   rocksdb::ReadOptions get_options;
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
-  MetaData *meta = nullptr;
+  MetaData *ptr = nullptr;
   rocksdb::WriteBatch batch;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
-  for (size_t i = 0; i < status.size(); i++) {
+  for (int i = 0; i < len; i++) {
     if (!status[i].ok()) {
       continue;
     }
-    meta = (MetaData *)&(result[i][0]);
-    if (meta->update_num < this->min_count_) {
-      meta->update_num++;
-      meta->update_time = get_current_time();
+    ptr = (MetaData *)(result[i].data());
+    if (ptr->update_num < this->count_) {
+      this->update(keys[i], ptr);
     } else {
-      this->update(meta->key, meta, t_gds[i], global_step);
+      this->update(keys[i], ptr, &(gds[i * this->dim_]), global_steps);
     }
     batch.Put(s_keys[i], result[i]);
   }
   this->db_->Write(put_options, &batch);
 }
 
+Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
+  rocksdb::Options options;
+  options.create_if_missing = true;
+  rocksdb::DBWithTTL *db;
+  rocksdb::Status status =
+      rocksdb::DBWithTTL::Open(options, data_dir, &db, this->ttl_);
+  if (!status.ok()) {
+    std::cerr << "open leveldb error: " << status.ToString() << std::endl;
+    exit(-1);
+  }
+  assert(db != nullptr);
+  this->db_ = std::shared_ptr<rocksdb::DBWithTTL>(db, [](void *ptr) {
+    if (ptr != nullptr) {
+      delete (rocksdb::DBWithTTL *)ptr;
+    }
+  });
+  std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
+}
+
+Storage::~Storage() {}
+
 //保存
-void Embeddings::dump(const std::string &path, int expires) {
-  auto oldest_timestamp = get_current_time() - 86400 * expires;
+void Storage::dump(const std::string &path,
+                   const std::function<bool(MetaData *ptr)> &filter) {
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
@@ -138,7 +147,7 @@ void Embeddings::dump(const std::string &path, int expires) {
   int group_dims[max_group];
   for (int i = 0; i < max_group; i++) {
     group_counts[i] = 0;
-    group_dims[i] = this->metas_[i].dim;
+    group_dims[i] = 0;
   }
 
   std::ofstream writer(path, std::ios::out | std::ios::binary);
@@ -146,19 +155,16 @@ void Embeddings::dump(const std::string &path, int expires) {
   writer.write((char *)&group_counts, sizeof(size_t) * max_group);
   rocksdb::WriteOptions del_options;
   del_options.sync = false;
-
+  int group;
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
-    if (ptr->update_time < oldest_timestamp ||
-        ptr->update_num < this->min_count_) {
-      //删除太老或更新次数太少的记录
-      this->db_->Delete(del_options, {(char *)&ptr->key, sizeof(u_int64_t)});
-      continue;
+    if (filter(ptr)) {
+      group = groupof(ptr->key);
+      group_counts[group]++;
+      group_dims[group] = ptr->dim;
+      writer.write((char *)&ptr->key, sizeof(u_int64_t));
+      writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
     }
-
-    group_counts[groupof(ptr->key)]++;
-    writer.write((char *)&ptr->key, sizeof(u_int64_t));
-    writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
   }
   assert(it->status().ok());
   delete it;

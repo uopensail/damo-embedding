@@ -126,62 +126,46 @@ void PyFilter::add(unsigned long long key, unsigned long long num) {
 
 PyFilter::~PyFilter() {}
 
-PyEmbeddingFactory::PyEmbeddingFactory() {
-  PyOptimizer default_optimizer;
-  PyInitializer default_initializer;
-  this->embeddings_ = std::make_shared<Embeddings>(
-      864000, 15, "/tmp/pyembedding", default_optimizer.optimizer_,
-      default_initializer.initializer_);
+PyStorage::PyStorage(const std::string &data_dir, int ttl = 0) {
+  this->storage_ = std::make_shared<Storage>(ttl, data_dir);
 }
 
-PyEmbeddingFactory::PyEmbeddingFactory(const std::string &config_file) {
-  std::shared_ptr<cpptoml::table> g = cpptoml::parse_file(config_file);
-  Params p_optimizer(g->get_table("optimizer"));
-  Params p_initializer(g->get_table("initializer"));
-  Params p_storage(g->get_table("storage"));
+PyStorage::~PyStorage() {}
 
-  std::shared_ptr<Optimizer> optimizer = nullptr;
-  Params p_scheduler(g->contains("scheduler") ? g->get_table("scheduler")
-                                              : nullptr);
-
-  this->embeddings_ = std::make_shared<Embeddings>(
-      p_storage.get<int>("ttl", 864000), p_storage.get<int>("min_count", 15),
-      p_storage.get<std::string>("path", "/tmp/pyembedding"),
-      get_optimizers(p_optimizer, p_scheduler),
-      get_initializers(p_initializer));
+void PyStorage::dump(const std::string &path, int expires, int group) {
+  auto func = [&group, &expires](MetaData *ptr) -> bool {
+    if (ptr == nullptr) {
+      return false;
+    }
+    auto oldest_ts = get_current_time() - expires * 86400;
+    if (ptr->update_time < oldest_ts) {
+      return false;
+    }
+    if ((group == -1) ||
+        (0 <= group && group < max_group && group == groupof(ptr->key))) {
+      return true;
+    }
+    return false;
+  };
+  this->storage_->dump(path, func);
 }
 
-PyEmbeddingFactory::PyEmbeddingFactory(int ttl, int min_count,
-                                       const std::string &data_dir,
-                                       PyOptimizer optimizer,
-                                       PyInitializer initializer) {
-  this->embeddings_ = std::make_shared<Embeddings>(
-      ttl, min_count, data_dir, optimizer.optimizer_, initializer.initializer_);
+PyEmbedding::PyEmbedding(PyStorage storage, PyOptimizer optimizer,
+                         PyInitializer initializer, int dim, int count) {
+  this->embedding_ =
+      std::make_unique<Embedding>(storage.storage_, optimizer.optimizer_,
+                                  initializer.initializer_, dim, count);
 }
 
-PyEmbeddingFactory::~PyEmbeddingFactory() {}
-
-void PyEmbeddingFactory::dump(const std::string &path, int expires) {
-  this->embeddings_->dump(path, expires);
-}
-
-PyEmbedding::PyEmbedding(PyEmbeddingFactory factory, int group, int dim)
-    : embeddings_(factory.embeddings_), group_(group), dim_(dim) {
-  this->embeddings_->add_group(group, dim);
-}
 PyEmbedding::PyEmbedding(const PyEmbedding &p) {
   if (&p != this) {
-    this->embeddings_ = p.embeddings_;
-    this->group_ = p.group_;
-    this->dim_ = p.dim_;
+    this->embedding_ = p.embedding_;
   }
 }
 
 PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
   if (&p != this) {
-    this->embeddings_ = p.embeddings_;
-    this->group_ = p.group_;
-    this->dim_ = p.dim_;
+    this->embedding_ = p.embedding_;
   }
   return *this;
 }
@@ -190,11 +174,11 @@ PyEmbedding::~PyEmbedding() {}
 
 void PyEmbedding::lookup(unsigned long long *keys, int len, float *data,
                          int n) {
-  this->embeddings_->lookup((u_int64_t *)keys, len, data, n);
+  this->embedding_->lookup((u_int64_t *)keys, len, data, n);
 }
 
 void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,
                                   int n, unsigned long long global_step) {
-  this->embeddings_->apply_gradients((u_int64_t *)keys, len, gds, n,
-                                     global_step);
+  this->embedding_->apply_gradients((u_int64_t *)keys, len, gds, n,
+                                    global_step);
 }

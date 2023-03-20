@@ -29,7 +29,7 @@
 #include "initializer.h"
 #include "optimizer.h"
 
-class Parameters {
+class Parameters final {
  public:
   std::shared_ptr<cpptoml::table> params_;
 
@@ -45,13 +45,11 @@ class Parameters {
 };
 
 class PyEmbedding;
-class PyEmbeddingFactory;
 
-class PyInitializer {
+class PyInitializer final {
  private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
-  friend class PyEmbeddingFactory;
 
  public:
   PyInitializer();
@@ -62,11 +60,10 @@ class PyInitializer {
   ~PyInitializer();
 };
 
-class PyOptimizer {
+class PyOptimizer final {
  private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
-  friend class PyEmbeddingFactory;
 
  public:
   PyOptimizer();
@@ -79,11 +76,10 @@ class PyOptimizer {
   ~PyOptimizer();
 };
 
-class PyFilter {
+class PyFilter final {
  private:
   std::shared_ptr<CountingBloomFilter> filter_;
   friend class PyEmbedding;
-  friend class PyEmbeddingFactory;
 
  public:
   PyFilter();
@@ -95,17 +91,15 @@ class PyFilter {
   ~PyFilter();
 };
 
-class PyEmbeddingFactory {
+class PyStorage final {
  private:
-  std::shared_ptr<Embeddings> embeddings_;
+  std::shared_ptr<Storage> storage_;
   friend class PyEmbedding;
 
  public:
-  PyEmbeddingFactory();
-  PyEmbeddingFactory(const std::string &config_file);
-  PyEmbeddingFactory(int ttl, int min_count, const std::string &data_dir,
-                     PyOptimizer optimizer, PyInitializer initializer);
-  ~PyEmbeddingFactory();
+  PyStorage() = delete;
+  PyStorage(const std::string &data_dir, int ttl = 0);
+  ~PyStorage();
 
   /**
    * @brief 保存权重到磁盘
@@ -113,18 +107,17 @@ class PyEmbeddingFactory {
    * @param path 路径
    * @param expires out of days, 过期天数
    */
-  void dump(const std::string &path, int expires);
+  void dump(const std::string &path, int expires, int group = -1);
 };
 
 class PyEmbedding {
  private:
-  std::shared_ptr<Embeddings> embeddings_;
-  int group_;
-  int dim_;
+  std::shared_ptr<Embedding> embedding_;
 
  public:
   PyEmbedding() = delete;
-  PyEmbedding(PyEmbeddingFactory factory, int group, int dim);
+  PyEmbedding(PyStorage storage, PyOptimizer optimizer,
+              PyInitializer initializer, int dim, int count);
   PyEmbedding(const PyEmbedding &p);
   PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();

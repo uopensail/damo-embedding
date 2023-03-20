@@ -30,65 +30,46 @@
 #include "initializer.h"
 #include "optimizer.h"
 
-typedef struct EmbeddingMeta {
-  int dim;
-  u_int64_t group;
-} EmbeddingMeta;
+class Embedding;
+class Storage {
+ public:
+  Storage() = delete;
+  Storage(int ttl, const std::string &data_dir);
+  ~Storage();
+  void dump(const std::string &path,
+            const std::function<bool(MetaData *ptr)> &filter);
 
-class Embeddings {
  private:
-  rocksdb::DBWithTTL *db_;
   int ttl_;
-  u_int64_t min_count_;
-  std::shared_ptr<Optimizer> optimizer_;
-  std::shared_ptr<Initializer> initializer_;
-  EmbeddingMeta metas_[max_group];
+  std::shared_ptr<rocksdb::DBWithTTL> db_;
+  friend class Embedding;
+};
+
+class Embedding {
+ public:
+  Embedding() = delete;
+  Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
+            const std::shared_ptr<Initializer> &initializer, int dim,
+            int count);
+  ~Embedding();
+  void lookup(u_int64_t *keys, int len, Float *data, int n);
+  void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
+                       const u_int64_t &global_steps);
+  const int get_dim() const;
+  const u_int64_t get_count() const;
 
  private:
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
               const u_int64_t &global_step);
-  void create(const u_int64_t &key, MetaData *ptr);
+  void update(const u_int64_t &key, MetaData *ptr);
+  std::shared_ptr<std::string> &create(const u_int64_t &key);
 
- public:
-  /**
-   * @brief Construct a new Embedding object
-   *
-   * @param step_lag 最大的滞后步数
-   * @param data_dir 数据存放的路径
-   * @param optimizer 优化算子
-   * @param initializer 初始化算子
-   * @param filter 频控
-   */
-  Embeddings(int ttl, int min_count, const std::string &data_dir,
-             const std::shared_ptr<Optimizer> &optimizer,
-             const std::shared_ptr<Initializer> &initializer);
-
-  void add_group(int group, int dim);
-  ~Embeddings();
-
-  /**
-   * @brief 查找
-   *
-   * @param keys 所要查找的keys
-   * @param len 长度
-   * @param data 返回的数据
-   * @param n 返回的长度
-   * @return
-   */
-  void lookup(u_int64_t *keys, int len, Float *data, int n);
-
-  /**
-   * @brief 更新梯度
-   *
-   * @param keys 所要更新的keys
-   * @param len 长度
-   * @param gds 梯度
-   * @param n 长度
-   * @param global_steps 全局的step，太滞后的step就不会更新
-   */
-  void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                       const u_int64_t &global_steps);
-  void dump(const std::string &path, int expires);
+ private:
+  int dim_;
+  u_int64_t count_;
+  std::shared_ptr<rocksdb::DBWithTTL> db_;
+  const std::shared_ptr<Optimizer> optimizer_;
+  const std::shared_ptr<Initializer> initializer_;
 };
 
 #endif  // DAMO_EMBEDDING_EMBEDDING_H
