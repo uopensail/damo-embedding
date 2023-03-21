@@ -24,6 +24,7 @@
 #include <functional>
 
 #include "common.h"
+
 using lr_scheduler = std::function<Float(
     Float learning_rate, u_int64_t global_step, const Params &params)>;
 

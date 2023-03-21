@@ -36,6 +36,13 @@ class Initializer {
   Initializer(const Params &initializer_params);
   virtual ~Initializer();
   const std::string &get_name();
+
+  /**
+   * @brief initialize the weights
+   *
+   * @param w weights to be initialized
+   * @param wn width of the weights
+   */
   virtual void call(Float *data, int dim) = 0;
 };
 

@@ -33,7 +33,6 @@ void Parameters::insert(std::string key, double value) {
   this->params_->insert(key, value_);
 }
 
-// PyInitializer的实现
 PyInitializer::PyInitializer() {
   Parameters p;
   p.insert("name", std::string("zeros"));
@@ -60,7 +59,6 @@ void PyInitializer::call(float *w, int wn) { initializer_->call(w, wn); }
 
 PyInitializer::~PyInitializer() {}
 
-// PyOptimizer的实现
 PyOptimizer::PyOptimizer() {
   Parameters sgd, decay;
   sgd.insert("name", std::string("sgd"));
@@ -96,7 +94,6 @@ void PyOptimizer::call(float *data, int wn, float *gds, int gn,
   optimizer_->call(data, gds, wn, global_step);
 }
 
-// PyFilter的实现
 PyFilter::PyFilter() : filter_(nullptr) {}
 PyFilter::PyFilter(Parameters params)
     : filter_(std::make_shared<CountingBloomFilter>(params.params_)) {}
@@ -126,7 +123,11 @@ void PyFilter::add(unsigned long long key, unsigned long long num) {
 
 PyFilter::~PyFilter() {}
 
-PyStorage::PyStorage(const std::string &data_dir, int ttl = 0) {
+PyStorage::PyStorage() {
+  this->storage_ = std::make_shared<Storage>(0, "/tmp/damo-embeddings");
+}
+
+PyStorage::PyStorage(const std::string &data_dir, int ttl) {
   this->storage_ = std::make_shared<Storage>(ttl, data_dir);
 }
 
@@ -153,7 +154,7 @@ void PyStorage::dump(const std::string &path, int expires, int group) {
 PyEmbedding::PyEmbedding(PyStorage storage, PyOptimizer optimizer,
                          PyInitializer initializer, int dim, int count) {
   this->embedding_ =
-      std::make_unique<Embedding>(storage.storage_, optimizer.optimizer_,
+      std::make_shared<Embedding>(*storage.storage_, optimizer.optimizer_,
                                   initializer.initializer_, dim, count);
 }
 

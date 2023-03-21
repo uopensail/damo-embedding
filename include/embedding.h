@@ -36,6 +36,13 @@ class Storage {
   Storage() = delete;
   Storage(int ttl, const std::string &data_dir);
   ~Storage();
+
+  /**
+   * @brief save the data to filesystem, with the given filter condition
+   *
+   * @param path file path
+   * @param filter condition
+   */
   void dump(const std::string &path,
             const std::function<bool(MetaData *ptr)> &filter);
 
@@ -52,9 +59,28 @@ class Embedding {
             const std::shared_ptr<Initializer> &initializer, int dim,
             int count);
   ~Embedding();
+  /**
+   * @brief lookup the embeddings
+   *
+   * @param keys keys to lookup
+   * @param kn length of the keys
+   * @param w weight for the keys
+   * @param wn length of the weights
+   * @return
+   */
   void lookup(u_int64_t *keys, int len, Float *data, int n);
+
+  /**
+   * @brief update the embedding weights
+   *
+   * @param keys keys to update
+   * @param kn length of the keys
+   * @param gds gradients for the keys
+   * @param gn length of the gradients
+   * @param global_step global step
+   */
   void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                       const u_int64_t &global_steps);
+                       const u_int64_t &global_step);
   const int get_dim() const;
   const u_int64_t get_count() const;
 
@@ -62,7 +88,7 @@ class Embedding {
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
               const u_int64_t &global_step);
   void update(const u_int64_t &key, MetaData *ptr);
-  std::shared_ptr<std::string> &create(const u_int64_t &key);
+  std::shared_ptr<std::string> create(const u_int64_t &key);
 
  private:
   int dim_;

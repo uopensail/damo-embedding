@@ -41,8 +41,34 @@ class Optimizer {
   Optimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~Optimizer();
   const std::string &get_name();
+
+  /**
+   * @brief get the space of the optimizer
+   *
+   * @param dim weight dimension
+   * @return int
+   */
   virtual int get_space(int dim);
+
+  /**
+   * @brief according to the global step and original learning rate, to generate
+   * lr
+   *
+   * @param global_step global step
+   * @param learning_rate original learning rate
+   * @return Float
+   */
   inline Float get_lr(u_int64_t global_step, Float learning_rate);
+
+  /**
+   * @brief call the optimizer, updating the embedding
+   *
+   * @param w weights
+   * @param wn width of the weights
+   * @param gds gradients for weights
+   * @param gn width of the grad
+   * @param global_step global step
+   */
   virtual void call(Float *data, Float *gds, int dim,
                     u_int64_t global_step) = 0;
 };

@@ -72,7 +72,21 @@ class CountingBloomFilter final {
   ~CountingBloomFilter();
 
  public:
+  /**
+   * @brief where the key in the filter
+   *
+   * @param key key to find
+   * @return true in the filter
+   * @return false not in the filter
+   */
   bool check(const u_int64_t &key);
+
+  /**
+   * @brief add key to the filter
+   *
+   * @param key key to ad
+   * @param num add counts
+   */
   void add(const u_int64_t &key, const u_int64_t &num = 1);
   int get_count() const;
 };

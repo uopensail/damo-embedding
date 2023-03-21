@@ -61,6 +61,80 @@ class _SwigNonDynamicMeta(type):
     __setattr__ = _swig_setattr_nondynamic_class_variable(type.__setattr__)
 
 
+class Parameters(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
+
+    def __init__(self, *args):
+        _damo.Parameters_swiginit(self, _damo.new_Parameters(*args))
+    __swig_destroy__ = _damo.delete_Parameters
+
+    def insert(self, *args):
+        return _damo.Parameters_insert(self, *args)
+
+# Register Parameters in _damo:
+_damo.Parameters_swigregister(Parameters)
+
+class PyInitializer(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _damo.PyInitializer_swiginit(self, _damo.new_PyInitializer(*args))
+
+    def call(self, w):
+        return _damo.PyInitializer_call(self, w)
+    __swig_destroy__ = _damo.delete_PyInitializer
+
+# Register PyInitializer in _damo:
+_damo.PyInitializer_swigregister(PyInitializer)
+
+class PyOptimizer(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _damo.PyOptimizer_swiginit(self, _damo.new_PyOptimizer(*args))
+
+    def call(self, w, gds, global_step):
+        return _damo.PyOptimizer_call(self, w, gds, global_step)
+    __swig_destroy__ = _damo.delete_PyOptimizer
+
+# Register PyOptimizer in _damo:
+_damo.PyOptimizer_swigregister(PyOptimizer)
+
+class PyFilter(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _damo.PyFilter_swiginit(self, _damo.new_PyFilter(*args))
+
+    def check(self, key):
+        return _damo.PyFilter_check(self, key)
+
+    def add(self, key, num):
+        return _damo.PyFilter_add(self, key, num)
+    __swig_destroy__ = _damo.delete_PyFilter
+
+# Register PyFilter in _damo:
+_damo.PyFilter_swigregister(PyFilter)
+
+class PyStorage(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, *args):
+        _damo.PyStorage_swiginit(self, _damo.new_PyStorage(*args))
+    __swig_destroy__ = _damo.delete_PyStorage
+
+    def dump(self, path, expires, group=-1):
+        return _damo.PyStorage_dump(self, path, expires, group)
+
+# Register PyStorage in _damo:
+_damo.PyStorage_swigregister(PyStorage)
+
 class PyEmbedding(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -77,7 +151,6 @@ class PyEmbedding(object):
 
 # Register PyEmbedding in _damo:
 _damo.PyEmbedding_swigregister(PyEmbedding)
-cvar = _damo.cvar
 
 
 

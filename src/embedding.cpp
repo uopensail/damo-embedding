@@ -16,7 +16,7 @@ const u_int64_t Embedding::get_count() const { return this->count_; };
 
 Embedding::~Embedding() {}
 
-std::shared_ptr<std::string> &Embedding::create(const u_int64_t &key) {
+std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
   auto value = std::make_shared<std::string>(
       sizeof(MetaData) +
           sizeof(Float) * this->optimizer_->get_space(this->dim_),
@@ -53,28 +53,21 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   }
   rocksdb::ReadOptions get_options;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
-  size_t offset = 0;
   MetaData *ptr;
 
-  //写入
   rocksdb::WriteBatch batch;
   for (int i = 0; i < len; i++) {
     if (status[i].ok()) {
       ptr = (MetaData *)(result[i].data());
       if (ptr->update_num >= this->count_) {
-        memcpy(&(data[offset]), ptr->data, sizeof(Float) * this->dim_);
+        memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
       }
     } else {
-      //需要初始化
       auto value = this->create(keys[i]);
       batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), *value);
     }
-    offset += this->dim_;
   }
 
-  assert(offset == n);
-
-  //写到rocksdb里面去
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
   this->db_->Write(put_options, &batch);
@@ -82,19 +75,16 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
 }
 
 void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                                const u_int64_t &global_steps) {
+                                const u_int64_t &global_step) {
   assert(len * this->dim_ == n);
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
-  size_t offset = 0;
   for (int i = 0; i < len; i++) {
     s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
   }
 
-  //先从rocksdb中进行查找
+  // get date from recksdb
   rocksdb::ReadOptions get_options;
-  rocksdb::WriteOptions put_options;
-  put_options.sync = false;
   MetaData *ptr = nullptr;
   rocksdb::WriteBatch batch;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
@@ -106,10 +96,12 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
     if (ptr->update_num < this->count_) {
       this->update(keys[i], ptr);
     } else {
-      this->update(keys[i], ptr, &(gds[i * this->dim_]), global_steps);
+      this->update(keys[i], ptr, &(gds[i * this->dim_]), global_step);
     }
     batch.Put(s_keys[i], result[i]);
   }
+  rocksdb::WriteOptions put_options;
+  put_options.sync = false;
   this->db_->Write(put_options, &batch);
 }
 
@@ -134,7 +126,6 @@ Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
 
 Storage::~Storage() {}
 
-//保存
 void Storage::dump(const std::string &path,
                    const std::function<bool(MetaData *ptr)> &filter) {
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
@@ -142,7 +133,6 @@ void Storage::dump(const std::string &path,
   read_option.snapshot = sp;
   rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
   MetaData *ptr;
-  //初始化一些值
   size_t group_counts[max_group];
   int group_dims[max_group];
   for (int i = 0; i < max_group; i++) {
@@ -169,8 +159,9 @@ void Storage::dump(const std::string &path,
   assert(it->status().ok());
   delete it;
   this->db_->ReleaseSnapshot(sp);
-  // update group key counts
-  writer.seekp(sizeof(int) * max_group, std::ios::beg);
+  // update group key dim and counts
+  writer.seekp(0, std::ios::beg);
+  writer.write((char *)&group_dims, sizeof(int) * max_group);
   writer.write((char *)&group_counts, sizeof(size_t) * max_group);
   writer.close();
 

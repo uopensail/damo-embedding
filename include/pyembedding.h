@@ -29,7 +29,7 @@
 #include "initializer.h"
 #include "optimizer.h"
 
-class Parameters final {
+class Parameters {
  public:
   std::shared_ptr<cpptoml::table> params_;
 
@@ -46,7 +46,7 @@ class Parameters final {
 
 class PyEmbedding;
 
-class PyInitializer final {
+class PyInitializer {
  private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
@@ -56,11 +56,18 @@ class PyInitializer final {
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
   PyInitializer &operator=(const PyInitializer &p);
+
+  /**
+   * @brief initialize the weights
+   *
+   * @param w weights to be initialized
+   * @param wn width of the weights
+   */
   void call(float *w, int wn);
   ~PyInitializer();
 };
 
-class PyOptimizer final {
+class PyOptimizer {
  private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
@@ -71,12 +78,22 @@ class PyOptimizer final {
   PyOptimizer(Parameters op_params, Parameters decay_params);
   PyOptimizer(const PyOptimizer &p);
   PyOptimizer &operator=(const PyOptimizer &p);
+
+  /**
+   * @brief call the optimizer, updating the embedding
+   *
+   * @param w weights
+   * @param wn width of the weights
+   * @param gds gradients for weights
+   * @param gn width of the grad
+   * @param global_step global step
+   */
   void call(float *w, int wn, float *gds, int gn,
             unsigned long long global_step);
   ~PyOptimizer();
 };
 
-class PyFilter final {
+class PyFilter {
  private:
   std::shared_ptr<CountingBloomFilter> filter_;
   friend class PyEmbedding;
@@ -86,26 +103,49 @@ class PyFilter final {
   PyFilter(Parameters params);
   PyFilter(const PyFilter &p);
   PyFilter &operator=(const PyFilter &p);
+
+  /**
+   * @brief where the key in the filter
+   *
+   * @param key key to find
+   * @return true in the filter
+   * @return false not in the filter
+   */
   bool check(unsigned long long key);
+
+  /**
+   * @brief add key to the filter
+   *
+   * @param key key to ad
+   * @param num add counts
+   */
   void add(unsigned long long key, unsigned long long num);
   ~PyFilter();
 };
 
-class PyStorage final {
+class PyStorage {
  private:
   std::shared_ptr<Storage> storage_;
   friend class PyEmbedding;
 
  public:
-  PyStorage() = delete;
+  PyStorage();
+
+  /**
+   * @brief Construct a new Py Storage object
+   *
+   * @param data_dir to save the data
+   * @param ttl time to live in seconds
+   */
   PyStorage(const std::string &data_dir, int ttl = 0);
   ~PyStorage();
 
   /**
-   * @brief 保存权重到磁盘
+   * @brief dump the data to binary format for online predict
    *
-   * @param path 路径
-   * @param expires out of days, 过期天数
+   * @param path to save the data
+   * @param expires only save the new keys
+   * @param group if group == -1, dump all data, otherwise dump this group
    */
   void dump(const std::string &path, int expires, int group = -1);
 };
@@ -123,24 +163,24 @@ class PyEmbedding {
   ~PyEmbedding();
 
   /**
-   * @brief 查询
+   * @brief lookup the embeddings
    *
-   * @param keys 需要查询的keys
-   * @param kn keys的长度
-   * @param w 返回的数据
-   * @param wn 返回的数据长度
+   * @param keys keys to lookup
+   * @param kn length of the keys
+   * @param w weight for the keys
+   * @param wn length of the weights
    * @return
    */
   void lookup(unsigned long long *keys, int kn, float *w, int wn);
 
   /**
-   * @brief
+   * @brief update the embedding weights
    *
-   * @param keys 需要更新的keys
-   * @param kn keys的长度
-   * @param gds 梯度
-   * @param gn 梯度权重的长度
-   * @param global_step 全局step
+   * @param keys keys to update
+   * @param kn length of the keys
+   * @param gds gradients for the keys
+   * @param gn length of the gradients
+   * @param global_step global step
    */
   void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn,
                        unsigned long long global_step);
