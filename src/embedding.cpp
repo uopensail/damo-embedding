@@ -83,7 +83,7 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
     s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
   }
 
-  // get date from recksdb
+  // get data from recksdb
   rocksdb::ReadOptions get_options;
   MetaData *ptr = nullptr;
   rocksdb::WriteBatch batch;

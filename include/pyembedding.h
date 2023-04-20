@@ -31,9 +31,6 @@
 
 class Parameters {
  public:
-  std::shared_ptr<cpptoml::table> params_;
-
- public:
   Parameters();
   Parameters(const Parameters &p);
   Parameters &operator=(const Parameters &p);
@@ -42,15 +39,14 @@ class Parameters {
   void insert(std::string key, int value);
   void insert(std::string key, double value);
   void insert(std::string key, bool value);
+
+ public:
+  std::shared_ptr<cpptoml::table> params_;
 };
 
 class PyEmbedding;
 
 class PyInitializer {
- private:
-  std::shared_ptr<Initializer> initializer_;
-  friend class PyEmbedding;
-
  public:
   PyInitializer();
   PyInitializer(Parameters params);
@@ -65,13 +61,13 @@ class PyInitializer {
    */
   void call(float *w, int wn);
   ~PyInitializer();
+
+ private:
+  std::shared_ptr<Initializer> initializer_;
+  friend class PyEmbedding;
 };
 
 class PyOptimizer {
- private:
-  std::shared_ptr<Optimizer> optimizer_;
-  friend class PyEmbedding;
-
  public:
   PyOptimizer();
   PyOptimizer(Parameters op_params);
@@ -91,13 +87,13 @@ class PyOptimizer {
   void call(float *w, int wn, float *gds, int gn,
             unsigned long long global_step);
   ~PyOptimizer();
+
+ private:
+  std::shared_ptr<Optimizer> optimizer_;
+  friend class PyEmbedding;
 };
 
 class PyFilter {
- private:
-  std::shared_ptr<CountingBloomFilter> filter_;
-  friend class PyEmbedding;
-
  public:
   PyFilter();
   PyFilter(Parameters params);
@@ -121,13 +117,13 @@ class PyFilter {
    */
   void add(unsigned long long key, unsigned long long num);
   ~PyFilter();
+
+ private:
+  std::shared_ptr<CountingBloomFilter> filter_;
+  friend class PyEmbedding;
 };
 
 class PyStorage {
- private:
-  std::shared_ptr<Storage> storage_;
-  friend class PyEmbedding;
-
  public:
   PyStorage();
 
@@ -148,12 +144,13 @@ class PyStorage {
    * @param group if group == -1, dump all data, otherwise dump this group
    */
   void dump(const std::string &path, int expires, int group = -1);
+
+ private:
+  std::shared_ptr<Storage> storage_;
+  friend class PyEmbedding;
 };
 
 class PyEmbedding {
- private:
-  std::shared_ptr<Embedding> embedding_;
-
  public:
   PyEmbedding() = delete;
   PyEmbedding(PyStorage storage, PyOptimizer optimizer,
@@ -184,6 +181,9 @@ class PyEmbedding {
    */
   void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn,
                        unsigned long long global_step);
+
+ private:
+  std::shared_ptr<Embedding> embedding_;
 };
 
 #endif  // DAMO_EMBEDDING_PY_EMBEDDING_H

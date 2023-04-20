@@ -27,9 +27,6 @@
 #include "common.h"
 
 class Initializer {
- protected:
-  std::string name_;
-
  public:
   Initializer() = delete;
   Initializer(const Initializer &) = delete;
@@ -44,6 +41,9 @@ class Initializer {
    * @param wn width of the weights
    */
   virtual void call(Float *data, int dim) = 0;
+
+ protected:
+  std::string name_;
 };
 
 class Zeros : public Initializer {
@@ -65,48 +65,48 @@ class Ones : public Initializer {
 };
 
 class RandomUniform : public Initializer {
- private:
-  double min_;
-  double max_;
-  std::uniform_real_distribution<double> distribution;
-  std::default_random_engine random;
-
  public:
   RandomUniform() = delete;
   RandomUniform(const RandomUniform &) = delete;
   RandomUniform(const Params &initializer_params);
   virtual ~RandomUniform();
   virtual void call(Float *data, int dim);
+
+ private:
+  double min_;
+  double max_;
+  std::uniform_real_distribution<double> distribution;
+  std::default_random_engine random;
 };
 
 class RandomNormal : public Initializer {
- private:
-  double mean_;
-  double stddev_;
-  std::normal_distribution<double> distribution;
-  std::default_random_engine random;
-
  public:
   RandomNormal() = delete;
   RandomNormal(const RandomNormal &) = delete;
   RandomNormal(const Params &initializer_params);
   virtual ~RandomNormal();
   virtual void call(Float *data, int dim);
-};
 
-class TruncateNormal : public Initializer {
  private:
   double mean_;
   double stddev_;
   std::normal_distribution<double> distribution;
   std::default_random_engine random;
+};
 
+class TruncateNormal : public Initializer {
  public:
   TruncateNormal() = delete;
   TruncateNormal(const TruncateNormal &) = delete;
   TruncateNormal(const Params &initializer_params);
   virtual ~TruncateNormal();
   virtual void call(Float *data, int dim);
+
+ private:
+  double mean_;
+  double stddev_;
+  std::normal_distribution<double> distribution;
+  std::default_random_engine random;
 };
 
 std::shared_ptr<Initializer> get_initializers(const Params &p);

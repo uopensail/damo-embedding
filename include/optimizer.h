@@ -30,11 +30,6 @@
 #include "learning_rate_scheduler.h"
 
 class Optimizer {
- protected:
-  std::string name_;
-  lr_scheduler function_;
-  Params scheduler_;
-
  public:
   Optimizer() = delete;
   Optimizer(const Optimizer &) = delete;
@@ -71,28 +66,27 @@ class Optimizer {
    */
   virtual void call(Float *data, Float *gds, int dim,
                     u_int64_t global_step) = 0;
+
+ protected:
+  std::string name_;
+  lr_scheduler function_;
+  Params scheduler_;
 };
 
 class SGDOptimizer : public Optimizer {
- private:
-  Float gamma_;
-  Float lambda_;
-
  public:
   SGDOptimizer() = delete;
   SGDOptimizer(const SGDOptimizer &) = delete;
   SGDOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~SGDOptimizer();
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+
+ private:
+  Float gamma_;
+  Float lambda_;
 };
 
 class FTRLOptimizer : public Optimizer {
- private:
-  Float alpha_;
-  Float beta_;
-  Float lambda1_;
-  Float lambda2_;
-
  public:
   FTRLOptimizer() = delete;
   FTRLOptimizer(const FTRLOptimizer &) = delete;
@@ -100,15 +94,15 @@ class FTRLOptimizer : public Optimizer {
   virtual ~FTRLOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+
+ private:
+  Float alpha_;
+  Float beta_;
+  Float lambda1_;
+  Float lambda2_;
 };
 
 class AdagradOptimizer : public Optimizer {
- private:
-  Float gamma_;
-  Float lambda_;
-  Float eta_;
-  Float epsilon_;
-
  public:
   AdagradOptimizer() = delete;
   AdagradOptimizer(const AdagradOptimizer &) = delete;
@@ -116,6 +110,12 @@ class AdagradOptimizer : public Optimizer {
   virtual ~AdagradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+
+ private:
+  Float gamma_;
+  Float lambda_;
+  Float eta_;
+  Float epsilon_;
 };
 
 /**
@@ -123,13 +123,6 @@ class AdagradOptimizer : public Optimizer {
  *
  */
 class AdamOptimizer : public Optimizer {
- private:
-  Float gamma_;
-  Float beta1_;
-  Float beta2_;
-  Float lambda_;
-  Float epsilon_;
-
  public:
   AdamOptimizer() = delete;
   AdamOptimizer(const AdamOptimizer &) = delete;
@@ -137,16 +130,16 @@ class AdamOptimizer : public Optimizer {
   virtual ~AdamOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
-};
 
-class AmsGradOptimizer : public Optimizer {
  private:
   Float gamma_;
   Float beta1_;
   Float beta2_;
   Float lambda_;
   Float epsilon_;
+};
 
+class AmsGradOptimizer : public Optimizer {
  public:
   AmsGradOptimizer() = delete;
   AmsGradOptimizer(const AmsGradOptimizer &) = delete;
@@ -154,16 +147,16 @@ class AmsGradOptimizer : public Optimizer {
   virtual ~AmsGradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
-};
 
-class AdamWOptimizer : public Optimizer {
  private:
   Float gamma_;
   Float beta1_;
   Float beta2_;
   Float lambda_;
   Float epsilon_;
+};
 
+class AdamWOptimizer : public Optimizer {
  public:
   AdamWOptimizer() = delete;
   AdamWOptimizer(const AdamWOptimizer &) = delete;
@@ -171,15 +164,16 @@ class AdamWOptimizer : public Optimizer {
   virtual ~AdamWOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
-};
 
-class LionOptimizer : public Optimizer {
  private:
-  Float eta_;
+  Float gamma_;
   Float beta1_;
   Float beta2_;
   Float lambda_;
+  Float epsilon_;
+};
 
+class LionOptimizer : public Optimizer {
  public:
   LionOptimizer() = delete;
   LionOptimizer(const LionOptimizer &) = delete;
@@ -187,6 +181,12 @@ class LionOptimizer : public Optimizer {
   virtual ~LionOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
+
+ private:
+  Float eta_;
+  Float beta1_;
+  Float beta2_;
+  Float lambda_;
 };
 
 std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
