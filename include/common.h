@@ -43,6 +43,7 @@ using u_int64_t = unsigned long long;
 
 // the feature number must <= 256
 const int max_group = 256;
+const u_int64_t key_mask = 0xFFFFFFFFFFFFFFul;
 
 u_int64_t get_current_time();
 Float safe_sqrt(Float x);
@@ -51,10 +52,13 @@ Float sign(Float x);
 // get the group id from the key
 u_int64_t groupof(const u_int64_t &key);
 
+u_int64_t mask_group(const u_int64_t &key, const u_int64_t &mask);
+
 // the struct of value in rocksdb
 #pragma pack(push)
 #pragma pack(1)
 struct MetaData {
+  int group;
   u_int64_t key;
   u_int64_t update_time;  // ms
   u_int64_t update_num;

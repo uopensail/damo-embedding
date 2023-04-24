@@ -154,7 +154,7 @@ class PyEmbedding {
  public:
   PyEmbedding() = delete;
   PyEmbedding(PyStorage storage, PyOptimizer optimizer,
-              PyInitializer initializer, int dim, int count);
+              PyInitializer initializer, int dim, int min_count, int group = 0);
   PyEmbedding(const PyEmbedding &p);
   PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();

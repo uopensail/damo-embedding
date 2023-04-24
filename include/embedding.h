@@ -48,6 +48,7 @@ class Storage {
 
  private:
   int ttl_;
+  bool groups_[max_group];
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   friend class Embedding;
 };
@@ -57,7 +58,7 @@ class Embedding {
   Embedding() = delete;
   Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
             const std::shared_ptr<Initializer> &initializer, int dim,
-            int count);
+            int min_count, int group = 0);
   ~Embedding();
   /**
    * @brief lookup the embeddings
@@ -82,7 +83,7 @@ class Embedding {
   void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
                        const u_int64_t &global_step);
   const int get_dim() const;
-  const u_int64_t get_count() const;
+  const u_int64_t get_min_count() const;
 
  private:
   void update(const u_int64_t &key, MetaData *ptr, Float *gds,
@@ -92,7 +93,9 @@ class Embedding {
 
  private:
   int dim_;
-  u_int64_t count_;
+  int group_;
+  u_int64_t group_mask_;
+  u_int64_t min_count_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   const std::shared_ptr<Optimizer> optimizer_;
   const std::shared_ptr<Initializer> initializer_;

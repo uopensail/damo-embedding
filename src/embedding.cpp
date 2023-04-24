@@ -3,16 +3,26 @@
 Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
-                     int count)
+                     int min_count, int group)
     : dim_(dim),
-      count_(count),
+      group_(group),
+      group_mask_(0),
+      min_count_(min_count),
+
       db_(storage.db_),
       optimizer_(optimizer),
-      initializer_(initializer) {}
+      initializer_(initializer) {
+  if (!storage.groups_[group]) {
+    std::cout << "group: " << group << " exists" << std::endl;
+    exit(0);
+  }
+  storage.groups_[group] = true;
+  this->group_mask_ = (u_int64_t(group)) << 56;
+}
 
 const int Embedding::get_dim() const { return dim_; }
 
-const u_int64_t Embedding::get_count() const { return this->count_; };
+const u_int64_t Embedding::get_min_count() const { return this->min_count_; };
 
 Embedding::~Embedding() {}
 
@@ -25,6 +35,7 @@ std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
   this->initializer_->call(ptr->data, this->dim_);
   ptr->update_num = 1;
   ptr->key = key;
+  ptr->group = this->group_;
   ptr->dim = this->dim_;
   ptr->update_time = get_current_time();
   return value;
@@ -48,8 +59,11 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
 
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
+  u_int64_t *group_keys = (u_int64_t *)malloc(len * sizeof(u_int64_t));
   for (int i = 0; i < len; i++) {
-    s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+    group_keys[i] = mask_group(keys[i], this->group_mask_);
+    s_keys.emplace_back(
+        rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)));
   }
   rocksdb::ReadOptions get_options;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
@@ -59,18 +73,20 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   for (int i = 0; i < len; i++) {
     if (status[i].ok()) {
       ptr = (MetaData *)(result[i].data());
-      if (ptr->update_num >= this->count_) {
+      if (ptr->update_num >= this->min_count_) {
         memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
       }
     } else {
       auto value = this->create(keys[i]);
-      batch.Put(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)), *value);
+      batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
+                *value);
     }
   }
 
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
   this->db_->Write(put_options, &batch);
+  free(group_keys);
   return;
 }
 
@@ -79,8 +95,11 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
   assert(len * this->dim_ == n);
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
+  u_int64_t *group_keys = (u_int64_t *)malloc(len * sizeof(u_int64_t));
   for (int i = 0; i < len; i++) {
-    s_keys.emplace_back(rocksdb::Slice((char *)&keys[i], sizeof(u_int64_t)));
+    group_keys[i] = mask_group(keys[i], this->group_mask_);
+    s_keys.emplace_back(
+        rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)));
   }
 
   // get data from recksdb
@@ -93,7 +112,7 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
       continue;
     }
     ptr = (MetaData *)(result[i].data());
-    if (ptr->update_num < this->count_) {
+    if (ptr->update_num < this->min_count_) {
       this->update(keys[i], ptr);
     } else {
       this->update(keys[i], ptr, &(gds[i * this->dim_]), global_step);
@@ -103,9 +122,13 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
   this->db_->Write(put_options, &batch);
+  free(group_keys);
 }
 
 Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
+  for (int i = 0; i < max_group; i++) {
+    this->groups_[i] = false;
+  }
   rocksdb::Options options;
   options.create_if_missing = true;
   rocksdb::DBWithTTL *db;
@@ -121,6 +144,7 @@ Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
       delete (rocksdb::DBWithTTL *)ptr;
     }
   });
+
   std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
 }
 

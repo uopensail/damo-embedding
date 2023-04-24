@@ -64,7 +64,6 @@ class _SwigNonDynamicMeta(type):
 class Parameters(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
-    params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
 
     def __init__(self, *args):
         _damo.Parameters_swiginit(self, _damo.new_Parameters(*args))
@@ -72,6 +71,7 @@ class Parameters(object):
 
     def insert(self, *args):
         return _damo.Parameters_insert(self, *args)
+    params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
 
 # Register Parameters in _damo:
 _damo.Parameters_swigregister(Parameters)

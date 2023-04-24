@@ -143,7 +143,7 @@ void PyStorage::dump(const std::string &path, int expires, int group) {
       return false;
     }
     if ((group == -1) ||
-        (0 <= group && group < max_group && group == groupof(ptr->key))) {
+        (0 <= group && group < max_group && group == ptr->group)) {
       return true;
     }
     return false;
@@ -152,10 +152,11 @@ void PyStorage::dump(const std::string &path, int expires, int group) {
 }
 
 PyEmbedding::PyEmbedding(PyStorage storage, PyOptimizer optimizer,
-                         PyInitializer initializer, int dim, int count) {
-  this->embedding_ =
-      std::make_shared<Embedding>(*storage.storage_, optimizer.optimizer_,
-                                  initializer.initializer_, dim, count);
+                         PyInitializer initializer, int dim, int min_count,
+                         int group) {
+  this->embedding_ = std::make_shared<Embedding>(
+      *storage.storage_, optimizer.optimizer_, initializer.initializer_, dim,
+      min_count, group);
 }
 
 PyEmbedding::PyEmbedding(const PyEmbedding &p) {
