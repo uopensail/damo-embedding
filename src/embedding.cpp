@@ -1,28 +1,67 @@
 #include "embedding.h"
 
+Configure::Configure() {
+  dim = 0;
+  group = -1;
+  optimizer = nullptr;
+  initializer = nullptr;
+}
+
+bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
+                                   const rocksdb::Slice *existing_value,
+                                   const rocksdb::Slice &value,
+                                   std::string *new_value,
+                                   rocksdb::Logger *logger) const {
+  // key must already exist
+  if (existing_value == nullptr) {
+    return false;
+  }
+
+  MetaData *ptr = (MetaData *)(const_cast<char *>(existing_value->data()));
+
+  if (ptr->group < 0 || ptr->group >= max_group ||
+      group_configs[ptr->group].group == -1) {
+    return false;
+  }
+
+  new_value->reserve(existing_value->size());
+  new_value->copy(const_cast<char *>(existing_value->data()),
+                  existing_value->size(), 0);
+  ptr = (MetaData *)(const_cast<char *>(new_value->data()));
+
+  ptr->update_num++;
+  ptr->update_time = get_current_time();
+  float *gds = (float *)(const_cast<char *>(value.data()));
+  group_configs[ptr->group].optimizer->call(ptr->data, gds, ptr->dim,
+                                            ptr->update_num);
+  return true;
+}
+
 Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
-                     int min_count, int group)
+                     int group)
     : dim_(dim),
       group_(group),
       group_mask_(0),
-      min_count_(min_count),
-
       db_(storage.db_),
       optimizer_(optimizer),
       initializer_(initializer) {
-  if (!storage.groups_[group]) {
-    std::cout << "group: " << group << " exists" << std::endl;
-    exit(0);
+  if (group < 0 || group >= max_group) {
+    std::cout << "group: " << group << " out of range" << std::endl;
+    exit(-1);
   }
-  storage.groups_[group] = true;
+  if (group_configs[group].group != -1) {
+    std::cout << "group: " << group << " exists" << std::endl;
+    exit(-1);
+  }
+
+  group_configs[group].dim = dim;
+  group_configs[group].group = group;
+  group_configs[group].initializer = initializer;
+  group_configs[group].optimizer = optimizer;
   this->group_mask_ = (u_int64_t(group)) << 56;
 }
-
-const int Embedding::get_dim() const { return dim_; }
-
-const u_int64_t Embedding::get_min_count() const { return this->min_count_; };
 
 Embedding::~Embedding() {}
 
@@ -39,18 +78,6 @@ std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
   ptr->dim = this->dim_;
   ptr->update_time = get_current_time();
   return value;
-}
-
-void Embedding::update(const u_int64_t &key, MetaData *ptr, Float *gds,
-                       const u_int64_t &global_step) {
-  ptr->update_num++;
-  ptr->update_time = get_current_time();
-  this->optimizer_->call(ptr->data, gds, this->dim_, global_step);
-}
-
-void Embedding::update(const u_int64_t &key, MetaData *ptr) {
-  ptr->update_num++;
-  ptr->update_time = get_current_time();
 }
 
 void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
@@ -73,9 +100,7 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   for (int i = 0; i < len; i++) {
     if (status[i].ok()) {
       ptr = (MetaData *)(result[i].data());
-      if (ptr->update_num >= this->min_count_) {
-        memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
-      }
+      memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
     } else {
       auto value = this->create(keys[i]);
       batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
@@ -90,47 +115,27 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   return;
 }
 
-void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                                const u_int64_t &global_step) {
+void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n) {
   assert(len * this->dim_ == n);
-  std::vector<rocksdb::Slice> s_keys;
-  std::vector<std::string> result;
   u_int64_t *group_keys = (u_int64_t *)malloc(len * sizeof(u_int64_t));
-  for (int i = 0; i < len; i++) {
-    group_keys[i] = mask_group(keys[i], this->group_mask_);
-    s_keys.emplace_back(
-        rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)));
-  }
 
-  // get data from recksdb
-  rocksdb::ReadOptions get_options;
-  MetaData *ptr = nullptr;
-  rocksdb::WriteBatch batch;
-  auto status = this->db_->MultiGet(get_options, s_keys, &result);
-  for (int i = 0; i < len; i++) {
-    if (!status[i].ok()) {
-      continue;
-    }
-    ptr = (MetaData *)(result[i].data());
-    if (ptr->update_num < this->min_count_) {
-      this->update(keys[i], ptr);
-    } else {
-      this->update(keys[i], ptr, &(gds[i * this->dim_]), global_step);
-    }
-    batch.Put(s_keys[i], result[i]);
-  }
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
+  rocksdb::WriteBatch batch;
+
+  for (int i = 0; i < len; i++) {
+    group_keys[i] = mask_group(keys[i], this->group_mask_);
+    batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
+                rocksdb::Slice((char *)gds, sizeof(Float) * this->dim_));
+  }
   this->db_->Write(put_options, &batch);
   free(group_keys);
 }
 
 Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
-  for (int i = 0; i < max_group; i++) {
-    this->groups_[i] = false;
-  }
   rocksdb::Options options;
   options.create_if_missing = true;
+  options.merge_operator.reset(new ApplyGredientsOperator());
   rocksdb::DBWithTTL *db;
   rocksdb::Status status =
       rocksdb::DBWithTTL::Open(options, data_dir, &db, this->ttl_);
@@ -161,21 +166,17 @@ void Storage::dump(const std::string &path,
   int group_dims[max_group];
   for (int i = 0; i < max_group; i++) {
     group_counts[i] = 0;
-    group_dims[i] = 0;
+    group_dims[i] = group_configs[i].dim;
   }
 
   std::ofstream writer(path, std::ios::out | std::ios::binary);
   writer.write((char *)&group_dims, sizeof(int) * max_group);
   writer.write((char *)&group_counts, sizeof(size_t) * max_group);
-  rocksdb::WriteOptions del_options;
-  del_options.sync = false;
-  int group;
+
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
     if (filter(ptr)) {
-      group = groupof(ptr->key);
-      group_counts[group]++;
-      group_dims[group] = ptr->dim;
+      group_counts[ptr->group]++;
       writer.write((char *)&ptr->key, sizeof(u_int64_t));
       writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
     }

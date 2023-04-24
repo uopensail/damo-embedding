@@ -10,6 +10,37 @@ Parameters &Parameters::operator=(const Parameters &p) {
   return *this;
 }
 
+std::string Parameters::to_string() {
+  std::string result = "{ ";
+
+  int index = 0;
+  for (const auto &kv : *this->params_) {
+    if (index != 0) {
+      result += ", ";
+    }
+    result += "\"" + kv.first + "\" : ";
+    if (auto v = std::dynamic_pointer_cast<cpptoml::value<double>>(kv.second)) {
+      result += std::to_string(static_cast<double>(v->get()));
+    } else if (auto v = std::dynamic_pointer_cast<cpptoml::value<std::string>>(
+                   kv.second)) {
+      result += "\"" + static_cast<std::string>(v->get()) + "\"";
+    } else if (auto v = std::dynamic_pointer_cast<cpptoml::value<int64_t>>(
+                   kv.second)) {
+      result += std::to_string(static_cast<int64_t>(v->get()));
+    } else if (auto v =
+                   std::dynamic_pointer_cast<cpptoml::value<bool>>(kv.second)) {
+      if (static_cast<bool>(v->get())) {
+        result += "true";
+      } else {
+        result += "false";
+      }
+    }
+    index++;
+  }
+  result += " }";
+  return result;
+}
+
 Parameters ::~Parameters() {}
 
 void Parameters::insert(std::string key, bool value) {
@@ -133,8 +164,8 @@ PyStorage::PyStorage(const std::string &data_dir, int ttl) {
 
 PyStorage::~PyStorage() {}
 
-void PyStorage::dump(const std::string &path, int expires, int group) {
-  auto func = [&group, &expires](MetaData *ptr) -> bool {
+void PyStorage::dump(const std::string &path, int expires) {
+  auto func = [&expires](MetaData *ptr) -> bool {
     if (ptr == nullptr) {
       return false;
     }
@@ -142,21 +173,16 @@ void PyStorage::dump(const std::string &path, int expires, int group) {
     if (ptr->update_time < oldest_ts) {
       return false;
     }
-    if ((group == -1) ||
-        (0 <= group && group < max_group && group == ptr->group)) {
-      return true;
-    }
-    return false;
+    return true;
   };
   this->storage_->dump(path, func);
 }
 
 PyEmbedding::PyEmbedding(PyStorage storage, PyOptimizer optimizer,
-                         PyInitializer initializer, int dim, int min_count,
-                         int group) {
-  this->embedding_ = std::make_shared<Embedding>(
-      *storage.storage_, optimizer.optimizer_, initializer.initializer_, dim,
-      min_count, group);
+                         PyInitializer initializer, int dim, int group) {
+  this->embedding_ =
+      std::make_shared<Embedding>(*storage.storage_, optimizer.optimizer_,
+                                  initializer.initializer_, dim, group);
 }
 
 PyEmbedding::PyEmbedding(const PyEmbedding &p) {
@@ -180,7 +206,6 @@ void PyEmbedding::lookup(unsigned long long *keys, int len, float *data,
 }
 
 void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,
-                                  int n, unsigned long long global_step) {
-  this->embedding_->apply_gradients((u_int64_t *)keys, len, gds, n,
-                                    global_step);
+                                  int n) {
+  this->embedding_->apply_gradients((u_int64_t *)keys, len, gds, n);
 }

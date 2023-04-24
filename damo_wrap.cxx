@@ -3139,6 +3139,38 @@ SWIG_AsVal_bool (PyObject *obj, bool *val)
 }
 
 
+SWIGINTERNINLINE PyObject *
+SWIG_FromCharPtrAndSize(const char* carray, size_t size)
+{
+  if (carray) {
+    if (size > INT_MAX) {
+      swig_type_info* pchar_descriptor = SWIG_pchar_descriptor();
+      return pchar_descriptor ? 
+	SWIG_InternalNewPointerObj(const_cast< char * >(carray), pchar_descriptor, 0) : SWIG_Py_Void();
+    } else {
+#if PY_VERSION_HEX >= 0x03000000
+#if defined(SWIG_PYTHON_STRICT_BYTE_CHAR)
+      return PyBytes_FromStringAndSize(carray, static_cast< Py_ssize_t >(size));
+#else
+      return PyUnicode_DecodeUTF8(carray, static_cast< Py_ssize_t >(size), "surrogateescape");
+#endif
+#else
+      return PyString_FromStringAndSize(carray, static_cast< Py_ssize_t >(size));
+#endif
+    }
+  } else {
+    return SWIG_Py_Void();
+  }
+}
+
+
+SWIGINTERNINLINE PyObject *
+SWIG_From_std_string  (const std::string& s)
+{
+  return SWIG_FromCharPtrAndSize(s.data(), s.size());
+}
+
+
 #if NPY_API_VERSION < 0x00000007
 #define NPY_ARRAY_DEFAULT NPY_DEFAULT
 #define NPY_ARRAY_FARRAY  NPY_FARRAY
@@ -4051,6 +4083,29 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_Parameters_to_string(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+  PyObject *resultobj = 0;
+  Parameters *arg1 = (Parameters *) 0 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyObject *swig_obj[1] ;
+  std::string result;
+  
+  if (!args) SWIG_fail;
+  swig_obj[0] = args;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_Parameters, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Parameters_to_string" "', argument " "1"" of type '" "Parameters *""'"); 
+  }
+  arg1 = reinterpret_cast< Parameters * >(argp1);
+  result = (arg1)->to_string();
+  resultobj = SWIG_From_std_string(static_cast< std::string >(result));
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_Parameters_params__set(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   Parameters *arg1 = (Parameters *) 0 ;
@@ -4903,58 +4958,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PyStorage_dump__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
-  PyObject *resultobj = 0;
-  PyStorage *arg1 = (PyStorage *) 0 ;
-  std::string *arg2 = 0 ;
-  int arg3 ;
-  int arg4 ;
-  void *argp1 = 0 ;
-  int res1 = 0 ;
-  int res2 = SWIG_OLDOBJ ;
-  int val3 ;
-  int ecode3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  
-  if ((nobjs < 4) || (nobjs > 4)) SWIG_fail;
-  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyStorage, 0 |  0 );
-  if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyStorage_dump" "', argument " "1"" of type '" "PyStorage *""'"); 
-  }
-  arg1 = reinterpret_cast< PyStorage * >(argp1);
-  {
-    std::string *ptr = (std::string *)0;
-    res2 = SWIG_AsPtr_std_string(swig_obj[1], &ptr);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "PyStorage_dump" "', argument " "2"" of type '" "std::string const &""'"); 
-    }
-    if (!ptr) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyStorage_dump" "', argument " "2"" of type '" "std::string const &""'"); 
-    }
-    arg2 = ptr;
-  }
-  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyStorage_dump" "', argument " "3"" of type '" "int""'");
-  } 
-  arg3 = static_cast< int >(val3);
-  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "PyStorage_dump" "', argument " "4"" of type '" "int""'");
-  } 
-  arg4 = static_cast< int >(val4);
-  (arg1)->dump((std::string const &)*arg2,arg3,arg4);
-  resultobj = SWIG_Py_Void();
-  if (SWIG_IsNewObj(res2)) delete arg2;
-  return resultobj;
-fail:
-  if (SWIG_IsNewObj(res2)) delete arg2;
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_PyStorage_dump__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_PyStorage_dump(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   PyStorage *arg1 = (PyStorage *) 0 ;
   std::string *arg2 = 0 ;
@@ -4964,8 +4968,9 @@ SWIGINTERN PyObject *_wrap_PyStorage_dump__SWIG_1(PyObject *SWIGUNUSEDPARM(self)
   int res2 = SWIG_OLDOBJ ;
   int val3 ;
   int ecode3 = 0 ;
+  PyObject *swig_obj[3] ;
   
-  if ((nobjs < 3) || (nobjs > 3)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "PyStorage_dump", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyStorage, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyStorage_dump" "', argument " "1"" of type '" "PyStorage *""'"); 
@@ -4997,68 +5002,6 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PyStorage_dump(PyObject *self, PyObject *args) {
-  Py_ssize_t argc;
-  PyObject *argv[5] = {
-    0
-  };
-  
-  if (!(argc = SWIG_Python_UnpackTuple(args, "PyStorage_dump", 0, 4, argv))) SWIG_fail;
-  --argc;
-  if (argc == 3) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_PyStorage, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsPtr_std_string(argv[1], (std::string**)(0));
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        {
-          int res = SWIG_AsVal_int(argv[2], NULL);
-          _v = SWIG_CheckState(res);
-        }
-        if (_v) {
-          return _wrap_PyStorage_dump__SWIG_1(self, argc, argv);
-        }
-      }
-    }
-  }
-  if (argc == 4) {
-    int _v;
-    void *vptr = 0;
-    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_PyStorage, 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_AsPtr_std_string(argv[1], (std::string**)(0));
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        {
-          int res = SWIG_AsVal_int(argv[2], NULL);
-          _v = SWIG_CheckState(res);
-        }
-        if (_v) {
-          {
-            int res = SWIG_AsVal_int(argv[3], NULL);
-            _v = SWIG_CheckState(res);
-          }
-          if (_v) {
-            return _wrap_PyStorage_dump__SWIG_0(self, argc, argv);
-          }
-        }
-      }
-    }
-  }
-  
-fail:
-  SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'PyStorage_dump'.\n"
-    "  Possible C/C++ prototypes are:\n"
-    "    PyStorage::dump(std::string const &,int,int)\n"
-    "    PyStorage::dump(std::string const &,int)\n");
-  return 0;
-}
-
-
 SWIGINTERN PyObject *PyStorage_swigregister(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *obj;
   if (!SWIG_Python_UnpackTuple(args, "swigregister", 1, 1, &obj)) return NULL;
@@ -5071,91 +5014,6 @@ SWIGINTERN PyObject *PyStorage_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject
 }
 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
-  PyObject *resultobj = 0;
-  PyStorage arg1 ;
-  PyOptimizer arg2 ;
-  PyInitializer arg3 ;
-  int arg4 ;
-  int arg5 ;
-  int arg6 ;
-  void *argp1 ;
-  int res1 = 0 ;
-  void *argp2 ;
-  int res2 = 0 ;
-  void *argp3 ;
-  int res3 = 0 ;
-  int val4 ;
-  int ecode4 = 0 ;
-  int val5 ;
-  int ecode5 = 0 ;
-  int val6 ;
-  int ecode6 = 0 ;
-  PyEmbedding *result = 0 ;
-  
-  if ((nobjs < 6) || (nobjs > 6)) SWIG_fail;
-  {
-    res1 = SWIG_ConvertPtr(swig_obj[0], &argp1, SWIGTYPE_p_PyStorage,  0  | 0);
-    if (!SWIG_IsOK(res1)) {
-      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_PyEmbedding" "', argument " "1"" of type '" "PyStorage""'"); 
-    }  
-    if (!argp1) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "1"" of type '" "PyStorage""'");
-    } else {
-      PyStorage * temp = reinterpret_cast< PyStorage * >(argp1);
-      arg1 = *temp;
-      if (SWIG_IsNewObj(res1)) delete temp;
-    }
-  }
-  {
-    res2 = SWIG_ConvertPtr(swig_obj[1], &argp2, SWIGTYPE_p_PyOptimizer,  0  | 0);
-    if (!SWIG_IsOK(res2)) {
-      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "PyOptimizer""'"); 
-    }  
-    if (!argp2) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "PyOptimizer""'");
-    } else {
-      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp2);
-      arg2 = *temp;
-      if (SWIG_IsNewObj(res2)) delete temp;
-    }
-  }
-  {
-    res3 = SWIG_ConvertPtr(swig_obj[2], &argp3, SWIGTYPE_p_PyInitializer,  0  | 0);
-    if (!SWIG_IsOK(res3)) {
-      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyInitializer""'"); 
-    }  
-    if (!argp3) {
-      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyInitializer""'");
-    } else {
-      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp3);
-      arg3 = *temp;
-      if (SWIG_IsNewObj(res3)) delete temp;
-    }
-  }
-  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
-  if (!SWIG_IsOK(ecode4)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "int""'");
-  } 
-  arg4 = static_cast< int >(val4);
-  ecode5 = SWIG_AsVal_int(swig_obj[4], &val5);
-  if (!SWIG_IsOK(ecode5)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode5), "in method '" "new_PyEmbedding" "', argument " "5"" of type '" "int""'");
-  } 
-  arg5 = static_cast< int >(val5);
-  ecode6 = SWIG_AsVal_int(swig_obj[5], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "new_PyEmbedding" "', argument " "6"" of type '" "int""'");
-  } 
-  arg6 = static_cast< int >(val6);
-  result = (PyEmbedding *)new PyEmbedding(arg1,arg2,arg3,arg4,arg5,arg6);
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyEmbedding, SWIG_POINTER_NEW |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   PyStorage arg1 ;
   PyOptimizer arg2 ;
@@ -5232,6 +5090,75 @@ fail:
 }
 
 
+SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+  PyObject *resultobj = 0;
+  PyStorage arg1 ;
+  PyOptimizer arg2 ;
+  PyInitializer arg3 ;
+  int arg4 ;
+  void *argp1 ;
+  int res1 = 0 ;
+  void *argp2 ;
+  int res2 = 0 ;
+  void *argp3 ;
+  int res3 = 0 ;
+  int val4 ;
+  int ecode4 = 0 ;
+  PyEmbedding *result = 0 ;
+  
+  if ((nobjs < 4) || (nobjs > 4)) SWIG_fail;
+  {
+    res1 = SWIG_ConvertPtr(swig_obj[0], &argp1, SWIGTYPE_p_PyStorage,  0  | 0);
+    if (!SWIG_IsOK(res1)) {
+      SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "new_PyEmbedding" "', argument " "1"" of type '" "PyStorage""'"); 
+    }  
+    if (!argp1) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "1"" of type '" "PyStorage""'");
+    } else {
+      PyStorage * temp = reinterpret_cast< PyStorage * >(argp1);
+      arg1 = *temp;
+      if (SWIG_IsNewObj(res1)) delete temp;
+    }
+  }
+  {
+    res2 = SWIG_ConvertPtr(swig_obj[1], &argp2, SWIGTYPE_p_PyOptimizer,  0  | 0);
+    if (!SWIG_IsOK(res2)) {
+      SWIG_exception_fail(SWIG_ArgError(res2), "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "PyOptimizer""'"); 
+    }  
+    if (!argp2) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "2"" of type '" "PyOptimizer""'");
+    } else {
+      PyOptimizer * temp = reinterpret_cast< PyOptimizer * >(argp2);
+      arg2 = *temp;
+      if (SWIG_IsNewObj(res2)) delete temp;
+    }
+  }
+  {
+    res3 = SWIG_ConvertPtr(swig_obj[2], &argp3, SWIGTYPE_p_PyInitializer,  0  | 0);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyInitializer""'"); 
+    }  
+    if (!argp3) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "new_PyEmbedding" "', argument " "3"" of type '" "PyInitializer""'");
+    } else {
+      PyInitializer * temp = reinterpret_cast< PyInitializer * >(argp3);
+      arg3 = *temp;
+      if (SWIG_IsNewObj(res3)) delete temp;
+    }
+  }
+  ecode4 = SWIG_AsVal_int(swig_obj[3], &val4);
+  if (!SWIG_IsOK(ecode4)) {
+    SWIG_exception_fail(SWIG_ArgError(ecode4), "in method '" "new_PyEmbedding" "', argument " "4"" of type '" "int""'");
+  } 
+  arg4 = static_cast< int >(val4);
+  result = (PyEmbedding *)new PyEmbedding(arg1,arg2,arg3,arg4);
+  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyEmbedding, SWIG_POINTER_NEW |  0 );
+  return resultobj;
+fail:
+  return NULL;
+}
+
+
 SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_2(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   PyEmbedding *arg1 = 0 ;
@@ -5258,11 +5185,11 @@ fail:
 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding(PyObject *self, PyObject *args) {
   Py_ssize_t argc;
-  PyObject *argv[7] = {
+  PyObject *argv[6] = {
     0
   };
   
-  if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyEmbedding", 0, 6, argv))) SWIG_fail;
+  if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyEmbedding", 0, 5, argv))) SWIG_fail;
   --argc;
   if (argc == 1) {
     int _v;
@@ -5270,6 +5197,28 @@ SWIGINTERN PyObject *_wrap_new_PyEmbedding(PyObject *self, PyObject *args) {
     _v = SWIG_CheckState(res);
     if (_v) {
       return _wrap_new_PyEmbedding__SWIG_2(self, argc, argv);
+    }
+  }
+  if (argc == 4) {
+    int _v;
+    int res = SWIG_ConvertPtr(argv[0], 0, SWIGTYPE_p_PyStorage, SWIG_POINTER_NO_NULL | 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      int res = SWIG_ConvertPtr(argv[1], 0, SWIGTYPE_p_PyOptimizer, SWIG_POINTER_NO_NULL | 0);
+      _v = SWIG_CheckState(res);
+      if (_v) {
+        int res = SWIG_ConvertPtr(argv[2], 0, SWIGTYPE_p_PyInitializer, SWIG_POINTER_NO_NULL | 0);
+        _v = SWIG_CheckState(res);
+        if (_v) {
+          {
+            int res = SWIG_AsVal_int(argv[3], NULL);
+            _v = SWIG_CheckState(res);
+          }
+          if (_v) {
+            return _wrap_new_PyEmbedding__SWIG_1(self, argc, argv);
+          }
+        }
+      }
     }
   }
   if (argc == 5) {
@@ -5293,41 +5242,7 @@ SWIGINTERN PyObject *_wrap_new_PyEmbedding(PyObject *self, PyObject *args) {
               _v = SWIG_CheckState(res);
             }
             if (_v) {
-              return _wrap_new_PyEmbedding__SWIG_1(self, argc, argv);
-            }
-          }
-        }
-      }
-    }
-  }
-  if (argc == 6) {
-    int _v;
-    int res = SWIG_ConvertPtr(argv[0], 0, SWIGTYPE_p_PyStorage, SWIG_POINTER_NO_NULL | 0);
-    _v = SWIG_CheckState(res);
-    if (_v) {
-      int res = SWIG_ConvertPtr(argv[1], 0, SWIGTYPE_p_PyOptimizer, SWIG_POINTER_NO_NULL | 0);
-      _v = SWIG_CheckState(res);
-      if (_v) {
-        int res = SWIG_ConvertPtr(argv[2], 0, SWIGTYPE_p_PyInitializer, SWIG_POINTER_NO_NULL | 0);
-        _v = SWIG_CheckState(res);
-        if (_v) {
-          {
-            int res = SWIG_AsVal_int(argv[3], NULL);
-            _v = SWIG_CheckState(res);
-          }
-          if (_v) {
-            {
-              int res = SWIG_AsVal_int(argv[4], NULL);
-              _v = SWIG_CheckState(res);
-            }
-            if (_v) {
-              {
-                int res = SWIG_AsVal_int(argv[5], NULL);
-                _v = SWIG_CheckState(res);
-              }
-              if (_v) {
-                return _wrap_new_PyEmbedding__SWIG_0(self, argc, argv);
-              }
+              return _wrap_new_PyEmbedding__SWIG_0(self, argc, argv);
             }
           }
         }
@@ -5338,8 +5253,8 @@ SWIGINTERN PyObject *_wrap_new_PyEmbedding(PyObject *self, PyObject *args) {
 fail:
   SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'new_PyEmbedding'.\n"
     "  Possible C/C++ prototypes are:\n"
-    "    PyEmbedding::PyEmbedding(PyStorage,PyOptimizer,PyInitializer,int,int,int)\n"
     "    PyEmbedding::PyEmbedding(PyStorage,PyOptimizer,PyInitializer,int,int)\n"
+    "    PyEmbedding::PyEmbedding(PyStorage,PyOptimizer,PyInitializer,int)\n"
     "    PyEmbedding::PyEmbedding(PyEmbedding const &)\n");
   return 0;
 }
@@ -5435,18 +5350,15 @@ SWIGINTERN PyObject *_wrap_PyEmbedding_apply_gradients(PyObject *SWIGUNUSEDPARM(
   int arg3 ;
   float *arg4 = (float *) 0 ;
   int arg5 ;
-  unsigned long long arg6 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   PyArrayObject *array2 = NULL ;
   int is_new_object2 = 0 ;
   PyArrayObject *array4 = NULL ;
   int is_new_object4 = 0 ;
-  unsigned long long val6 ;
-  int ecode6 = 0 ;
-  PyObject *swig_obj[4] ;
+  PyObject *swig_obj[3] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "PyEmbedding_apply_gradients", 4, 4, swig_obj)) SWIG_fail;
+  if (!SWIG_Python_UnpackTuple(args, "PyEmbedding_apply_gradients", 3, 3, swig_obj)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyEmbedding, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyEmbedding_apply_gradients" "', argument " "1"" of type '" "PyEmbedding *""'"); 
@@ -5476,12 +5388,7 @@ SWIGINTERN PyObject *_wrap_PyEmbedding_apply_gradients(PyObject *SWIGUNUSEDPARM(
     arg4 = (float*) array_data(array4);
     arg5 = (int) array_size(array4,0);
   }
-  ecode6 = SWIG_AsVal_unsigned_SS_long_SS_long(swig_obj[3], &val6);
-  if (!SWIG_IsOK(ecode6)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode6), "in method '" "PyEmbedding_apply_gradients" "', argument " "6"" of type '" "unsigned long long""'");
-  } 
-  arg6 = static_cast< unsigned long long >(val6);
-  (arg1)->apply_gradients(arg2,arg3,arg4,arg5,arg6);
+  (arg1)->apply_gradients(arg2,arg3,arg4,arg5);
   resultobj = SWIG_Py_Void();
   {
     if (is_new_object2 && array2)
@@ -5529,6 +5436,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_Parameters", _wrap_new_Parameters, METH_VARARGS, NULL},
 	 { "delete_Parameters", _wrap_delete_Parameters, METH_O, NULL},
 	 { "Parameters_insert", _wrap_Parameters_insert, METH_VARARGS, NULL},
+	 { "Parameters_to_string", _wrap_Parameters_to_string, METH_O, NULL},
 	 { "Parameters_params__set", _wrap_Parameters_params__set, METH_VARARGS, NULL},
 	 { "Parameters_params__get", _wrap_Parameters_params__get, METH_O, NULL},
 	 { "Parameters_swigregister", Parameters_swigregister, METH_O, NULL},

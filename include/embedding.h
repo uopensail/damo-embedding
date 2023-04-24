@@ -24,11 +24,38 @@
 #pragma once
 
 #include <rocksdb/db.h>
+#include <rocksdb/merge_operator.h>
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
 #include "initializer.h"
 #include "optimizer.h"
+
+struct Configure {
+  int dim;
+  int group;
+  std::shared_ptr<Optimizer> optimizer;
+  std::shared_ptr<Initializer> initializer;
+  Configure();
+};
+using Configure = struct Configure;
+
+static Configure group_configs[max_group];
+
+class ApplyGredientsOperator : public rocksdb::AssociativeMergeOperator {
+ public:
+  ApplyGredientsOperator() {}
+  ~ApplyGredientsOperator() {}
+
+  bool Merge(const rocksdb::Slice &key, const rocksdb::Slice *existing_value,
+             const rocksdb::Slice &value, std::string *new_value,
+             rocksdb::Logger *logger) const override;
+
+  static const char *kClassName() { return "ApplyGredientsOperator"; }
+  static const char *kNickName() { return "apply_gredients"; }
+  [[nodiscard]] const char *Name() const override { return kClassName(); }
+  [[nodiscard]] const char *NickName() const override { return kNickName(); }
+};
 
 class Embedding;
 class Storage {
@@ -48,7 +75,6 @@ class Storage {
 
  private:
   int ttl_;
-  bool groups_[max_group];
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   friend class Embedding;
 };
@@ -58,7 +84,7 @@ class Embedding {
   Embedding() = delete;
   Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
             const std::shared_ptr<Initializer> &initializer, int dim,
-            int min_count, int group = 0);
+            int group = 0);
   ~Embedding();
   /**
    * @brief lookup the embeddings
@@ -78,24 +104,16 @@ class Embedding {
    * @param kn length of the keys
    * @param gds gradients for the keys
    * @param gn length of the gradients
-   * @param global_step global step
    */
-  void apply_gradients(u_int64_t *keys, int len, Float *gds, int n,
-                       const u_int64_t &global_step);
-  const int get_dim() const;
-  const u_int64_t get_min_count() const;
+  void apply_gradients(u_int64_t *keys, int len, Float *gds, int n);
 
  private:
-  void update(const u_int64_t &key, MetaData *ptr, Float *gds,
-              const u_int64_t &global_step);
-  void update(const u_int64_t &key, MetaData *ptr);
   std::shared_ptr<std::string> create(const u_int64_t &key);
 
  private:
   int dim_;
   int group_;
   u_int64_t group_mask_;
-  u_int64_t min_count_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   const std::shared_ptr<Optimizer> optimizer_;
   const std::shared_ptr<Initializer> initializer_;

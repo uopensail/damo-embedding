@@ -71,6 +71,9 @@ class Parameters(object):
 
     def insert(self, *args):
         return _damo.Parameters_insert(self, *args)
+
+    def to_string(self):
+        return _damo.Parameters_to_string(self)
     params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
 
 # Register Parameters in _damo:
@@ -129,8 +132,8 @@ class PyStorage(object):
         _damo.PyStorage_swiginit(self, _damo.new_PyStorage(*args))
     __swig_destroy__ = _damo.delete_PyStorage
 
-    def dump(self, path, expires, group=-1):
-        return _damo.PyStorage_dump(self, path, expires, group)
+    def dump(self, path, expires):
+        return _damo.PyStorage_dump(self, path, expires)
 
 # Register PyStorage in _damo:
 _damo.PyStorage_swigregister(PyStorage)
@@ -146,8 +149,8 @@ class PyEmbedding(object):
     def lookup(self, keys, w):
         return _damo.PyEmbedding_lookup(self, keys, w)
 
-    def apply_gradients(self, keys, gds, global_step):
-        return _damo.PyEmbedding_apply_gradients(self, keys, gds, global_step)
+    def apply_gradients(self, keys, gds):
+        return _damo.PyEmbedding_apply_gradients(self, keys, gds)
 
 # Register PyEmbedding in _damo:
 _damo.PyEmbedding_swigregister(PyEmbedding)

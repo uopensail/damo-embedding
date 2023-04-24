@@ -24,19 +24,22 @@ import damo
 import random
 
 
-class CountBloomFilterTestCase(unittest.TestCase):
+class ParametersTestCase(unittest.TestCase):
     def setUp(self):
-        params = damo.Parameters()
-        self.filter = damo.PyFilter(params)
+        pass
 
     def tearDown(self):
         pass
 
-    def testAdd(self):
-        key = 10000000
-        for i in range(16):
-            self.filter.add(key, 1)
-            print(self.filter.check(key))
+    def test(self):
+        params = damo.Parameters()
+        params.insert("str", "str")
+        params.insert("int", 5)
+        params.insert("float", float(5.0))
+        params.insert("float2", 3.0)
+        params.insert("float", 4.0)
+        params.insert("bool", True)
+        print(params.to_string())
 
 
 if __name__ == '__main__':

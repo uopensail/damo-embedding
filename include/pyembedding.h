@@ -39,6 +39,7 @@ class Parameters {
   void insert(std::string key, int value);
   void insert(std::string key, double value);
   void insert(std::string key, bool value);
+  std::string to_string();
 
  public:
   std::shared_ptr<cpptoml::table> params_;
@@ -141,9 +142,8 @@ class PyStorage {
    *
    * @param path to save the data
    * @param expires only save the new keys
-   * @param group if group == -1, dump all data, otherwise dump this group
    */
-  void dump(const std::string &path, int expires, int group = -1);
+  void dump(const std::string &path, int expires);
 
  private:
   std::shared_ptr<Storage> storage_;
@@ -154,7 +154,7 @@ class PyEmbedding {
  public:
   PyEmbedding() = delete;
   PyEmbedding(PyStorage storage, PyOptimizer optimizer,
-              PyInitializer initializer, int dim, int min_count, int group = 0);
+              PyInitializer initializer, int dim, int group = 0);
   PyEmbedding(const PyEmbedding &p);
   PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();
@@ -177,10 +177,8 @@ class PyEmbedding {
    * @param kn length of the keys
    * @param gds gradients for the keys
    * @param gn length of the gradients
-   * @param global_step global step
    */
-  void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn,
-                       unsigned long long global_step);
+  void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn);
 
  private:
   std::shared_ptr<Embedding> embedding_;
