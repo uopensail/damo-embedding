@@ -112,33 +112,6 @@ CBF的作用是用来过滤低频次特征。互联网的业务一般都呈现�
 2. mean: 均值, 浮点数, default: 0.0
 3. stddev: 标准差, 浮点数, default: 1.0
 
-
-
-#### Example
-
-```python
-import damo
-
-# 设置参数
-param = damo.Parameters()
-param.insert("capacity", 1<<28) 
-param.insert("count", 15)  
-param.insert("path", "/tmp/cbf")
-param.insert("reload", True)
-param.insert("ffp", 0.001)
-print(param.to_json())
-
-filter = damo.PyFilter(param)
-
-key = 123456
-for i in range(16):
-    filter.add(key, 1)
-    print(filter.check())
-
-```
-
-
-
 ### Optimizer
 
 #### SGD
@@ -198,47 +171,13 @@ for i in range(16):
 ## Install
 
 ### rocksdb安装
+参考[rocksdb安装](rocksdb.md)
 
-这里展示了centos7下的安装脚本, 其他系统类似。
-
-```shell
-#!/bin/sh
-yum install -y git gflags-devel snappy-devel glog-devel zlib-devel lz4-devel libzstd-devel gcc-c++ make autoreconf automake libtool cmake
-cd /tmp
-wget https://github.com/facebook/rocksdb/archive/v6.4.6.tar.gz
-tar -xvzf v6.4.6.tar.gz
-cd rocksdb-6.4.6/
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rocksdb ..
-make shared_lib && make install
-
-cat >>/etc/profile <<EOF
-export CPLUS_INCLUDE_PATH=\$CPLUS_INCLUDE_PATH:/usr/local/rocksdb/include/
-export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:/usr/local/rocksdb/lib64/
-export LIBRARY_PATH=\$LIBRARY_PATH:/usr/local/rocksdb/lib64/
-EOF
-source /etc/profile
-```
-
-### numpy添加到路径
-
-一般来说numpy安装在了python的路径下`site-packages`文件中
+### damo-embedding安装
 
 ```shell
-NUMPY_INCLUDE_PATH=$PYTHONPATH/site-packages/numpy/core/include
-NUMPY_LIBRARY_PATH=$PYTHONPATH/site-packages/numpy/core/lib
-
-export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$NUMPY_INCLUDE_PATH
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NUMPY_LIBRARY_PATH
-export LIBRARY_PATH=$LIBRARY_PATH:NUMPY_LIBRARY_PATH
-```
-
-### PyEmbedding安装
-
-```shell
-git clone xxx
-cd xxxx
+git clone https://github.com/uopensail/damo-embedding
+cd damo-embedding
 python setup.py install
 ```
 
@@ -258,32 +197,8 @@ python setup.py install
 
 默认使用主机字节序，不做转换。默认情况下，x86是小端。
 
-## Configuration
-
-需要按照toml的格式进行配置, 具体示例配置如下:
-
-```toml
-[filter]
-capacity=1111
-count=15
-path=/tmp/filter.txt
-reload=true
-ffp=0.0002
-
-[opt]
-
-
-
-[ini]
-
-
-[scheduler]
-```
-
-### 
-
 ## Examples
-参考examples/
+参考目录../example
 
 ## Reference
 
