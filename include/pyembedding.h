@@ -39,7 +39,7 @@ class Parameters {
   void insert(std::string key, int value);
   void insert(std::string key, double value);
   void insert(std::string key, bool value);
-  std::string to_string();
+  std::string to_json();
 
  public:
   std::shared_ptr<cpptoml::table> params_;

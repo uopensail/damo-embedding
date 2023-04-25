@@ -49,9 +49,6 @@ u_int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);
 
-// get the group id from the key
-u_int64_t groupof(const u_int64_t &key);
-
 u_int64_t mask_group(const u_int64_t &key, const u_int64_t &mask);
 
 // the struct of value in rocksdb

@@ -72,8 +72,8 @@ class Parameters(object):
     def insert(self, *args):
         return _damo.Parameters_insert(self, *args)
 
-    def to_string(self):
-        return _damo.Parameters_to_string(self)
+    def to_json(self):
+        return _damo.Parameters_to_json(self)
     params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
 
 # Register Parameters in _damo:

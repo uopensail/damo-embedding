@@ -28,6 +28,8 @@
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
+#include <mutex>
+
 #include "initializer.h"
 #include "optimizer.h"
 
@@ -40,6 +42,8 @@ struct Configure {
 };
 using Configure = struct Configure;
 
+// lock for group configs
+static std::mutex group_lock;
 static Configure group_configs[max_group];
 
 class ApplyGredientsOperator : public rocksdb::AssociativeMergeOperator {

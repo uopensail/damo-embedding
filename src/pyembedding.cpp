@@ -10,7 +10,7 @@ Parameters &Parameters::operator=(const Parameters &p) {
   return *this;
 }
 
-std::string Parameters::to_string() {
+std::string Parameters::to_json() {
   std::string result = "{ ";
 
   int index = 0;

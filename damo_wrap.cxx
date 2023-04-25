@@ -4083,7 +4083,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_Parameters_to_string(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_Parameters_to_json(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
   PyObject *resultobj = 0;
   Parameters *arg1 = (Parameters *) 0 ;
   void *argp1 = 0 ;
@@ -4095,10 +4095,10 @@ SWIGINTERN PyObject *_wrap_Parameters_to_string(PyObject *SWIGUNUSEDPARM(self), 
   swig_obj[0] = args;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_Parameters, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
-    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Parameters_to_string" "', argument " "1"" of type '" "Parameters *""'"); 
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "Parameters_to_json" "', argument " "1"" of type '" "Parameters *""'"); 
   }
   arg1 = reinterpret_cast< Parameters * >(argp1);
-  result = (arg1)->to_string();
+  result = (arg1)->to_json();
   resultobj = SWIG_From_std_string(static_cast< std::string >(result));
   return resultobj;
 fail:
@@ -5436,7 +5436,7 @@ static PyMethodDef SwigMethods[] = {
 	 { "new_Parameters", _wrap_new_Parameters, METH_VARARGS, NULL},
 	 { "delete_Parameters", _wrap_delete_Parameters, METH_O, NULL},
 	 { "Parameters_insert", _wrap_Parameters_insert, METH_VARARGS, NULL},
-	 { "Parameters_to_string", _wrap_Parameters_to_string, METH_O, NULL},
+	 { "Parameters_to_json", _wrap_Parameters_to_json, METH_O, NULL},
 	 { "Parameters_params__set", _wrap_Parameters_params__set, METH_VARARGS, NULL},
 	 { "Parameters_params__get", _wrap_Parameters_params__get, METH_O, NULL},
 	 { "Parameters_swigregister", Parameters_swigregister, METH_O, NULL},

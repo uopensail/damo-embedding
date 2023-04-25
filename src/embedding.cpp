@@ -51,6 +51,8 @@ Embedding::Embedding(Storage &storage,
     std::cout << "group: " << group << " out of range" << std::endl;
     exit(-1);
   }
+  this->group_mask_ = (u_int64_t(group)) << 56;
+  std::lock_guard<std::mutex> guard(group_lock);
   if (group_configs[group].group != -1) {
     std::cout << "group: " << group << " exists" << std::endl;
     exit(-1);
@@ -60,7 +62,6 @@ Embedding::Embedding(Storage &storage,
   group_configs[group].group = group;
   group_configs[group].initializer = initializer;
   group_configs[group].optimizer = optimizer;
-  this->group_mask_ = (u_int64_t(group)) << 56;
 }
 
 Embedding::~Embedding() {}
