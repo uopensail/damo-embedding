@@ -243,7 +243,7 @@ void LionOptimizer::call(Float *data, Float *gds, int dim,
 
 std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
                                           const Params &scheduler) {
-  auto name = optimizer_params.get<std::string>("name");
+  auto name = optimizer_params.get<std::string>("name", "sgd");
   if (name == "sgd") {
     return std::shared_ptr<Optimizer>(
         new SGDOptimizer{optimizer_params, scheduler});

@@ -83,7 +83,7 @@ void TruncateNormal::call(Float *data, int dim) {
 }
 
 std::shared_ptr<Initializer> get_initializers(const Params &p) {
-  auto name = p.get<std::string>("name");
+  auto name = p.get<std::string>("name", "zeros");
   if (name == "zeros") {
     return std::shared_ptr<Initializer>{new Zeros(p)};
   } else if (name == "ones") {
