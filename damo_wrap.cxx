@@ -4509,7 +4509,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_PyOptimizer_call(PyObject *SWIGUNUSEDPARM(self), PyObject *args) {
+SWIGINTERN PyObject *_wrap_PyOptimizer_call__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   PyOptimizer *arg1 = (PyOptimizer *) 0 ;
   float *arg2 = (float *) 0 ;
@@ -4525,9 +4525,8 @@ SWIGINTERN PyObject *_wrap_PyOptimizer_call(PyObject *SWIGUNUSEDPARM(self), PyOb
   int is_new_object4 = 0 ;
   unsigned long long val6 ;
   int ecode6 = 0 ;
-  PyObject *swig_obj[4] ;
   
-  if (!SWIG_Python_UnpackTuple(args, "PyOptimizer_call", 4, 4, swig_obj)) SWIG_fail;
+  if ((nobjs < 4) || (nobjs > 4)) SWIG_fail;
   res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyOptimizer, 0 |  0 );
   if (!SWIG_IsOK(res1)) {
     SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyOptimizer_call" "', argument " "1"" of type '" "PyOptimizer *""'"); 
@@ -4575,6 +4574,133 @@ fail:
     }
   }
   return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyOptimizer_call__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+  PyObject *resultobj = 0;
+  PyOptimizer *arg1 = (PyOptimizer *) 0 ;
+  float *arg2 = (float *) 0 ;
+  int arg3 ;
+  float *arg4 = (float *) 0 ;
+  int arg5 ;
+  void *argp1 = 0 ;
+  int res1 = 0 ;
+  PyArrayObject *array2 = NULL ;
+  int i2 = 1 ;
+  PyArrayObject *array4 = NULL ;
+  int is_new_object4 = 0 ;
+  
+  if ((nobjs < 3) || (nobjs > 3)) SWIG_fail;
+  res1 = SWIG_ConvertPtr(swig_obj[0], &argp1,SWIGTYPE_p_PyOptimizer, 0 |  0 );
+  if (!SWIG_IsOK(res1)) {
+    SWIG_exception_fail(SWIG_ArgError(res1), "in method '" "PyOptimizer_call" "', argument " "1"" of type '" "PyOptimizer *""'"); 
+  }
+  arg1 = reinterpret_cast< PyOptimizer * >(argp1);
+  {
+    array2 = obj_to_array_no_conversion(swig_obj[1], NPY_FLOAT);
+    if (!array2 || !require_dimensions(array2,1) || !require_contiguous(array2)
+      || !require_native(array2)) SWIG_fail;
+    arg2 = (float*) array_data(array2);
+    arg3 = 1;
+    for (i2=0; i2 < array_numdims(array2); ++i2) arg3 *= array_size(array2,i2);
+  }
+  {
+    npy_intp size[1] = {
+      -1 
+    };
+    array4 = obj_to_array_contiguous_allow_conversion(swig_obj[2],
+      NPY_FLOAT,
+      &is_new_object4);
+    if (!array4 || !require_dimensions(array4, 1) ||
+      !require_size(array4, size, 1)) SWIG_fail;
+    arg4 = (float*) array_data(array4);
+    arg5 = (int) array_size(array4,0);
+  }
+  (arg1)->call(arg2,arg3,arg4,arg5);
+  resultobj = SWIG_Py_Void();
+  {
+    if (is_new_object4 && array4)
+    {
+      Py_DECREF(array4); 
+    }
+  }
+  return resultobj;
+fail:
+  {
+    if (is_new_object4 && array4)
+    {
+      Py_DECREF(array4); 
+    }
+  }
+  return NULL;
+}
+
+
+SWIGINTERN PyObject *_wrap_PyOptimizer_call(PyObject *self, PyObject *args) {
+  Py_ssize_t argc;
+  PyObject *argv[5] = {
+    0
+  };
+  
+  if (!(argc = SWIG_Python_UnpackTuple(args, "PyOptimizer_call", 0, 4, argv))) SWIG_fail;
+  --argc;
+  if (argc == 3) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_PyOptimizer, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      {
+        _v = is_array(argv[1]) && PyArray_EquivTypenums(array_type(argv[1]),
+          NPY_FLOAT);
+      }
+      if (_v) {
+        {
+          _v = is_array(argv[2]) || PySequence_Check(argv[2]);
+        }
+        if (_v) {
+          if (argc <= 3) {
+            return _wrap_PyOptimizer_call__SWIG_1(self, argc, argv);
+          }
+          return _wrap_PyOptimizer_call__SWIG_1(self, argc, argv);
+        }
+      }
+    }
+  }
+  if (argc == 4) {
+    int _v;
+    void *vptr = 0;
+    int res = SWIG_ConvertPtr(argv[0], &vptr, SWIGTYPE_p_PyOptimizer, 0);
+    _v = SWIG_CheckState(res);
+    if (_v) {
+      {
+        _v = is_array(argv[1]) && PyArray_EquivTypenums(array_type(argv[1]),
+          NPY_FLOAT);
+      }
+      if (_v) {
+        {
+          _v = is_array(argv[2]) || PySequence_Check(argv[2]);
+        }
+        if (_v) {
+          {
+            int res = SWIG_AsVal_unsigned_SS_long_SS_long(argv[3], NULL);
+            _v = SWIG_CheckState(res);
+          }
+          if (_v) {
+            return _wrap_PyOptimizer_call__SWIG_0(self, argc, argv);
+          }
+        }
+      }
+    }
+  }
+  
+fail:
+  SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'PyOptimizer_call'.\n"
+    "  Possible C/C++ prototypes are:\n"
+    "    PyOptimizer::call(float *,int,float *,int,unsigned long long)\n"
+    "    PyOptimizer::call(float *,int,float *,int)\n");
+  return 0;
 }
 
 
@@ -4962,12 +5088,12 @@ SWIGINTERN PyObject *_wrap_PyStorage_dump(PyObject *SWIGUNUSEDPARM(self), PyObje
   PyObject *resultobj = 0;
   PyStorage *arg1 = (PyStorage *) 0 ;
   std::string *arg2 = 0 ;
-  int arg3 ;
+  Parameters arg3 ;
   void *argp1 = 0 ;
   int res1 = 0 ;
   int res2 = SWIG_OLDOBJ ;
-  int val3 ;
-  int ecode3 = 0 ;
+  void *argp3 ;
+  int res3 = 0 ;
   PyObject *swig_obj[3] ;
   
   if (!SWIG_Python_UnpackTuple(args, "PyStorage_dump", 3, 3, swig_obj)) SWIG_fail;
@@ -4987,11 +5113,19 @@ SWIGINTERN PyObject *_wrap_PyStorage_dump(PyObject *SWIGUNUSEDPARM(self), PyObje
     }
     arg2 = ptr;
   }
-  ecode3 = SWIG_AsVal_int(swig_obj[2], &val3);
-  if (!SWIG_IsOK(ecode3)) {
-    SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "PyStorage_dump" "', argument " "3"" of type '" "int""'");
-  } 
-  arg3 = static_cast< int >(val3);
+  {
+    res3 = SWIG_ConvertPtr(swig_obj[2], &argp3, SWIGTYPE_p_Parameters,  0  | 0);
+    if (!SWIG_IsOK(res3)) {
+      SWIG_exception_fail(SWIG_ArgError(res3), "in method '" "PyStorage_dump" "', argument " "3"" of type '" "Parameters""'"); 
+    }  
+    if (!argp3) {
+      SWIG_exception_fail(SWIG_ValueError, "invalid null reference " "in method '" "PyStorage_dump" "', argument " "3"" of type '" "Parameters""'");
+    } else {
+      Parameters * temp = reinterpret_cast< Parameters * >(argp3);
+      arg3 = *temp;
+      if (SWIG_IsNewObj(res3)) delete temp;
+    }
+  }
   (arg1)->dump((std::string const &)*arg2,arg3);
   resultobj = SWIG_Py_Void();
   if (SWIG_IsNewObj(res2)) delete arg2;

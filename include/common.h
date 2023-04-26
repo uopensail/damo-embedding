@@ -78,6 +78,8 @@ class Params {
   Params &operator=(const Params &p);
   Params &operator=(const std::shared_ptr<cpptoml::table> &table);
 
+  bool contains(const std::string &key);
+
   template <class T>
   T get(const std::string &key) const {
     if (table != nullptr && table->contains(key)) {

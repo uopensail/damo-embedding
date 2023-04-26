@@ -100,7 +100,7 @@ class PyOptimizer(object):
     def __init__(self, *args):
         _damo.PyOptimizer_swiginit(self, _damo.new_PyOptimizer(*args))
 
-    def call(self, w, gds, global_step):
+    def call(self, w, gds, global_step=0):
         return _damo.PyOptimizer_call(self, w, gds, global_step)
     __swig_destroy__ = _damo.delete_PyOptimizer
 
@@ -132,8 +132,8 @@ class PyStorage(object):
         _damo.PyStorage_swiginit(self, _damo.new_PyStorage(*args))
     __swig_destroy__ = _damo.delete_PyStorage
 
-    def dump(self, path, expires):
-        return _damo.PyStorage_dump(self, path, expires)
+    def dump(self, path, condition):
+        return _damo.PyStorage_dump(self, path, condition)
 
 # Register PyStorage in _damo:
 _damo.PyStorage_swigregister(PyStorage)

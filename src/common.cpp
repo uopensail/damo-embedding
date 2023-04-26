@@ -21,6 +21,10 @@ Params &Params::operator=(const std::shared_ptr<cpptoml::table> &table) {
 
 Params::~Params() {}
 
+bool Params::contains(const std::string &key) {
+  return this->table->contains(key);
+}
+
 u_int64_t get_current_time() {
   struct timeval tv;
   gettimeofday(&tv, NULL);

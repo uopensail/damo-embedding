@@ -243,6 +243,10 @@ void LionOptimizer::call(Float *data, Float *gds, int dim,
 
 std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
                                           const Params &scheduler) {
+  if (optimizer_params.isnil()) {
+    std::cerr << "optimizer params is nil" << std::endl;
+    exit(0);
+  }
   auto name = optimizer_params.get<std::string>("name", "sgd");
   if (name == "sgd") {
     return std::shared_ptr<Optimizer>(

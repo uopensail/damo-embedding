@@ -14,19 +14,19 @@ void create_empty_file(const std::string &filename, const size_t &size) {
 
 CountingBloomFilter::CountingBloomFilter()
     : CountingBloomFilter(min_size, max_count,
-                          "/tmp/COUNTING_BLOOM_FILTER_DATA", true, FFP) {}
+                          "/tmp/COUNTING_BLOOM_FILTER_DATA", true, FPR) {}
 
 CountingBloomFilter::CountingBloomFilter(const Params &config)
     : CountingBloomFilter(
           config.get<u_int64_t>("capacity", min_size),
           config.get<int>("count", max_count),
           config.get<std::string>("path", "/tmp/COUNTING_BLOOM_FILTER_DATA"),
-          config.get<bool>("reload", true), config.get<double>("ffp", FFP)) {}
+          config.get<bool>("reload", true), config.get<double>("fpr", FPR)) {}
 
 CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
                                          const std::string &filename,
-                                         bool reload, double ffp)
-    : ffp_(ffp), capacity_(capacity), filename_(filename), count_(count) {
+                                         bool reload, double fpr)
+    : fpr_(fpr), capacity_(capacity), filename_(filename), count_(count) {
   if (count > max_count) {
     std::cout << "counting bloom filter support max count is: " << max_count
               << std::endl;
@@ -34,7 +34,7 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   }
   // counter_num_ = -(n*ln(p))/ (ln2)^2
   this->counter_num_ =
-      size_t(log(1.0 / ffp_) * double(capacity_) / (log(2.0) * log(2.0)));
+      size_t(log(1.0 / fpr_) * double(capacity_) / (log(2.0) * log(2.0)));
   if (this->counter_num_ & 1) {
     this->counter_num_++;
   }

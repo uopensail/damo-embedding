@@ -74,7 +74,7 @@ CBF的作用是用来过滤低频次特征。互联网的业务一般都呈现�
 1. capacity: 最大容量, default: 2^28
 2. count: 过滤次数, default: 15
 3. path: 保存路径, default: /tmp/COUNTING_BLOOM_FILTER_DATA
-4. ffp: 假阳率, default: 1e-3
+4. fpr: 假阳率, default: 1e-3
 5. reload: 是否加载数据文件, default: true
 
 ### Initializer

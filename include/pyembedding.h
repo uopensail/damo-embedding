@@ -86,7 +86,7 @@ class PyOptimizer {
    * @param global_step global step
    */
   void call(float *w, int wn, float *gds, int gn,
-            unsigned long long global_step);
+            unsigned long long global_step = 0);
   ~PyOptimizer();
 
  private:
@@ -143,7 +143,7 @@ class PyStorage {
    * @param path to save the data
    * @param expires only save the new keys
    */
-  void dump(const std::string &path, int expires);
+  void dump(const std::string &path, Parameters condition);
 
  private:
   std::shared_ptr<Storage> storage_;

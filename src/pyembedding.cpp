@@ -164,15 +164,38 @@ PyStorage::PyStorage(const std::string &data_dir, int ttl) {
 
 PyStorage::~PyStorage() {}
 
-void PyStorage::dump(const std::string &path, int expires) {
-  auto func = [&expires](MetaData *ptr) -> bool {
+void PyStorage::dump(const std::string &path, Parameters condition) {
+  auto func = [&condition](MetaData *ptr) -> bool {
     if (ptr == nullptr) {
       return false;
     }
-    auto oldest_ts = get_current_time() - expires * 86400;
-    if (ptr->update_time < oldest_ts) {
-      return false;
+    if (condition.params_ == nullptr) {
+      return true;
     }
+
+    Params p(condition.params_);
+    if (p.contains("expire_days")) {
+      u_int64_t expire_days = p.get<u_int64_t>("expire_days");
+      auto oldest_ts = get_current_time() - expire_days * 86400000;
+      if (ptr->update_time < oldest_ts) {
+        return false;
+      }
+    }
+
+    if (p.contains("min_count")) {
+      u_int64_t min_count = p.get<u_int64_t>("min_count");
+      if (ptr->update_num < min_count) {
+        return false;
+      }
+    }
+
+    if (p.contains("group")) {
+      int group = p.get<int>("group");
+      if (ptr->group != group) {
+        return false;
+      }
+    }
+
     return true;
   };
   this->storage_->dump(path, func);
