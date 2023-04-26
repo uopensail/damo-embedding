@@ -46,3 +46,7 @@ Use `swig -python -c++ damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
 ### Python3
 [Python3](doc/EN/Python3.md)
 
+```bash
+python setup.py install
+```
+

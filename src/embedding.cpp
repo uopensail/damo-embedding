@@ -23,17 +23,16 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
       group_configs[ptr->group].group == -1) {
     return false;
   }
-
+  assert(new_value != nullptr);
+  new_value->clear();
   new_value->reserve(existing_value->size());
-  new_value->copy(const_cast<char *>(existing_value->data()),
-                  existing_value->size(), 0);
-  ptr = (MetaData *)(const_cast<char *>(new_value->data()));
-
-  ptr->update_num++;
-  ptr->update_time = get_current_time();
+  MetaData *new_ptr = (MetaData *)(const_cast<char *>(new_value->data()));
+  memcpy(new_ptr, ptr, existing_value->size());
+  new_ptr->update_num++;
+  new_ptr->update_time = get_current_time();
   float *gds = (float *)(const_cast<char *>(value.data()));
-  group_configs[ptr->group].optimizer->call(ptr->data, gds, ptr->dim,
-                                            ptr->update_num);
+  group_configs[new_ptr->group].optimizer->call(
+      new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
   return true;
 }
 
@@ -104,6 +103,8 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
       memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
     } else {
       auto value = this->create(keys[i]);
+      ptr = (MetaData *)(value->data());
+      memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
       batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
                 *value);
     }
@@ -145,9 +146,13 @@ Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
     exit(-1);
   }
   assert(db != nullptr);
+
   this->db_ = std::shared_ptr<rocksdb::DBWithTTL>(db, [](void *ptr) {
     if (ptr != nullptr) {
-      delete (rocksdb::DBWithTTL *)ptr;
+      rocksdb::DBWithTTL *db = (rocksdb::DBWithTTL *)ptr;
+      db->Flush(rocksdb::FlushOptions());
+      db->Close();
+      delete db;
     }
   });
 
