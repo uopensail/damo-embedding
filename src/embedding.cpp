@@ -24,8 +24,8 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
     return false;
   }
   assert(new_value != nullptr);
-  std::string data(existing_value->size(), '\0');
-  MetaData *new_ptr = (MetaData *)(data.data());
+  new_value->resize(existing_value->size());
+  MetaData *new_ptr = (MetaData *)(new_value->data());
   memcpy(new_ptr, ptr, existing_value->size());
   new_ptr->update_num++;
   new_ptr->update_time = get_current_time();
@@ -33,7 +33,6 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
   std::cout << std::endl;
   group_configs[new_ptr->group].optimizer->call(
       new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
-  *new_value = data;
   return true;
 }
 
