@@ -4941,20 +4941,7 @@ SWIGINTERN PyObject *PyFilter_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject 
   return SWIG_Python_InitShadowInstance(args);
 }
 
-SWIGINTERN PyObject *_wrap_new_PyStorage__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **SWIGUNUSEDPARM(swig_obj)) {
-  PyObject *resultobj = 0;
-  PyStorage *result = 0 ;
-  
-  if ((nobjs < 0) || (nobjs > 0)) SWIG_fail;
-  result = (PyStorage *)new PyStorage();
-  resultobj = SWIG_NewPointerObj(SWIG_as_voidptr(result), SWIGTYPE_p_PyStorage, SWIG_POINTER_NEW |  0 );
-  return resultobj;
-fail:
-  return NULL;
-}
-
-
-SWIGINTERN PyObject *_wrap_new_PyStorage__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_new_PyStorage__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   std::string *arg1 = 0 ;
   int arg2 ;
@@ -4990,7 +4977,7 @@ fail:
 }
 
 
-SWIGINTERN PyObject *_wrap_new_PyStorage__SWIG_2(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
+SWIGINTERN PyObject *_wrap_new_PyStorage__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
   std::string *arg1 = 0 ;
   int res1 = SWIG_OLDOBJ ;
@@ -5026,15 +5013,12 @@ SWIGINTERN PyObject *_wrap_new_PyStorage(PyObject *self, PyObject *args) {
   
   if (!(argc = SWIG_Python_UnpackTuple(args, "new_PyStorage", 0, 2, argv))) SWIG_fail;
   --argc;
-  if (argc == 0) {
-    return _wrap_new_PyStorage__SWIG_0(self, argc, argv);
-  }
   if (argc == 1) {
     int _v;
     int res = SWIG_AsPtr_std_string(argv[0], (std::string**)(0));
     _v = SWIG_CheckState(res);
     if (_v) {
-      return _wrap_new_PyStorage__SWIG_2(self, argc, argv);
+      return _wrap_new_PyStorage__SWIG_1(self, argc, argv);
     }
   }
   if (argc == 2) {
@@ -5047,7 +5031,7 @@ SWIGINTERN PyObject *_wrap_new_PyStorage(PyObject *self, PyObject *args) {
         _v = SWIG_CheckState(res);
       }
       if (_v) {
-        return _wrap_new_PyStorage__SWIG_1(self, argc, argv);
+        return _wrap_new_PyStorage__SWIG_0(self, argc, argv);
       }
     }
   }
@@ -5055,7 +5039,6 @@ SWIGINTERN PyObject *_wrap_new_PyStorage(PyObject *self, PyObject *args) {
 fail:
   SWIG_Python_RaiseOrModifyTypeError("Wrong number or type of arguments for overloaded function 'new_PyStorage'.\n"
     "  Possible C/C++ prototypes are:\n"
-    "    PyStorage::PyStorage()\n"
     "    PyStorage::PyStorage(std::string const &,int)\n"
     "    PyStorage::PyStorage(std::string const &)\n");
   return 0;
@@ -5149,7 +5132,7 @@ SWIGINTERN PyObject *PyStorage_swiginit(PyObject *SWIGUNUSEDPARM(self), PyObject
 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_0(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
-  PyStorage arg1 ;
+  SwigValueWrapper< PyStorage > arg1 ;
   PyOptimizer arg2 ;
   PyInitializer arg3 ;
   int arg4 ;
@@ -5226,7 +5209,7 @@ fail:
 
 SWIGINTERN PyObject *_wrap_new_PyEmbedding__SWIG_1(PyObject *SWIGUNUSEDPARM(self), Py_ssize_t nobjs, PyObject **swig_obj) {
   PyObject *resultobj = 0;
-  PyStorage arg1 ;
+  SwigValueWrapper< PyStorage > arg1 ;
   PyOptimizer arg2 ;
   PyInitializer arg3 ;
   int arg4 ;

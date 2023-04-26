@@ -128,8 +128,8 @@ class PyStorage(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, *args):
-        _damo.PyStorage_swiginit(self, _damo.new_PyStorage(*args))
+    def __init__(self, data_dir, ttl=0):
+        _damo.PyStorage_swiginit(self, _damo.new_PyStorage(data_dir, ttl))
     __swig_destroy__ = _damo.delete_PyStorage
 
     def dump(self, path, condition):

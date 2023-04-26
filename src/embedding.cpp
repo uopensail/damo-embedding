@@ -24,15 +24,16 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
     return false;
   }
   assert(new_value != nullptr);
-  new_value->clear();
-  new_value->reserve(existing_value->size());
-  MetaData *new_ptr = (MetaData *)(const_cast<char *>(new_value->data()));
+  std::string data(existing_value->size(), '\0');
+  MetaData *new_ptr = (MetaData *)(data.data());
   memcpy(new_ptr, ptr, existing_value->size());
   new_ptr->update_num++;
   new_ptr->update_time = get_current_time();
   float *gds = (float *)(const_cast<char *>(value.data()));
+  std::cout << std::endl;
   group_configs[new_ptr->group].optimizer->call(
       new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
+  *new_value = data;
   return true;
 }
 
@@ -151,8 +152,12 @@ Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
     if (ptr != nullptr) {
       rocksdb::DBWithTTL *db = (rocksdb::DBWithTTL *)ptr;
       db->Flush(rocksdb::FlushOptions());
+      // do compact
+      rocksdb::CompactRangeOptions options;
+      db->CompactRange(options, nullptr, nullptr);
       db->Close();
       delete db;
+      db = nullptr;
     }
   });
 
@@ -195,8 +200,4 @@ void Storage::dump(const std::string &path,
   writer.write((char *)&group_dims, sizeof(int) * max_group);
   writer.write((char *)&group_counts, sizeof(size_t) * max_group);
   writer.close();
-
-  // do compact
-  rocksdb::CompactRangeOptions options;
-  this->db_->CompactRange(options, nullptr, nullptr);
 }

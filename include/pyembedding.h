@@ -126,8 +126,6 @@ class PyFilter {
 
 class PyStorage {
  public:
-  PyStorage();
-
   /**
    * @brief Construct a new Py Storage object
    *

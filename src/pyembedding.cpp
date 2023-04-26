@@ -154,10 +154,6 @@ void PyFilter::add(unsigned long long key, unsigned long long num) {
 
 PyFilter::~PyFilter() {}
 
-PyStorage::PyStorage() {
-  this->storage_ = std::make_shared<Storage>(0, "/tmp/damo-embeddings");
-}
-
 PyStorage::PyStorage(const std::string &data_dir, int ttl) {
   this->storage_ = std::make_shared<Storage>(ttl, data_dir);
 }

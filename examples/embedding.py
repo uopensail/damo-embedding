@@ -23,7 +23,7 @@ import damo
 import numpy as np
 
 # create storage
-storage = damo.PyStorage("/tmp/data_dir", 86400*100)
+storage = damo.PyStorage("/tmp/data_dir", 0)
 
 # create initializer
 init_params = damo.Parameters()
@@ -48,13 +48,7 @@ keys[0] = 1234567890
 w = np.zeros(dim*keys.shape[0], dtype=np.float32)
 gds = np.random.random(dim*keys.shape[0]).astype(np.float32)
 
-print('original weight: ', w)
 embedding.lookup(keys, w)
-print('initialized weight: ', w)
-print('new weights', w - gds*0.001)
-print('gradients: ', gds)
 embedding.apply_gradients(keys, gds)
 embedding.lookup(keys, w)
-print('apply gradients weight: ', w)
-embedding.lookup(keys, w)
-print('apply gradients weight: ', w)
+print(w)
