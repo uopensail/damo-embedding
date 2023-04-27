@@ -30,7 +30,6 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
   new_ptr->update_num++;
   new_ptr->update_time = get_current_time();
   float *gds = (float *)(const_cast<char *>(value.data()));
-  std::cout << std::endl;
   group_configs[new_ptr->group].optimizer->call(
       new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
   return true;
@@ -72,7 +71,7 @@ std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
       0);
   MetaData *ptr = (MetaData *)(value->data());
   this->initializer_->call(ptr->data, this->dim_);
-  ptr->update_num = 1;
+  ptr->update_num = 0;
   ptr->key = key;
   ptr->group = this->group_;
   ptr->dim = this->dim_;
@@ -128,7 +127,8 @@ void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n) {
   for (int i = 0; i < len; i++) {
     group_keys[i] = mask_group(keys[i], this->group_mask_);
     batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
-                rocksdb::Slice((char *)gds, sizeof(Float) * this->dim_));
+                rocksdb::Slice((char *)&gds[i * this->dim_],
+                               sizeof(Float) * this->dim_));
   }
   this->db_->Write(put_options, &batch);
   free(group_keys);

@@ -135,8 +135,10 @@ void AdamOptimizer::call(Float *data, Float *gds, int dim,
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim << 1]);
-  Float beta1_t = powf(this->beta1_, global_step);
-  Float beta2_t = powf(this->beta2_, global_step);
+  Float beta1_t =
+      global_step == 0 ? this->beta1_ : powf(this->beta1_, global_step);
+  Float beta2_t =
+      global_step == 0 ? this->beta2_ : powf(this->beta2_, global_step);
   Float lr = get_lr(global_step, this->gamma_);
   Float tmp_gd, tmp_m, tmp_v;
   for (int i = 0; i < dim; i++) {
