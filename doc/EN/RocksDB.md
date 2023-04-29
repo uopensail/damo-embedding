@@ -29,7 +29,8 @@ cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rocksdb ..
 # online env NOT USE make/make all
 # online env make static_lib/make shared_lib
 # please refer to the official documentation for details
-make shared_lib && make install-shared
+make shared_lib EXTRA_CXXFLAGS=-fPIC EXTRA_CFLAGS=-fPIC USE_RTTI=1 DEBUG_LEVEL=0 
+make install-shared
 
 # add to system path
 cat >>/etc/profile <<EOF

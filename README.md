@@ -64,9 +64,16 @@ Use `swig -python -c++ damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
 ### RocksDB
 [RocksDB](doc/EN/RocksDB.md)
 
-### Python3
-[Python3](doc/EN/Python3.md)
+When make rocksdb, must add these:
 
+`EXTRA_CXXFLAGS=-fPIC EXTRA_CFLAGS=-fPIC USE_RTTI=1 DEBUG_LEVEL=0`
+
+### Python3
+This is python3 tool, [Python3](doc/EN/Python3.md) Is required. 
+
+NumPy is needed, NumPy's include and lib path should add to system path, please refer to [Swig&NumPy.md](./doc/EN/Swig&NumPy.md).
+
+### install
 ```bash
 python setup.py install
 ```
