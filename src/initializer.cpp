@@ -30,8 +30,7 @@ RandomUniform::RandomUniform(const Params &initializer_params)
     : Initializer(initializer_params),
       min_(initializer_params.get<double>("min", -1.0)),
       max_(initializer_params.get<double>("max", 1.0)),
-      distribution(min_, max_),
-      random(time(NULL)) {
+      distribution(min_, max_), random(time(NULL)) {
   assert(max_ > min_);
 }
 
@@ -47,8 +46,7 @@ RandomNormal::RandomNormal(const Params &initializer_params)
     : Initializer(initializer_params),
       mean_(initializer_params.get<double>("mean", 0.0)),
       stddev_(initializer_params.get<double>("stddev", 1.0)),
-      distribution(mean_, stddev_),
-      random(time(NULL)) {
+      distribution(mean_, stddev_), random(time(NULL)) {
   assert(stddev_ > 0.0);
 }
 
@@ -64,8 +62,7 @@ TruncateNormal::TruncateNormal(const Params &initializer_params)
     : Initializer(initializer_params),
       mean_(initializer_params.get<double>("mean", 0.0)),
       stddev_(initializer_params.get<double>("stddev", 1.0)),
-      distribution(mean_, stddev_),
-      random(time(NULL)) {
+      distribution(mean_, stddev_), random(time(NULL)) {
   assert(stddev_ > 0.0);
 }
 

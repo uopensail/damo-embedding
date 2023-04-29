@@ -28,7 +28,7 @@ bool Params::contains(const std::string &key) {
 u_int64_t get_current_time() {
   struct timeval tv;
   gettimeofday(&tv, NULL);
-  return u_int64_t(tv.tv_sec * 1000 + tv.tv_usec / 1000);
+  return static_cast<u_int64_t>(tv.tv_sec * 1000 + tv.tv_usec / 1000);
 }
 
 Float safe_sqrt(Float x) { return x >= 0.0 ? sqrtf((x)) : 0.0; }

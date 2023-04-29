@@ -30,7 +30,7 @@
 #include "learning_rate_scheduler.h"
 
 class Optimizer {
- public:
+public:
   Optimizer() = delete;
   Optimizer(const Optimizer &) = delete;
   Optimizer(const Params &optimizer_params, const Params &scheduler);
@@ -67,27 +67,27 @@ class Optimizer {
   virtual void call(Float *data, Float *gds, int dim,
                     u_int64_t global_step) = 0;
 
- protected:
+protected:
   std::string name_;
   lr_scheduler function_;
   Params scheduler_;
 };
 
 class SGDOptimizer : public Optimizer {
- public:
+public:
   SGDOptimizer() = delete;
   SGDOptimizer(const SGDOptimizer &) = delete;
   SGDOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~SGDOptimizer();
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float gamma_;
   Float lambda_;
 };
 
 class FTRLOptimizer : public Optimizer {
- public:
+public:
   FTRLOptimizer() = delete;
   FTRLOptimizer(const FTRLOptimizer &) = delete;
   FTRLOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -95,7 +95,7 @@ class FTRLOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float alpha_;
   Float beta_;
   Float lambda1_;
@@ -103,7 +103,7 @@ class FTRLOptimizer : public Optimizer {
 };
 
 class AdagradOptimizer : public Optimizer {
- public:
+public:
   AdagradOptimizer() = delete;
   AdagradOptimizer(const AdagradOptimizer &) = delete;
   AdagradOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -111,7 +111,7 @@ class AdagradOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float gamma_;
   Float lambda_;
   Float eta_;
@@ -123,7 +123,7 @@ class AdagradOptimizer : public Optimizer {
  *
  */
 class AdamOptimizer : public Optimizer {
- public:
+public:
   AdamOptimizer() = delete;
   AdamOptimizer(const AdamOptimizer &) = delete;
   AdamOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -131,7 +131,7 @@ class AdamOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float gamma_;
   Float beta1_;
   Float beta2_;
@@ -140,7 +140,7 @@ class AdamOptimizer : public Optimizer {
 };
 
 class AmsGradOptimizer : public Optimizer {
- public:
+public:
   AmsGradOptimizer() = delete;
   AmsGradOptimizer(const AmsGradOptimizer &) = delete;
   AmsGradOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -148,7 +148,7 @@ class AmsGradOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float gamma_;
   Float beta1_;
   Float beta2_;
@@ -157,7 +157,7 @@ class AmsGradOptimizer : public Optimizer {
 };
 
 class AdamWOptimizer : public Optimizer {
- public:
+public:
   AdamWOptimizer() = delete;
   AdamWOptimizer(const AdamWOptimizer &) = delete;
   AdamWOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -165,7 +165,7 @@ class AdamWOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float gamma_;
   Float beta1_;
   Float beta2_;
@@ -174,7 +174,7 @@ class AdamWOptimizer : public Optimizer {
 };
 
 class LionOptimizer : public Optimizer {
- public:
+public:
   LionOptimizer() = delete;
   LionOptimizer(const LionOptimizer &) = delete;
   LionOptimizer(const Params &optimizer_params, const Params &scheduler);
@@ -182,7 +182,7 @@ class LionOptimizer : public Optimizer {
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, u_int64_t global_step);
 
- private:
+private:
   Float eta_;
   Float beta1_;
   Float beta2_;
@@ -192,4 +192,4 @@ class LionOptimizer : public Optimizer {
 std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
                                           const Params &scheduler);
 
-#endif  // DAMO_EMBEDDING_OPTIMIZER_H
+#endif // DAMO_EMBEDDING_OPTIMIZER_H

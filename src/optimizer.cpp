@@ -2,8 +2,7 @@
 
 Optimizer::Optimizer(const Params &optimizer_params, const Params &scheduler)
     : name_(optimizer_params.get<std::string>("name")),
-      function_(get_lr_scheduler(scheduler)),
-      scheduler_(scheduler) {}
+      function_(get_lr_scheduler(scheduler)), scheduler_(scheduler) {}
 
 const std::string &Optimizer::get_name() { return name_; }
 
@@ -135,14 +134,12 @@ void AdamOptimizer::call(Float *data, Float *gds, int dim,
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim << 1]);
-  Float beta1_t =
-      global_step == 0 ? this->beta1_ : powf(this->beta1_, global_step);
-  Float beta2_t =
-      global_step == 0 ? this->beta2_ : powf(this->beta2_, global_step);
+  Float beta1_t = powf(this->beta1_, global_step);
+  Float beta2_t = powf(this->beta2_, global_step);
   Float lr = get_lr(global_step, this->gamma_);
   Float tmp_gd, tmp_m, tmp_v;
   for (int i = 0; i < dim; i++) {
-    tmp_gd = this->lambda_ != 0 ? gds[i] + this->lambda_ * w[i] : gds[i];
+    tmp_gd = gds[i] + this->lambda_ * w[i];
     m[i] = this->beta1_ * m[i] + (1.0 - this->beta1_) * tmp_gd;
     v[i] = this->beta2_ * v[i] + (1.0 - this->beta2_) * tmp_gd * tmp_gd;
     tmp_m = m[i] / (1.0 - beta1_t);
@@ -191,7 +188,7 @@ AdamWOptimizer::AdamWOptimizer(const Params &optimizer_params,
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.999)),
-      lambda_(optimizer_params.get<double>("lambda", 0.0)),
+      lambda_(optimizer_params.get<double>("lambda", 0.01)),
       epsilon_(optimizer_params.get<double>("epsilon", 1e-8)) {}
 
 AdamWOptimizer::~AdamWOptimizer() {}
@@ -207,13 +204,14 @@ void AdamWOptimizer::call(Float *data, Float *gds, int dim,
   Float beta2_t = powf(this->beta2_, global_step);
   Float lr = get_lr(global_step, this->gamma_);
   Float tmp_m, tmp_v;
+
   for (int i = 0; i < dim; i++) {
+    w[i] -= this->lambda_ * lr * w[i];
     m[i] = this->beta1_ * m[i] + (1.0 - this->beta1_) * gds[i];
     v[i] = this->beta2_ * v[i] + (1.0 - this->beta2_) * gds[i] * gds[i];
     tmp_m = m[i] / (1.0 - beta1_t);
     tmp_v = v[i] / (1.0 - beta2_t);
-    w[i] -= lr * (tmp_m / (safe_sqrt(tmp_v) + this->epsilon_) +
-                  this->lambda_ * w[i]);
+    w[i] -= lr * tmp_m / (safe_sqrt(tmp_v) + this->epsilon_);
   }
 }
 

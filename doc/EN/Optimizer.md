@@ -53,7 +53,7 @@ When using an optimizer, you need to configure the `name` item to indicate which
 1. $\gamma$: learning rate, default: 1e-3, **configure key**: `gamma`
 2. $\beta_1$: moving averages of gradient coefficient, default: 0.9, **configure key**: `beta1`
 3. $\beta_2$: moving averages of gradient's square coefficient, default: 0.999, **configure key**: `beta2`
-4. $\lambda$: weight decay rate, default: 1e-3, **configure key**: `lambda`
+4. $\lambda$: weight decay rate, default: 1e-2, **configure key**: `lambda`
 5. $\epsilon$: minimun error term, default: 1e-8, **configure key**: `epsilon`
 
 ## Lion

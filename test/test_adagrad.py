@@ -28,7 +28,7 @@ import shutil
 import os
 
 
-class AdamTestCase(unittest.TestCase):
+class AdagradTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
@@ -40,14 +40,11 @@ class AdamTestCase(unittest.TestCase):
         self.initializer = damo.PyInitializer(init_params)
         optm_params = damo.Parameters()
         optm_params.insert("name", "adam")
-        self.gamma = 0.001
-        self.beta1 = 0.9
-        self.beta2 = 0.999
+        self.gamma = 0.01
+        self.eta = 0.0
         self.lambda_ = 0.0
-        self.epsilon = 1e-8
+        self.epsilon = 1e-10
         optm_params.insert("gamma", self.gamma)
-        optm_params.insert("beta1", self.beta1)
-        optm_params.insert("beta2", self.beta2)
         optm_params.insert("lambda", self.lambda_)
         optm_params.insert("epsilon", self.epsilon)
         self.optimizer = damo.PyOptimizer(optm_params)
@@ -62,17 +59,14 @@ class AdamTestCase(unittest.TestCase):
         # in test case, we use torch to test the results
         n = 8
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.uint64)
-
         w = np.zeros(self.dim * n).astype(np.float32)
         self.embedding.lookup(keys, w)
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adam(
+        opt = torch.optim.Adagrad(
             [x],
             lr=self.gamma,
-            betas=(self.beta1, self.beta2),
-            weight_decay=self.lambda_,
             eps=self.epsilon,
         )
 

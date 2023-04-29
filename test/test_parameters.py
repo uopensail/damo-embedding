@@ -39,8 +39,8 @@ class ParametersTestCase(unittest.TestCase):
         params.insert("float2", 3.0)
         params.insert("float", 4.0)
         params.insert("bool", True)
-        print(params.to_string())
+        print(params.to_json())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

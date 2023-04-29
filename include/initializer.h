@@ -27,7 +27,7 @@
 #include "common.h"
 
 class Initializer {
- public:
+public:
   Initializer() = delete;
   Initializer(const Initializer &) = delete;
   Initializer(const Params &initializer_params);
@@ -42,12 +42,12 @@ class Initializer {
    */
   virtual void call(Float *data, int dim) = 0;
 
- protected:
+protected:
   std::string name_;
 };
 
 class Zeros : public Initializer {
- public:
+public:
   Zeros() = delete;
   Zeros(const Zeros &) = delete;
   Zeros(const Params &initializer_params);
@@ -56,7 +56,7 @@ class Zeros : public Initializer {
 };
 
 class Ones : public Initializer {
- public:
+public:
   Ones() = delete;
   Ones(const Ones &) = delete;
   Ones(const Params &initializer_params);
@@ -65,14 +65,14 @@ class Ones : public Initializer {
 };
 
 class RandomUniform : public Initializer {
- public:
+public:
   RandomUniform() = delete;
   RandomUniform(const RandomUniform &) = delete;
   RandomUniform(const Params &initializer_params);
   virtual ~RandomUniform();
   virtual void call(Float *data, int dim);
 
- private:
+private:
   double min_;
   double max_;
   std::uniform_real_distribution<double> distribution;
@@ -80,14 +80,14 @@ class RandomUniform : public Initializer {
 };
 
 class RandomNormal : public Initializer {
- public:
+public:
   RandomNormal() = delete;
   RandomNormal(const RandomNormal &) = delete;
   RandomNormal(const Params &initializer_params);
   virtual ~RandomNormal();
   virtual void call(Float *data, int dim);
 
- private:
+private:
   double mean_;
   double stddev_;
   std::normal_distribution<double> distribution;
@@ -95,14 +95,14 @@ class RandomNormal : public Initializer {
 };
 
 class TruncateNormal : public Initializer {
- public:
+public:
   TruncateNormal() = delete;
   TruncateNormal(const TruncateNormal &) = delete;
   TruncateNormal(const Params &initializer_params);
   virtual ~TruncateNormal();
   virtual void call(Float *data, int dim);
 
- private:
+private:
   double mean_;
   double stddev_;
   std::normal_distribution<double> distribution;
@@ -110,5 +110,4 @@ class TruncateNormal : public Initializer {
 };
 
 std::shared_ptr<Initializer> get_initializers(const Params &p);
-
-#endif  // DAMO_EMBEDDING_INITIALIZER_H
+#endif // DAMO_EMBEDDING_INITIALIZER_H

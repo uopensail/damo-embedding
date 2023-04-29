@@ -47,7 +47,7 @@ static std::mutex group_lock;
 static Configure group_configs[max_group];
 
 class ApplyGredientsOperator : public rocksdb::AssociativeMergeOperator {
- public:
+public:
   ApplyGredientsOperator() {}
   ~ApplyGredientsOperator() {}
 
@@ -63,7 +63,7 @@ class ApplyGredientsOperator : public rocksdb::AssociativeMergeOperator {
 
 class Embedding;
 class Storage {
- public:
+public:
   Storage() = delete;
   Storage(int ttl, const std::string &data_dir);
   ~Storage();
@@ -77,14 +77,14 @@ class Storage {
   void dump(const std::string &path,
             const std::function<bool(MetaData *ptr)> &filter);
 
- private:
+private:
   int ttl_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   friend class Embedding;
 };
 
 class Embedding {
- public:
+public:
   Embedding() = delete;
   Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
             const std::shared_ptr<Initializer> &initializer, int dim,
@@ -111,10 +111,10 @@ class Embedding {
    */
   void apply_gradients(u_int64_t *keys, int len, Float *gds, int n);
 
- private:
+private:
   std::shared_ptr<std::string> create(const u_int64_t &key);
 
- private:
+private:
   int dim_;
   int group_;
   u_int64_t group_mask_;
@@ -123,4 +123,4 @@ class Embedding {
   const std::shared_ptr<Initializer> initializer_;
 };
 
-#endif  // DAMO_EMBEDDING_EMBEDDING_H
+#endif // DAMO_EMBEDDING_EMBEDDING_H

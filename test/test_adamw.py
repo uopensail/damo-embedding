@@ -28,7 +28,7 @@ import shutil
 import os
 
 
-class AdamTestCase(unittest.TestCase):
+class AdamWTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
@@ -39,11 +39,11 @@ class AdamTestCase(unittest.TestCase):
         init_params.insert("stddev", 1.0)
         self.initializer = damo.PyInitializer(init_params)
         optm_params = damo.Parameters()
-        optm_params.insert("name", "adam")
+        optm_params.insert("name", "adamw")
         self.gamma = 0.001
         self.beta1 = 0.9
         self.beta2 = 0.999
-        self.lambda_ = 0.0
+        self.lambda_ = 0.01
         self.epsilon = 1e-8
         optm_params.insert("gamma", self.gamma)
         optm_params.insert("beta1", self.beta1)
@@ -68,7 +68,11 @@ class AdamTestCase(unittest.TestCase):
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adam(
+
+        y = torch.tensor(w, dtype=torch.float32, requires_grad=True)
+        y.grad = torch.tensor(gds, dtype=torch.float32)
+
+        opt1 = torch.optim.AdamW(
             [x],
             lr=self.gamma,
             betas=(self.beta1, self.beta2),
@@ -76,8 +80,24 @@ class AdamTestCase(unittest.TestCase):
             eps=self.epsilon,
         )
 
+        # opt2 = torch.optim.AdamW(
+        #     [y],
+        #     lr=self.gamma,
+        #     betas=(self.beta1, self.beta2),
+        #     weight_decay=0.0,
+        #     eps=self.epsilon,
+        # )
+
         self.embedding.apply_gradients(keys, gds)
-        opt.step()
+        opt1.step()
+        # opt2.step()
+
+        x0 = x.detach().numpy()
+        # y0 = y.detach().numpy()
+
+        # the diffenence between y0 and x0 is - w * self.gamma * self.lambda_
+        # print(y0 - x0 - w * self.gamma * self.lambda_)
+
         self.embedding.lookup(keys, w)
         tmp = (w - x.detach().numpy()).astype(np.float32)
         tmp = tmp.reshape((self.dim, n))

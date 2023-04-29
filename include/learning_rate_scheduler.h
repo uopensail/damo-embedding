@@ -42,4 +42,4 @@ Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
                          const Params &params);
 lr_scheduler get_lr_scheduler(const Params &p);
 
-#endif  // DAMO_EMBEDDING_LEARNING_RATE_SCHEDULER_H
+#endif // DAMO_EMBEDDING_LEARNING_RATE_SCHEDULER_H

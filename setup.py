@@ -29,12 +29,12 @@ def is_new_osx():
 
 if is_new_osx():
     COMPILE_OPTIONS.append("-stdlib=libc++")
-    COMPILE_OPTIONS.append("-std=c++20")
+    COMPILE_OPTIONS.append("-std=c++17")
     LINK_OPTIONS.append("-lc++")
     LINK_OPTIONS.append("-lrocksdb")
     LINK_OPTIONS.append("-nodefaultlibs")
 else:
-    COMPILE_OPTIONS.append("-std=c++20")
+    COMPILE_OPTIONS.append("-std=c++17")
     LINK_OPTIONS.append("-lrocksdb")
     LINK_OPTIONS.append("-lpthread")
     LINK_OPTIONS.append("-Wl,-rpath=/usr/local/lib")

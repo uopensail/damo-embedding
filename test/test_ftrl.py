@@ -18,38 +18,32 @@
 # You should have received a copy of the GNU General Public License
 # along with `Damo-Embedding`.  If not, see < http: # www.gnu.org/licenses/>.
 #
-
 import unittest
 from test import support
-import numpy as np
-import torch
 import damo
-import shutil
+import numpy as np
 import os
+import shutil
 
 
-class AdamTestCase(unittest.TestCase):
-    def setUp(self) -> None:
+class FTRLTestCase(unittest.TestCase):
+    def setUp(self):
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
         self.storage = damo.PyStorage("/tmp/data_dir", 86400)
         init_params = damo.Parameters()
-        init_params.insert("name", "truncate_normal")
-        init_params.insert("mean", 0.0)
-        init_params.insert("stddev", 1.0)
+        init_params.insert("name", "zeros")
         self.initializer = damo.PyInitializer(init_params)
         optm_params = damo.Parameters()
-        optm_params.insert("name", "adam")
-        self.gamma = 0.001
-        self.beta1 = 0.9
-        self.beta2 = 0.999
-        self.lambda_ = 0.0
-        self.epsilon = 1e-8
+        optm_params.insert("name", "ftrl")
+        self.gamma = 0.005
+        self.beta = 0.0
+        self.lambda1 = 0.0
+        self.lambda2 = 0.0
         optm_params.insert("gamma", self.gamma)
-        optm_params.insert("beta1", self.beta1)
-        optm_params.insert("beta2", self.beta2)
-        optm_params.insert("lambda", self.lambda_)
-        optm_params.insert("epsilon", self.epsilon)
+        optm_params.insert("beta", self.beta)
+        optm_params.insert("lambda1", self.lambda1)
+        optm_params.insert("lambda2", self.lambda2)
         self.optimizer = damo.PyOptimizer(optm_params)
 
         self.dim = 16
@@ -58,31 +52,28 @@ class AdamTestCase(unittest.TestCase):
             self.storage, self.optimizer, self.initializer, self.dim, group
         )
 
+    def tearDown(self):
+        pass
+
     def test(self):
-        # in test case, we use torch to test the results
         n = 8
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.uint64)
-
-        w = np.zeros(self.dim * n).astype(np.float32)
-        self.embedding.lookup(keys, w)
-        gds = np.random.random(self.dim * n).astype(np.float32)
-        x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
-        x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adam(
-            [x],
-            lr=self.gamma,
-            betas=(self.beta1, self.beta2),
-            weight_decay=self.lambda_,
-            eps=self.epsilon,
-        )
-
-        self.embedding.apply_gradients(keys, gds)
-        opt.step()
-        self.embedding.lookup(keys, w)
-        tmp = (w - x.detach().numpy()).astype(np.float32)
-        tmp = tmp.reshape((self.dim, n))
-        norms = np.linalg.norm(tmp, axis=-1)
-        print(norms)
+        N = np.zeros(self.dim * n, dtype=np.float32)
+        z = np.zeros(self.dim * n, dtype=np.float32)
+        w = np.zeros(self.dim * n, dtype=np.float32)
+        new_w = np.zeros(self.dim * n, dtype=np.float32)
+        for i in range(100):
+            self.embedding.lookup(keys, w)
+            gds = np.random.random(self.dim * n).astype(np.float32)
+            n1 = N + gds * gds
+            delta = (1.0 / self.gamma) * (np.sqrt(n1) - np.sqrt(N))
+            z = z + gds - w * delta
+            N = n1
+            tmp = np.where(np.abs(z) < self.lambda1, 0, z - np.sign(z) * self.lambda1)
+            new_w = -1.0 / ((self.beta + np.sqrt(N)) / self.gamma + self.lambda2) * tmp
+            self.embedding.apply_gradients(keys, gds)
+            self.embedding.lookup(keys, w)
+            print(np.linalg.norm(w - new_w))
 
 
 if __name__ == "__main__":

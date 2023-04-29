@@ -156,7 +156,7 @@ CBF的作用是用来过滤低频次特征。互联网的业务一般都呈现�
 1. $\gamma$: 学习率, default: 1e-3, 配置名称: gamma
 2. $\beta_1$: 梯度的移动均值系数, default: 0.9, 配置名称: beta1
 3. $\beta_2$: 梯度平方的移动均值系数, default: 0.999, 配置名称: beta2
-4. $\lambda$: 权重衰减的系数, default: 1e-3, 配置名称: lambda
+4. $\lambda$: 权重衰减的系数, default: 1e-2, 配置名称: lambda
 5. $\epsilon$: 最小误差项, default: 1e-8, 配置名称: epsilon
 
 #### Lion
@@ -166,7 +166,7 @@ CBF的作用是用来过滤低频次特征。互联网的业务一般都呈现�
 1. $\eta$: 学习率, default: 3e-4, 配置名称: eta
 2. $\beta_1$: 梯度的移动均值系数, default: 0.9, 配置名称: beta1
 3. $\beta_2$: 梯度的移动均值系数, default: 0.99, 配置名称: beta2
-4. $\lambda$: 权重衰减的系数, default: 0.01, 配置名称: lambda
+4. $\lambda$: 权重衰减的系数, default: 1e-2, 配置名称: lambda
 
 ## Install
 
@@ -198,7 +198,12 @@ python setup.py install
 默认使用主机字节序，不做转换。默认情况下，x86是小端。
 
 ## Examples
-参考目录../example
+在example目录下
+
+
+## 后记
+
+虽然这不算是个大项目，但也是我花了下班后和早晨的时间陆陆续续编写。拖拖拉拉，前前后后花了不少时间，反复修改，总是觉得这个不好，那个不好。最近才下定决心把这个项目了结掉。最近一次写到夜里两点，受寒感冒了。也算是付出了一些心血吧。
 
 ## Reference
 

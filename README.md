@@ -19,17 +19,38 @@ The reason for the OOV problem is mainly because the embedding in the training f
 
 ## Modules
 
-### Counting Bloom Filter
-[Counting Bloom Filter](doc/EN/CBF.md)
+Counting Bloom Filter
+
+The purpose of the Counting Bloom Filter is to filter low-frequency features. For more details, please refer to [Counting Bloom Filter](./doc/EN/CBF.md).
 
 ### Initializer
-[Initializer](doc/EN/Initializer.md)
+
+When user lookup keys from the embedding, if a key not exists, we use a specific initializer to initialize its weight, and then send the weight to the user, also save the weight to rocksdb. For more detail, please refer to [Initializer](./doc/EN/Initializer.md).
 
 ### Optimizer
-[Optimizer](doc/EN/Optimizer.md)
+
+There are many different optimizers, user can pick one of them, and use this optimizer to apply gradients. For more detail, please refer to [Optimizer](./doc/EN/Optimizer.md).
 
 ### Storage
-[Storage](doc/EN/Storage.md)
+
+The storage is based on rocksdb, it supports TTL(Time To Live). When creating a embedding object, storage object is necessary. Also, we support dump data to binary file for online serving. For more detail, please refer to [Storage](./doc/EN/Storage.md).
+
+### Embedding
+
+This is the most important module in this project. When creating an embedding object, users need fill in 5 arguments listed below:
+
+- **storage**: damo.PyStorage type
+  
+- **optimizer**: damo.PyOptimizer type
+  
+- **initializer**: damo.PyInitializer type
+  
+- **dimension**: int type, dim of embedding
+  
+- **group**: int type, [0, 256), defaul: 0
+  
+
+Embedding moule has two member functions: lookup and apply_gradients, both have no return values. For more detail, please refer to [Embedding](./doc/EN/Embedding.md).
 
 ## Install
 
@@ -50,3 +71,7 @@ Use `swig -python -c++ damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
 python setup.py install
 ```
 
+
+## Q&A
+
+1. [undefined reference to `typeinfo for rocksdb::AssociativeMergeOperator'](https://github.com/facebook/rocksdb/issues/3811)
