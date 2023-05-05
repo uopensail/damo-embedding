@@ -74,6 +74,7 @@ setup(
     keywords="sparse embedding using rocksdb",
     long_description="",
     long_description_content_type="text/markdown",
+    setup_requires=['numpy>=1.7.0'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
