@@ -59,7 +59,7 @@ When using damo-embedding,it is Not necessary to install SWIG. It is for develop
 
 [Swig And Numpy](doc/EN/Swig&NumPy.md)
 
-Use `swig -python -c++ damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
+Use `swig -python -c++ -Iinclude damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
 
 ### RocksDB
 [RocksDB](doc/EN/RocksDB.md)

@@ -9,6 +9,7 @@ Created on Mon Aug 3 17:58:27 2022
 """
 import platform
 import sys
+import numpy
 
 from setuptools import Extension, setup, find_packages
 
@@ -43,6 +44,7 @@ damoModule = Extension(
     name="_damo",
     include_dirs=[
         "include/",
+        numpy.get_include()
     ],
     sources=[
         "src/pyembedding.cpp",

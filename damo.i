@@ -2,7 +2,7 @@
 
 %{
 #define SWIG_FILE_WITH_INIT
-#include "include/pyembedding.h"
+#include "pyembedding.h"
 
 %}
 
@@ -17,4 +17,4 @@ import_array();
 %apply (unsigned long long* IN_ARRAY1, int DIM1) {(unsigned long long *keys, int kn)}
 %apply (float* INPLACE_ARRAY1, int DIM1) {(float* w, int wn)}
 
-%include "include/pyembedding.h"
+%include "pyembedding.h"
