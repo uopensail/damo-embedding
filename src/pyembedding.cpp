@@ -197,6 +197,10 @@ void PyStorage::dump(const std::string &path, Parameters condition) {
   this->storage_->dump(path, func);
 }
 
+void PyStorage::dump(const std::string &path) {
+  this->storage_->dump(path, nullptr);
+}
+
 PyEmbedding::PyEmbedding(PyStorage storage, PyOptimizer optimizer,
                          PyInitializer initializer, int dim, int group) {
   this->embedding_ =

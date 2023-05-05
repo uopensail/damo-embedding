@@ -39,8 +39,12 @@ Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
                      int group)
-    : dim_(dim), group_(group), group_mask_(0), db_(storage.db_),
-      optimizer_(optimizer), initializer_(initializer) {
+    : dim_(dim),
+      group_(group),
+      group_mask_(0),
+      db_(storage.db_),
+      optimizer_(optimizer),
+      initializer_(initializer) {
   if (group < 0 || group >= max_group) {
     std::cout << "group: " << group << " out of range" << std::endl;
     exit(-1);
@@ -181,7 +185,7 @@ void Storage::dump(const std::string &path,
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
-    if (filter(ptr)) {
+    if (filter == nullptr || filter(ptr)) {
       group_counts[ptr->group]++;
       writer.write((char *)&ptr->key, sizeof(u_int64_t));
       writer.write((char *)&ptr->group, sizeof(int));

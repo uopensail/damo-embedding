@@ -132,8 +132,8 @@ class PyStorage(object):
         _damo.PyStorage_swiginit(self, _damo.new_PyStorage(data_dir, ttl))
     __swig_destroy__ = _damo.delete_PyStorage
 
-    def dump(self, path, condition):
-        return _damo.PyStorage_dump(self, path, condition)
+    def dump(self, *args):
+        return _damo.PyStorage_dump(self, *args)
 
 # Register PyStorage in _damo:
 _damo.PyStorage_swigregister(PyStorage)

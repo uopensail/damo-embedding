@@ -30,7 +30,7 @@
 #include "optimizer.h"
 
 class Parameters {
-public:
+ public:
   Parameters();
   Parameters(const Parameters &p);
   Parameters &operator=(const Parameters &p);
@@ -41,14 +41,14 @@ public:
   void insert(std::string key, bool value);
   std::string to_json();
 
-public:
+ public:
   std::shared_ptr<cpptoml::table> params_;
 };
 
 class PyEmbedding;
 
 class PyInitializer {
-public:
+ public:
   PyInitializer();
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
@@ -63,13 +63,13 @@ public:
   void call(float *w, int wn);
   ~PyInitializer();
 
-private:
+ private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
 };
 
 class PyOptimizer {
-public:
+ public:
   PyOptimizer();
   PyOptimizer(Parameters op_params);
   PyOptimizer(Parameters op_params, Parameters decay_params);
@@ -89,13 +89,13 @@ public:
             unsigned long long global_step = 0);
   ~PyOptimizer();
 
-private:
+ private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
 };
 
 class PyFilter {
-public:
+ public:
   PyFilter();
   PyFilter(Parameters params);
   PyFilter(const PyFilter &p);
@@ -119,13 +119,13 @@ public:
   void add(unsigned long long key, unsigned long long num);
   ~PyFilter();
 
-private:
+ private:
   std::shared_ptr<CountingBloomFilter> filter_;
   friend class PyEmbedding;
 };
 
 class PyStorage {
-public:
+ public:
   /**
    * @brief Construct a new Py Storage object
    *
@@ -138,18 +138,25 @@ public:
   /**
    * @brief dump the data to binary format for online predict
    *
-   * @param path to save the data
-   * @param expires only save the new keys
+   * @param path data path to dump
+   * @param condition condition for dump
    */
   void dump(const std::string &path, Parameters condition);
 
-private:
+  /**
+   * @brief dump the data to binary format for online predict
+   *
+   * @param path data path to dump
+   */
+  void dump(const std::string &path);
+
+ private:
   std::shared_ptr<Storage> storage_;
   friend class PyEmbedding;
 };
 
 class PyEmbedding {
-public:
+ public:
   PyEmbedding() = delete;
   PyEmbedding(PyStorage storage, PyOptimizer optimizer,
               PyInitializer initializer, int dim, int group = 0);
@@ -178,8 +185,8 @@ public:
    */
   void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn);
 
-private:
+ private:
   std::shared_ptr<Embedding> embedding_;
 };
 
-#endif // DAMO_EMBEDDING_PY_EMBEDDING_H
+#endif  // DAMO_EMBEDDING_PY_EMBEDDING_H
