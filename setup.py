@@ -48,7 +48,7 @@ class get_numpy_include(object):
 damoModule = Extension(
     name="_damo",
     include_dirs=[
-        "include/",
+        "include",
         get_numpy_include()
     ],
     sources=[

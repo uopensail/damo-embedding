@@ -33,5 +33,6 @@
 build/
 dist/
 *.egg-info/
+*.eggs
 .vscode/
 *__pycache__*

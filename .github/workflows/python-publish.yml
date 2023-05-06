@@ -29,13 +29,12 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build
         pip install numpy
         pip install auditwheel
         pip install patchelf
     - name: Build package
       run: |
-        python -m build
+        python setup.py bdist_wheel sdist
         auditwheel repair dist/*.whl --plat manylinux_2_35_x86_64
         rm dist/*.whl
         cp wheelhouse/*.whl dist/
