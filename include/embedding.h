@@ -58,7 +58,7 @@ public:
   static const char *kClassName() { return "ApplyGredientsOperator"; }
   static const char *kNickName() { return "apply_gredients"; }
   [[nodiscard]] const char *Name() const override { return kClassName(); }
-  [[nodiscard]] const char *NickName() const override { return kNickName(); }
+  [[nodiscard]] const char *NickName() const { return kNickName(); }
 };
 
 class Embedding;
