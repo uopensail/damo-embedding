@@ -9,7 +9,6 @@ Created on Mon Aug 3 17:58:27 2022
 """
 import platform
 import sys
-import numpy
 
 from setuptools import Extension, setup, find_packages
 
@@ -40,11 +39,17 @@ else:
     LINK_OPTIONS.append("-lpthread")
     LINK_OPTIONS.append("-Wl,-rpath=/usr/local/lib")
 
+class get_numpy_include(object):
+    """Defer numpy.get_include() until after numpy is installed."""
+    def __str__(self):
+        import numpy
+        return numpy.get_include()
+    
 damoModule = Extension(
     name="_damo",
     include_dirs=[
         "include/",
-        numpy.get_include()
+        get_numpy_include()
     ],
     sources=[
         "src/pyembedding.cpp",
@@ -74,7 +79,7 @@ setup(
     keywords="sparse embedding using rocksdb",
     long_description="",
     long_description_content_type="text/markdown",
-    setup_requires=['numpy>=1.7.0'],
+    setup_requires=["numpy >= 1.7.0"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
