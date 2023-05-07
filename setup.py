@@ -68,12 +68,6 @@ damoModule = Extension(
 with open("README.md", "r", encoding="utf-8") as fd:
     long_description = fd.read()
 
-def parse_requirements(filename):
-    """ load requirements from a pip requirements file """
-    with open(filename, 'r') as f:
-        lineiter = list(line.strip() for line in f)
-    return [line for line in lineiter if line and not line.startswith("#")]
-
 setup(
     name="damo-embedding",
     version="1.0.0",
@@ -88,7 +82,7 @@ setup(
     keywords="sparse embedding using rocksdb",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires= parse_requirements("requirements.txt"),
+    install_requires= ["numpy >= 1.7.0"],
     setup_requires=["numpy >= 1.7.0"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
