@@ -81,7 +81,7 @@ setup(
     license="License :: GLP3",
     author="timepi",
     author_email="",
-    url="uopensail.github.io/damo-embedding",
+    url="https://github.com/uopensail/damo-embedding",
     packages=find_packages(),
     py_modules=["damo"],
     ext_modules=[damoModule],
