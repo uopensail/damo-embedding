@@ -65,6 +65,15 @@ damoModule = Extension(
     extra_link_args=LINK_OPTIONS,
 )
 
+with open("README.md", "r", encoding="utf-8") as fd:
+    long_description = fd.read()
+
+def parse_requirements(filename):
+    """ load requirements from a pip requirements file """
+    with open(filename, 'r') as f:
+        lineiter = list(line.strip() for line in f)
+    return [line for line in lineiter if line and not line.startswith("#")]
+
 setup(
     name="damo",
     version="1.0.0",
@@ -72,18 +81,18 @@ setup(
     license="License :: GLP3",
     author="timepi",
     author_email="",
-    url="",
+    url="uopensail.github.io/damo-embedding",
     packages=find_packages(),
     py_modules=["damo"],
     ext_modules=[damoModule],
     keywords="sparse embedding using rocksdb",
-    long_description="",
+    long_description=long_description,
     long_description_content_type="text/markdown",
+    install_requires= parse_requirements("requirements.txt"),
     setup_requires=["numpy >= 1.7.0"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
-        "License :: GPL3",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
