@@ -75,7 +75,7 @@ def parse_requirements(filename):
     return [line for line in lineiter if line and not line.startswith("#")]
 
 setup(
-    name="damo",
+    name="damo-embedding",
     version="1.0.0",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: GLP3",
