@@ -23,9 +23,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.6.1
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_BEFORE_ALL_LINUX: >
-            sed -i s/deb.debian.org/archive.debian.org/g /etc/apt/sources.list &&
-            bash scripts/prepare_build_debain.sh
+          CIBW_BEFORE_ALL_LINUX: bash scripts/prepare_build_centos.sh
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
