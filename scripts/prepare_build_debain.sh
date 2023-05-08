@@ -8,11 +8,11 @@ apt-get install -y libgflags-dev
 apt-get install -y libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
 
 # Build With Source
-
+gcc -v
 cd /tmp
-wget https://github.com/facebook/rocksdb/archive/v8.1.1.tar.gz
-tar -xvzf v8.1.1.tar.gz
-cd rocksdb-8.1.1/
+wget https://github.com/facebook/rocksdb/archive/v6.4.6.tar.gz
+tar -xvzf v6.4.6.tar.gz
+cd rocksdb-6.4.6/
 
 # online env NOT USE make/make all
 # online env make static_lib/make shared_lib
