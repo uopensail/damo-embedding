@@ -8,7 +8,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        #os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -18,19 +19,10 @@ jobs:
         with:
           python-version: '3.x'
           
-      - name: Install Dependencies On Linux
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get install librocksdb-dev
-          python -m pip install --upgrade pip
-          pip install numpy
-          pip install wheel
-          pip install auditwheel
-          pip install patchelf
-      
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.6.1
         env:
+          CIBW_BEFORE_ALL_LINUX: bash scripts/prepare_build_debain.sh
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
