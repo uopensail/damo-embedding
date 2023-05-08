@@ -13,9 +13,6 @@ cd /tmp
 wget https://github.com/facebook/rocksdb/archive/v8.1.1.tar.gz
 tar -xvzf v8.1.1.tar.gz
 cd rocksdb-8.1.1/
-mkdir build
-cd build
-cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rocksdb ..
 
 # online env NOT USE make/make all
 # online env make static_lib/make shared_lib
