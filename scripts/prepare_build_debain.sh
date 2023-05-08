@@ -1,5 +1,5 @@
 #!/bin/bash -x
-
+apt-get update
 apt-get install -y python-dev wget
 
 # Build Rocksdb
