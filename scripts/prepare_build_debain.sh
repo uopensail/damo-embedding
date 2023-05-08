@@ -10,9 +10,9 @@ apt-get install -y libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
 # Build With Source
 
 cd /tmp
-wget https://github.com/facebook/rocksdb/archive/v6.4.6.tar.gz
-tar -xvzf v6.4.6.tar.gz
-cd rocksdb-6.4.6/
+wget https://github.com/facebook/rocksdb/archive/v8.1.1.tar.gz
+tar -xvzf v8.1.1.tar.gz
+cd rocksdb-8.1.1/
 mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rocksdb ..
