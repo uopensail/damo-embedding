@@ -7,11 +7,10 @@ Configure::Configure() {
   initializer = nullptr;
 }
 
-bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
-                                   const rocksdb::Slice *existing_value,
-                                   const rocksdb::Slice &value,
-                                   std::string *new_value,
-                                   rocksdb::Logger *logger) const {
+bool ApplyGredientsOperator::FullMerge(
+    const rocksdb::Slice &key, const rocksdb::Slice *existing_value,
+    const std::deque<std::string> &operand_list, std::string *new_value,
+    rocksdb::Logger *logger) const {
   // key must already exist
   if (existing_value == nullptr) {
     return false;
@@ -27,11 +26,13 @@ bool ApplyGredientsOperator::Merge(const rocksdb::Slice &key,
   new_value->resize(existing_value->size());
   MetaData *new_ptr = (MetaData *)(new_value->data());
   memcpy(new_ptr, ptr, existing_value->size());
-  new_ptr->update_num++;
+  for (const auto &value : operand_list) {
+    new_ptr->update_num++;
+    float *gds = (float *)(const_cast<char *>(value.data()));
+    group_configs[new_ptr->group].optimizer->call(
+        new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
+  }
   new_ptr->update_time = get_current_time();
-  float *gds = (float *)(const_cast<char *>(value.data()));
-  group_configs[new_ptr->group].optimizer->call(
-      new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
   return true;
 }
 
