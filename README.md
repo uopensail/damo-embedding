@@ -73,7 +73,7 @@ This is python3 tool, [Python3](doc/EN/Python3.md) Is required.
 
 NumPy is needed, NumPy's include and lib path should add to system path, please refer to [Swig&NumPy.md](./doc/EN/Swig&NumPy.md).
 
-### install
+### Install
 ```bash
 python setup.py install
 ```
