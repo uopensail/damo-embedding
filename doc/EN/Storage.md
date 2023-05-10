@@ -61,6 +61,30 @@ First part stores the dim and count of each group, totally 256 groups. Second pa
 | int32     | 4bit | 1                 | group of the key  |
 | float     | 4bit | dim of this group | weight of the key |
 
+## checkpoint
+
+When model training finishes, you may do the checkout of all the keys.
+
+### file format
+
+First part stores the count keys. Second part stores all the keys and values.
+
+#### first part
+
+| type   | size | length | description                       |
+| ------ | ---- | ------ | --------------------------------- |
+| size_t  | 8bit | 1    | key count     |
+
+#### second part
+
+| type      | size | length            | description       |
+| --------- | ---- | ----------------- | ----------------- |
+| size_t | 8bit | 1                 | key length        |
+| byte   | 1bit | key length        | key data          |
+| size_t | 8bit | 1                 | value length      |
+| byte   | 1bit | value length      | value data        |
+
+
 ## Example
 
 ```python
@@ -77,6 +101,10 @@ cond.insert("min_count", 3)
 cond.insert("group", 0)
 
 storage.dump("/tmp/weight.dat", cond)
+
+storage.checkpoint("/tmp/checkpoint")
+
+storage.load_from_checkpoint("/tmp/checkpoint")
 
 ```
 

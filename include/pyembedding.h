@@ -150,6 +150,20 @@ class PyStorage {
    */
   void dump(const std::string &path);
 
+  /**
+   * @brief do the checkpoint
+   *
+   * @param path file path
+   */
+  void checkpoint(const std::string &path);
+
+  /**
+   * @brief load from checkpoint file
+   *
+   * @param path file path
+   */
+  void load_from_checkpoint(const std::string &path);
+
  private:
   std::shared_ptr<Storage> storage_;
   friend class PyEmbedding;

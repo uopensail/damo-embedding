@@ -24,24 +24,22 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from typing import Union
+from typing import Union, List
 from embedding import Embedding
 
 
-class DeepFM(torch.nn.Module):
+class GroupWiseEmbeddingNetwork(torch.nn.Module):
     def __init__(
         self,
-        emb_size: int,
-        fea_size: int,
+        emb_sizes: List[int],
         hid_dims=[256, 128],
         num_classes=1,
         dropout=[0.2, 0.2],
         **kwargs,
     ):
-        super(DeepFM, self).__init__()
-        self.emb_size = emb_size
-        self.fea_size = fea_size
-
+        super(GroupWiseEmbeddingNetwork, self).__init__()
+        self.emb_sizes = emb_sizes
+        self.groups = len(self.emb_sizes)
         initializer = {
             "name": "truncate_normal",
             "mean": float(kwargs.get("mean", 0.0)),
@@ -50,31 +48,25 @@ class DeepFM(torch.nn.Module):
 
         optimizer = {
             "name": "adam",
-            "gamma": float(kwargs.get("gamma", 0.001)),
+            "gamma": float(kwargs.get("gamma", 1e-3)),
             "beta1": float(kwargs.get("beta1", 0.9)),
             "beta2": float(kwargs.get("beta2", 0.999)),
             "lambda": float(kwargs.get("lambda", 0.0)),
             "epsilon": float(kwargs.get("epsilon", 1e-8)),
         }
 
-        self.w = Embedding(
-            1,
-            initializer=initializer,
-            optimizer=optimizer,
-            group=0,
-            **kwargs,
-        )
+        self.embeddings = []
+        for i, emb_size in enumerate(emb_sizes):
+            embedding = Embedding(
+                emb_size,
+                initializer=initializer,
+                optimizer=optimizer,
+                group=i,
+                **kwargs,
+            )
+            self.embeddings.append(embedding)
 
-        self.v = Embedding(
-            self.emb_size,
-            initializer=initializer,
-            optimizer=optimizer,
-            group=1,
-            **kwargs,
-        )
-        self.w0 = torch.zeros(1, dtype=torch.float32, requires_grad=True)
-        self.dims = [fea_size * emb_size] + hid_dims
-
+        self.dims = [sum(emb_sizes)] + hid_dims
         self.layers = nn.ModuleList()
         for i in range(1, len(self.dims)):
             self.layers.append(nn.Linear(self.dims[i - 1], self.dims[i]))
@@ -85,30 +77,16 @@ class DeepFM(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
-        """forward
-
-        Args:
-            inputs (Union[torch.Tensor, np.ndarray]): input tensor
-
-        Returns:
-            tensor.Tensor: deepfm forward values
-        """
-        assert inputs.shape[1] == self.fea_size
-        w = self.w.forward(inputs)
-        v = self.v.forward(inputs)
-        square_of_sum = torch.pow(torch.sum(v, dim=1), 2)
-        sum_of_square = torch.sum(v * v, dim=1)
-        fm_out = (
-            torch.sum((square_of_sum - sum_of_square)
-                      * 0.5, dim=1, keepdim=True)
-            + torch.sum(w, dim=1)
-            + self.w0
-        )
-
-        dnn_out = torch.flatten(v, 1)
+    def forward(self, inputs: Union[torch.Tensor, np.ndarray]):
+        batch_size, groups = inputs.shape
+        assert groups == self.groups
+        weights = []
+        for i in range(groups):
+            w = self.embeddings[i].forward(
+                inputs[:][:, i].reshape(batch_size, 1))
+            weights.append(torch.sum(w, dim=1))
+        dnn_out = torch.concat(weights, dim=1)
         for layer in self.layers:
             dnn_out = layer(dnn_out)
-        out = fm_out + dnn_out
-        out = self.sigmoid(out)
+        out = self.sigmoid(dnn_out)
         return out

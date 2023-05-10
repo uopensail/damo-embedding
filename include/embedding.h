@@ -87,6 +87,20 @@ class Storage {
   void dump(const std::string &path,
             const std::function<bool(MetaData *ptr)> &filter);
 
+  /**
+   * @brief do the checkpoint
+   *
+   * @param path file path
+   */
+  void checkpoint(const std::string &path);
+
+  /**
+   * @brief load from checkpoint file
+   *
+   * @param path file path
+   */
+  void load_from_checkpoint(const std::string &path);
+
  private:
   int ttl_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;

@@ -153,8 +153,7 @@ Storage::Storage(int ttl, const std::string &data_dir) : ttl_(ttl) {
       rocksdb::DBWithTTL *db = (rocksdb::DBWithTTL *)ptr;
       db->Flush(rocksdb::FlushOptions());
       // do compact
-      rocksdb::CompactRangeOptions options;
-      db->CompactRange(options, nullptr, nullptr);
+      db->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
       db->Close();
       delete db;
       db = nullptr;
@@ -201,4 +200,79 @@ void Storage::dump(const std::string &path,
   writer.write((char *)&group_dims, sizeof(int) * max_group);
   writer.write((char *)&group_counts, sizeof(size_t) * max_group);
   writer.close();
+}
+
+// checkpoint file format:
+// u_int64_t: key count
+// (size_t: key length, bytes: key data, size_t: value length, bytes: value
+// data)+
+void Storage::checkpoint(const std::string &path) {
+  std::string checkpoint_path = path + "-" + std::to_string(get_current_time());
+  const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
+  rocksdb::ReadOptions read_option;
+  read_option.snapshot = sp;
+  rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
+  u_int64_t count = 0;
+  size_t key_len = 0, value_len = 0;
+
+  std::ofstream writer(checkpoint_path, std::ios::out | std::ios::binary);
+  writer.write((char *)&count, sizeof(u_int64_t));
+
+  for (it->SeekToFirst(); it->Valid(); it->Next()) {
+    count++;
+    key_len = it->key().size();
+    value_len = it->value().size();
+    writer.write((char *)&key_len, sizeof(size_t));
+    writer.write(it->key().data(), key_len);
+    writer.write((char *)&value_len, sizeof(size_t));
+    writer.write(it->value().data(), value_len);
+  }
+  assert(it->status().ok());
+  delete it;
+  this->db_->ReleaseSnapshot(sp);
+  writer.seekp(0, std::ios::beg);
+  writer.write((char *)&count, sizeof(u_int64_t));
+  writer.close();
+}
+
+void Storage::load_from_checkpoint(const std::string &path) {
+  // first delete all the old keys
+  auto status = this->db_->DeleteRange(rocksdb::WriteOptions(),
+                                       this->db_->DefaultColumnFamily(),
+                                       rocksdb::Slice(), rocksdb::Slice());
+
+  // add keys read from checkpoint file
+  rocksdb::WriteOptions options;
+  options.sync = false;
+  std::ifstream reader(path, std::ios::in | std::ios::binary);
+  u_int64_t count = 0;
+  size_t key_len = 0, value_len = 0;
+  reader.read((char *)&count, sizeof(u_int64_t));
+  size_t max_key_length = 1024, max_value_length = 1024;
+  char *key = (char *)malloc(max_key_length);
+  char *value = (char *)malloc(max_value_length);
+
+  for (u_int64_t i = 0; i < count; i++) {
+    reader.read((char *)&key_len, sizeof(size_t));
+    if (key_len > max_key_length) {
+      max_key_length = key_len * 2;
+      free(key);
+      key = (char *)malloc(max_key_length);
+    }
+    reader.read(key, key_len);
+    reader.read((char *)&value_len, sizeof(size_t));
+    if (value_len > max_value_length) {
+      max_value_length = value_len * 2;
+      free(value);
+      value = (char *)malloc(max_value_length);
+    }
+    reader.read(value, value_len);
+    this->db_->Put(options, {key, key_len}, {value, value_len});
+  }
+  free(key);
+  free(value);
+  reader.close();
+
+  this->db_->Flush(rocksdb::FlushOptions());
+  this->db_->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
 }

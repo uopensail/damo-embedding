@@ -2,7 +2,7 @@
 # -*- coding: UTF-8 -*-
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi < timepi123@gmail.com >
+# Copyright(C) 2019 - present timepi <timepi123@gmail.com>
 #
 # This file is part of `Damo-Embedding`.
 #
@@ -42,8 +42,20 @@ class Storage(object):
                 cls._instance.dir, cls._instance.ttl)
         return cls._instance
 
-    def dump(self, path: str):
-        self.storage.dump(path)
+    @staticmethod
+    def checkpoint(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.checkpoint(path)
+
+    @staticmethod
+    def dump(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.dump(path)
+
+    @staticmethod
+    def load_from_checkpoint(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.load_from_checkpoint(path)
 
 
 class Embedding(torch.nn.Module):

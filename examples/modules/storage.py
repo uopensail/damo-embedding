@@ -1,6 +1,6 @@
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi < timepi123@gmail.com >
+# Copyright(C) 2019 - present timepi <timepi123@gmail.com>
 #
 # This file is part of `Damo-Embedding`.
 #
