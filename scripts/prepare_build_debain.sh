@@ -8,7 +8,6 @@ apt-get install -y libgflags-dev
 apt-get install -y libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
 
 # Build With Source
-gcc -v
 cd /tmp
 wget https://github.com/facebook/rocksdb/archive/v6.4.6.tar.gz
 tar -xvzf v6.4.6.tar.gz

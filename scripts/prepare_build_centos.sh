@@ -1,12 +1,13 @@
 #!/bin/bash -x
 
-yum install -y python-devel wget
-yum install -y git gflags-devel snappy-devel glog-devel zlib-devel \
-    lz4-devel libzstd-devel gcc-c++ make autoreconf automake \
-    libtool cmake 
+yum install -y epel-release
+yum install -y python-dev wget
+
+# Build Rocksdb
+yum install -y libgflags-dev
+yum install -y libsnappy-dev zlib1g-dev libbz2-dev liblz4-dev libzstd-dev
 
 # Build With Source
-gcc -v
 cd /tmp
 wget https://github.com/facebook/rocksdb/archive/v6.4.6.tar.gz
 tar -xvzf v6.4.6.tar.gz
