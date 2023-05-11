@@ -28,7 +28,6 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.6.1
         env:
-          CIBW_BEFORE_ALL_LINUX: bash scripts/prepare_build_centos.sh
           CIBW_BEFORE_ALL_MACOS: brew install rocksdb
           CIBW_BEFORE_BUILD_WINDOWS: vcpkg install rocksdb:x64-windows
           CIBW_ARCHS_LINUX: auto, aarch64 
