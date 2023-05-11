@@ -21,11 +21,12 @@ def is_new_osx():
     if sys.platform != "darwin":
         return False
     mac_ver = platform.mac_ver()[0]
-    if mac_ver.startswith("10"):
-        ver_ss = mac_ver.split(".")
-        version = int(ver_ss[0])
-        if version > 10:
-            return True
+    ver_ss = mac_ver.split(".")
+    version = int(ver_ss[0])
+ 
+    if version > 10:
+        return True
+    elif version == 10:
         minor_version = int(ver_ss[1])
         return minor_version >= 7
     return False
