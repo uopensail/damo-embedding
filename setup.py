@@ -75,7 +75,7 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.0.2",
+    version="1.0.3",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: GLP3",
     author="timepi",
@@ -87,8 +87,7 @@ setup(
     keywords="sparse embedding using rocksdb",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires= ["numpy >= 1.7.0"],
-    setup_requires=["numpy >= 1.7.0"],
+    install_requires= ["numpy>=1.17.0"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
