@@ -23,7 +23,7 @@ def is_new_osx():
     mac_ver = platform.mac_ver()[0]
     ver_ss = mac_ver.split(".")
     version = int(ver_ss[0])
- 
+    
     if version > 10:
         return True
     elif version == 10:
@@ -79,7 +79,7 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.0.1",
+    version="1.0.3",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: GLP3",
     author="timepi",

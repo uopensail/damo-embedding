@@ -52,9 +52,6 @@ jobs:
   upload_pypi:
     needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
-    # upload to PyPI on every tag starting with 'v'
-    # alternatively, to publish when a GitHub Release is created, use the following rule:
-    if: github.event_name == 'release' && github.event.action == 'published'
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -62,8 +59,16 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
+        if: 'github.event.prerelease'
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          skip_existing: true
+
+      - uses: pypa/gh-action-pypi-publish@v1.4.2
+        if: '!github.event.prerelease'
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
           skip_existing: true
