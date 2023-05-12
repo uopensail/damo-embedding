@@ -1,6 +1,6 @@
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi < timepi123@gmail.com >
+# Copyright(C) 2019 - present timepi <timepi123@gmail.com>
 #
 # This file is part of `Damo-Embedding`.
 #
@@ -18,21 +18,37 @@
 # You should have received a copy of the GNU General Public License
 # along with `Damo-Embedding`.  If not, see < http: # www.gnu.org/licenses/>.
 #
-
 import damo
+import numpy as np
 
-# 设置参数
-param = damo.Parameters()
-param.insert("capacity", 1 << 28)
-param.insert("count", 15)
-param.insert("path", "/tmp/cbf")
-param.insert("reload", True)
-param.insert("fpr", 0.001)
-print(param.to_json())
+# configure learning rate scheduler
+schedluer_params = damo.Parameters()
+schedluer_params.insert("name", "")
 
-filter = damo.PyFilter(param)
+# configure optimizer
+optimizer_params = damo.Parameters()
+optimizer_params.insert("name", "sgd")
+optimizer_params.insert("gamma", 0.001)
+optimizer_params.insert("lambda", 0.0)
 
-key = 123456
-for i in range(16):
-    filter.add(key, 1)
-    print(filter.check(key))
+# no scheduler
+opt1 = damo.PyOptimizer(optimizer_params)
+
+# specific scheduler
+# opt1 = damo.PyOptimizer(optimizer_params, schedluer_params)
+
+w = np.zeros(10, dtype=np.float32)
+gs = np.random.random(10).astype(np.float32)
+step = 0
+print("w: ", w)
+print("gs: ", gs)
+
+
+opt1.call(w, gs, step)
+print("w: ", w)
+
+print("w: ", w)
+print("gs: ", gs)
+# default step is 0
+opt1.call(w, gs)
+print("w: ", w)

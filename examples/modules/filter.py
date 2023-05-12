@@ -1,6 +1,6 @@
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi < timepi123@gmail.com >
+# Copyright(C) 2019 - present timepi <timepi123@gmail.com>
 #
 # This file is part of `Damo-Embedding`.
 #
@@ -21,14 +21,18 @@
 
 import damo
 
-# first param: data dir
-# second param: ttl second
-storage = damo.PyStorage("/tmp/data_dir", 86400*100)
+# 设置参数
+param = damo.Parameters()
+param.insert("capacity", 1 << 28)
+param.insert("count", 15)
+param.insert("path", "/tmp/cbf")
+param.insert("reload", True)
+param.insert("fpr", 0.001)
+print(param.to_json())
 
+filter = damo.PyFilter(param)
 
-cond = damo.Parameters()
-cond.insert("expire_days", 100)
-cond.insert("min_count", 3)
-cond.insert("group", 0)
-
-storage.dump("/tmp/weight.dat", cond)
+key = 123456
+for i in range(16):
+    filter.add(key, 1)
+    print(filter.check(key))

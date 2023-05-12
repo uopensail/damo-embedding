@@ -160,6 +160,14 @@ PyStorage::PyStorage(const std::string &data_dir, int ttl) {
 
 PyStorage::~PyStorage() {}
 
+void PyStorage::checkpoint(const std::string &path) {
+  this->storage_->checkpoint(path);
+}
+
+void PyStorage::load_from_checkpoint(const std::string &path) {
+  this->storage_->load_from_checkpoint(path);
+}
+
 void PyStorage::dump(const std::string &path, Parameters condition) {
   auto func = [&condition](MetaData *ptr) -> bool {
     if (ptr == nullptr) {
