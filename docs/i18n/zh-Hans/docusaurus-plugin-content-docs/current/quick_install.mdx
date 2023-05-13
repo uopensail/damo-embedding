@@ -1,8 +1,17 @@
 import Tabs from '@theme/Tabs';
 import TabItem from '@theme/TabItem';
 
-# Quick Install
-We do depend on newer gcc/clang with C++17 support (GCC >= 7, Clang >= 5).
+# 快速安装
+
+```shell
+pip install damo-embedding
+```
+
+
+
+# 源码安装
+
+需要C++17，需要升级GCC/Clang (GCC >= 7, Clang >= 5).
 ## RocksDB
 
 <Tabs groupId="operating-systems">
@@ -55,8 +64,10 @@ vcpkg install rocksdb:x64-windows
   </TabItem>
 </Tabs>
 
-# Install damo-embedding via pip
+# 安装 damo-embedding 
 
 ```shell
-pip install damo-embedding
+git clone git@github.com:uopensail/damo-embedding.git
+cd damo-embedding
+python3 setup.py install
 ```

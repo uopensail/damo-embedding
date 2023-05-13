@@ -1,10 +1,15 @@
+
 # Embedding
 
-The Embedding module uses Rocksdb to store the values of Embedding, which is KV format. The Key of feature is u_int64_t type, the value is a list of floating point numbers and some other values.
+Embedding模块使用rocksdb来磁盘来存储Embedding的值, 采用KV的方式。 其中Key是特征hash的值(uint64类型), Value是Embedding对应的浮点数列表以及一些其他的值。
 
-## Key and Group
+## Key
 
-All features are discretization and represented by the unique u_int64_t value. We use group to represent the same type of features.Different group can have different optimizer, initializer and dimension.
+所有的特征都是经过离散化的, 用唯一的uint64的值进行表示。同一类特征用相同的特征组(group)来管理。在rocksdb中使用uint64这个值来进行查询。
+
+## Group
+
+这里会将特征分成不同的group, 不同的group可以设置不同的宽度, 不同的初始化算子和优化算子。
 
 ## Value
 
@@ -18,9 +23,9 @@ struct MetaData {
 };
 ```
 
-## TTL
+#### TTL
 
-For some features that have not been updated for a long time, they can be deleted by setting TTL, which is supported by Rocksdb itself. This action can reduce the size of the model.
+对于一些长时间没有更新的特征, 可以通过设置TTL的方式将其删除, 这个是rocksdb自身支持的功能。这样做也是为了降低模型的大小。
 
 ## Usage
 

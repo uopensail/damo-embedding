@@ -11,61 +11,61 @@ When using an optimizer, you need to configure the `name` item to indicate which
 | AdamW     | adamw   |
 | Lion      | lion    |
 
-## SGD
+#### SGD
 
-[SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD) configure the following parameters:
+[SGD](https://pytorch.org/docs/stable/generated/torch.optim.SGD.html#torch.optim.SGD)需要配置如下的一些参数:
 
-1. $\gamma$: learning rate, default: 1e-3, **configure key**: `gamma`
-2. $\lambda$: weight decay, default: 0, **configure key**: `lambda`
+1. $\gamma$: 学习率, default: 1e-3, 配置名称: gamma
+2. $\lambda$: 权重衰减的系数, default: 0, 配置名称: lambda
 
-## FTRL
+#### FTRL
 
-[FTRL](https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/37013.pdf) configure the following parameters:
+[FTRL](https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/37013.pdf)需要配置如下的一些参数:
 
-1. $\alpha$: learning rate, default: 5e-3, **configure key**: `gamma`
-2. $\beta:$\\beta$ param, default: 0.0, **configure key**: `beta`
-3. $\lambda_1$: L1 regulation, default: 0.0, **configure key**: `lambda1`
-4. $\lambda_2$: L2 regulation, default: 0.0, **configure key**: `lambda2`
+1. $\alpha$: 学习率, default: 5e-3, 配置名称: gamma
+2. $\beta$: $\beta$参数, default: 0.0, 配置名称: beta
+3. $\lambda_1$: L1正则参数, default: 0.0, 配置名称: lambda1
+4. $\lambda_2$: L2正则参数, default: 0.0, 配置名称: lambda2
 
-## Adagrad
+#### Adagrad
 
-[Adagrad](https://pytorch.org/docs/stable/generated/torch.optim.Adagrad.html#torch.optim.Adagrad) configure the following parameters:
+[Adagrad](https://pytorch.org/docs/stable/generated/torch.optim.Adagrad.html#torch.optim.Adagrad)需要配置如下的一些参数:
 
-1. $\gamma$: learning rate, default: 1e-2, **configure key**: `gamma`
-2. $\lambda$: weight decay, default: 0.0, **configure key**: `lambda`
-3. $\eta$: learning rate decay, default: 0.0, **configure key**: `eta`
-4. $\epsilon$: minimun error term, default: 1e-10, **configure key**: `epsilon`
+1. $\gamma$: 学习率, default: 1e-2, 配置名称: gamma
+2. $\lambda$: 权重衰减的系数, default: 0.0, 配置名称: lambda
+3. $\eta$: 学习率衰减系数, default: 0.0, 配置名称: eta
+4. $\epsilon$: 最小误差项, default: 1e-10, 配置名称: epsilon
 
-## Adam
+#### Adam
 
-[Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam) configure the following parameters(not support amsgrad):
+[Adam](https://pytorch.org/docs/stable/generated/torch.optim.Adam.html#torch.optim.Adam)需要配置如下的一些参数(不支持amsgrad):
 
-1. $\gamma$: learning rate, default: 1e-3, **configure key**: `gamma`
-2. $\beta_1$: moving averages of gradient coefficient, default: 0.9, **configure key**: `beta1`
-3. $\beta_2$: moving averages of gradient's square coefficient, default: 0.999, **configure key**: `beta2`
-4. $\lambda$: weight decay rate, default: 0.0, **configure key**: `lambda`
-5. $\epsilon$: minimun error term, default: 1e-8, **configure key**: `epsilon`
+1. $\gamma$: 学习率, default: 1e-3, 配置名称: gamma
+2. $\beta_1$: 梯度的移动均值系数, default: 0.9, 配置名称: beta1
+3. $\beta_2$: 梯度平方的移动均值系数, default: 0.999, 配置名称: beta2
+4. $\lambda$: 权重衰减的系数, default: 0.0, 配置名称: lambda
+5. $\epsilon$: 最小误差项, default: 1e-8, 配置名称: epsilon
 
-## AdamW
+#### AdamW
 
-[AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html#torch.optim.AdamW) configure the following parameters(not support amsgrad):
+[AdamW](https://pytorch.org/docs/stable/generated/torch.optim.AdamW.html#torch.optim.AdamW)需要配置如下的一些参数(不支持amsgrad):
 
-1. $\gamma$: learning rate, default: 1e-3, **configure key**: `gamma`
-2. $\beta_1$: moving averages of gradient coefficient, default: 0.9, **configure key**: `beta1`
-3. $\beta_2$: moving averages of gradient's square coefficient, default: 0.999, **configure key**: `beta2`
-4. $\lambda$: weight decay rate, default: 1e-2, **configure key**: `lambda`
-5. $\epsilon$: minimun error term, default: 1e-8, **configure key**: `epsilon`
+1. $\gamma$: 学习率, default: 1e-3, 配置名称: gamma
+2. $\beta_1$: 梯度的移动均值系数, default: 0.9, 配置名称: beta1
+3. $\beta_2$: 梯度平方的移动均值系数, default: 0.999, 配置名称: beta2
+4. $\lambda$: 权重衰减的系数, default: 1e-2, 配置名称: lambda
+5. $\epsilon$: 最小误差项, default: 1e-8, 配置名称: epsilon
 
-## Lion
+#### Lion
 
-[Lion](https://arxiv.org/abs/2302.06675) configure the following parameters:
+[Lion](https://arxiv.org/abs/2302.06675)需要配置如下的一些参数:
 
-1. $\eta$: learing rate, default: 3e-4, **configure key**: `eta`
-2. $\beta_1$: moving averages of gradient coefficient, default: 0.9, **configure key**: `beta1`
-3. $\beta_2$: moving averages of gradient's square coefficient, default: 0.99, **configure key**: `beta2`
-4. $\lambda$: weight decay, default: 0.01, **configure key**: `lambda`
+1. $\eta$: 学习率, default: 3e-4, 配置名称: eta
+2. $\beta_1$: 梯度的移动均值系数, default: 0.9, 配置名称: beta1
+3. $\beta_2$: 梯度的移动均值系数, default: 0.99, 配置名称: beta2
+4. $\lambda$: 权重衰减的系数, default: 1e-2, 配置名称: lambda
 
-## Example
+## 样例
 
 ```python
 import damo
