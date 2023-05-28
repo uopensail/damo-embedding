@@ -2,23 +2,18 @@
 # -*- coding: UTF-8 -*-
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi <timepi123@gmail.com>
+# Copyright (C) 2019 - present timepi <timepi123@gmail.com>
+# `Damo-Embedding` is provided under: GNU Affero General Public License
+# (AGPL3.0) https:#www.gnu.org/licenses/agpl-3.0.html unless stated otherwise.
 #
-# This file is part of `Damo-Embedding`.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation.
 #
-# `Damo-Embedding` is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# `Damo-Embedding` is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY
-# without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with `Damo-Embedding`.  If not, see < http: # www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
 #
 
 # dataset: https://www.kaggle.com/datasets/mrkmakr/criteo-dataset
@@ -57,11 +52,9 @@ def process(train_path: str) -> Tuple[Data.DataLoader, Data.DataLoader]:
     feature_cols = dense_cols + sparse_cols
     train_data = pd.read_csv(train_path, names=train_cols, sep="\t")
     for col in sparse_cols:
-        train_data[col] = train_data[col].apply(
-            lambda x: sparse_value_func(col, x))
+        train_data[col] = train_data[col].apply(lambda x: sparse_value_func(col, x))
     for col in dense_cols:
-        train_data[col] = train_data[col].apply(
-            lambda x: dense_value_func(col, x))
+        train_data[col] = train_data[col].apply(lambda x: dense_value_func(col, x))
 
     train, test = train_test_split(train_data, test_size=0.2, random_state=42)
     train_dataset = Data.TensorDataset(
@@ -69,15 +62,13 @@ def process(train_path: str) -> Tuple[Data.DataLoader, Data.DataLoader]:
         torch.FloatTensor(train["label"].values),
     )
 
-    train_loader = Data.DataLoader(
-        dataset=train_dataset, batch_size=2048, shuffle=True)
+    train_loader = Data.DataLoader(dataset=train_dataset, batch_size=2048, shuffle=True)
 
     test_dataset = Data.TensorDataset(
         torch.from_numpy(test[feature_cols].values.astype(np.int64)),
         torch.FloatTensor(test["label"].values),
     )
-    test_loader = Data.DataLoader(
-        dataset=test_dataset, batch_size=4096, shuffle=False)
+    test_loader = Data.DataLoader(dataset=test_dataset, batch_size=4096, shuffle=False)
 
     return (
         train_loader,

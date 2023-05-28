@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Mon Aug 3 17:58:27 2022
+#
+# `Damo-Embedding` - 'c++ tool for sparse parameter server'
+# Copyright (C) 2019 - present timepi <timepi123@gmail.com>
+# `Damo-Embedding` is provided under: GNU Affero General Public License
+# (AGPL3.0) https:#www.gnu.org/licenses/agpl-3.0.html unless stated otherwise.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
 
-@author: timepi
-
-@description: this is setup script for pydamo
-"""
 import platform
 import sys
 
@@ -23,7 +32,7 @@ def is_new_osx():
     mac_ver = platform.mac_ver()[0]
     ver_ss = mac_ver.split(".")
     version = int(ver_ss[0])
-    
+
     if version > 10:
         return True
     elif version == 10:
@@ -51,15 +60,13 @@ class get_numpy_include(object):
 
     def __str__(self):
         import numpy
+
         return numpy.get_include()
 
 
 damoModule = Extension(
     name="_damo",
-    include_dirs=[
-        "include",
-        get_numpy_include()
-    ],
+    include_dirs=["include", get_numpy_include()],
     sources=[
         "src/pyembedding.cpp",
         "damo_wrap.cxx",
@@ -84,7 +91,7 @@ setup(
     license="License :: GLP3",
     author="timepi",
     author_email="",
-    url="https://github.com/uopensail/damo-embedding",
+    url="https:#github.com/uopensail/damo-embedding",
     packages=find_packages(),
     py_modules=["damo"],
     ext_modules=[damoModule],

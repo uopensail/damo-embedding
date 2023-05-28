@@ -1,21 +1,17 @@
 //
 // `Damo-Embedding` - 'c++ tool for sparse parameter server'
 // Copyright (C) 2019 - present timepi <timepi123@gmail.com>
+// `Damo-Embedding` is provided under: GNU Affero General Public License
+// (AGPL3.0) https://www.gnu.org/licenses/agpl-3.0.html unless stated otherwise.
 //
-// This file is part of `Damo-Embedding`.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as
+// published by the Free Software Foundation.
 //
-// `Damo-Embedding` is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// `Damo-Embedding` is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with `Damo-Embedding`.  If not, see <http://www.gnu.org/licenses/>.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Affero General Public License for more details.
 //
 
 #ifndef DAMO_EMBEDDING_EMBEDDING_H
@@ -47,7 +43,7 @@ static std::mutex group_lock;
 static Configure group_configs[max_group];
 
 class ApplyGredientsOperator : public rocksdb::MergeOperator {
- public:
+public:
   ApplyGredientsOperator() {}
   ~ApplyGredientsOperator() {}
 
@@ -73,7 +69,7 @@ class ApplyGredientsOperator : public rocksdb::MergeOperator {
 
 class Embedding;
 class Storage {
- public:
+public:
   Storage() = delete;
   Storage(int ttl, const std::string &data_dir);
   ~Storage();
@@ -101,14 +97,14 @@ class Storage {
    */
   void load_from_checkpoint(const std::string &path);
 
- private:
+private:
   int ttl_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   friend class Embedding;
 };
 
 class Embedding {
- public:
+public:
   Embedding() = delete;
   Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
             const std::shared_ptr<Initializer> &initializer, int dim,
@@ -135,10 +131,10 @@ class Embedding {
    */
   void apply_gradients(u_int64_t *keys, int len, Float *gds, int n);
 
- private:
+private:
   std::shared_ptr<std::string> create(const u_int64_t &key);
 
- private:
+private:
   int dim_;
   int group_;
   u_int64_t group_mask_;
@@ -147,4 +143,4 @@ class Embedding {
   const std::shared_ptr<Initializer> initializer_;
 };
 
-#endif  // DAMO_EMBEDDING_EMBEDDING_H
+#endif // DAMO_EMBEDDING_EMBEDDING_H

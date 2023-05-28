@@ -1,22 +1,19 @@
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
 #
 # `Damo-Embedding` - 'c++ tool for sparse parameter server'
-# Copyright(C) 2019 - present timepi < timepi123@gmail.com >
+# Copyright (C) 2019 - present timepi <timepi123@gmail.com>
+# `Damo-Embedding` is provided under: GNU Affero General Public License
+# (AGPL3.0) https:#www.gnu.org/licenses/agpl-3.0.html unless stated otherwise.
 #
-# This file is part of `Damo-Embedding`.
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation.
 #
-# `Damo-Embedding` is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# `Damo-Embedding` is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY
-# without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with `Damo-Embedding`.  If not, see < http: # www.gnu.org/licenses/>.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
 #
 import unittest
 from test import support
@@ -42,7 +39,8 @@ class SGDTestCase(unittest.TestCase):
         self.dim = 16
         group = 0
         self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, group)
+            self.storage, self.optimizer, self.initializer, self.dim, group
+        )
 
     def tearDown(self):
         pass
@@ -51,15 +49,15 @@ class SGDTestCase(unittest.TestCase):
         n = 8
         keys = np.zeros(n, dtype=np.uint64)
         for i in range(n):
-            keys[i] = i+1
-        w = np.zeros(self.dim*keys.shape[0], dtype=np.float32)
-        gds = np.random.random(self.dim*keys.shape[0]).astype(np.float32)
+            keys[i] = i + 1
+        w = np.zeros(self.dim * keys.shape[0], dtype=np.float32)
+        gds = np.random.random(self.dim * keys.shape[0]).astype(np.float32)
         self.embedding.lookup(keys, w)
-        a = w - self.lr*gds
+        a = w - self.lr * gds
         self.embedding.apply_gradients(keys, gds)
         self.embedding.lookup(keys, w)
-        assert(np.linalg.norm(a - w) == 0.0)
+        assert np.linalg.norm(a - w) == 0.0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
