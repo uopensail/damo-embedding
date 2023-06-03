@@ -12,29 +12,36 @@ When using an initializer, you need to configure the `name` item to indicate whi
 
 #### Zeros
 
-All values Are setted to 0.
+0初始化
+需要配置如下参数:
+1. name: "zeros"
 
 #### Ones
 
-All values Are setted to 1.
+1初始化
+需要配置如下参数:
+1. name: "ones"
 
-#### RandomUniform
+## RandomUniform
 
-uniform distribution, configure the following parameters:
-1. min: low bound value, float type, default: -1.0
-2. max: up bound value, float type, default: 1.0
+均匀分布, 需要配置如下的一些参数:
+1. name: "random_uniform"
+2. min: 下限, 浮点数, default: -1.0
+3. max: 上限, 浮点数, default: 1.0
 
 #### RandomNormal
 
-stochastic normal distribution, configure the following parameters:
-1. mean: mean value, float type, default: 0.0
-2. stddev: standard deviation, float type, default: 1.0
+随机正态分布, 需要配置如下的一些参数:
+1. name: "random_normal"
+2. mean: 均值, 浮点数, default: 0.0
+3. stddev: 标准差, 浮点数, default: 1.0
 
 #### TruncateNormal
 
-stochastic normal distribution, if the generated value exceeds 2 standard deviations, it is discarded and regenerate, configure the following parameters:
-1. mean: mean value, float type, default: 0.0
-2. stddev: standard deviation,  float type, default: 1.0
+随机正态分布, 且2倍标准差外的数据丢弃重新生成 需要配置如下的一些参数:
+1. name: "truncate_normal"
+2. mean: 均值, 浮点数, default: 0.0
+3. stddev: 标准差, 浮点数, default: 1.0
 
 ### Example
 

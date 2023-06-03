@@ -1,15 +1,15 @@
 # Damo-Embedding
 
-This project is mainly aimed at the model training scenario of small companies, because small companies may be limited in machine resources, and it is not easy to apply for large memory machines or distributed clusters. In addition, most small companies do not need distributed training when training machine learning/deep learning models. On the one hand, because small companies do not have enough data to train distributed large models. On the other hand, training distributed model is a relatively complex project, with high requirements for engineers, and the cost of machines is also high. However, if stand-alone training is used, Out-Of-Memory (OOM) and Out-Of-Vocabulary (OOV) problems often arise. Damo-Embedding is a project designed to solve these problems.
+该项目主要针对的是小公司的模型训练场景, 因为小公司在机器资源方面可能比较受限, 不太容易申请大内存的机器以及分布式的集群。另外, 大部分的小公司在训练机器学习/深度学习模型的时候, 其实是不需要分布式训练的。一方面因为小公司的数据量不足以训练分布式的大模型, 另一方面分布式模型训练是一个比较复杂的工程, 对工程师的要求较高, 而且服务器的成本也是偏高。但是, 如果采用单机训练的话, 往往会出现Out-Of-Memory(OOM)和Out-Of-Vocabulary(OOV)的问题。Damo-Embedding就是用来解决这些问题的项目。
 
 ## Out-Of-Memory(OOM)
 
-When using the machine learning framework (TensorFlow/Pytorch) to train the model, creating a new embedding is usually necessary to specify the dimension and size in advance. And also, their implementations are based on memory. If the embedding size is too large, there will be no enough memory. So why do you need such a large Embedding? Because in some scenarios, especially in search, recommmend or ads scenarios, the number of users and materials is usually very large, and engineers will do some manual cross-features, which will lead to exponential expansion of the number of features.
+在使用机器学习框架(TensorFlow/Pytorch)训练模型的时候, 新建Embedding的时候, 通常需要提前指定维度和长度。它们的实现都是基于内存的, 如果申请的Embedding过大, 就会出现内存不够用的情形。那么为什么会需要那么大的Embedding呢？因为在一些实际业务中, 尤其是搜推广业务, 通常是用户和物料的数量都很大, 另外算法工程师会做一些手工交叉的特征, 这样会导致特征数量指数级膨胀。
 
 ## Out-Of-Vocabulary(OOV)
 
-In the online training model, some new features often appear, such as new user ids, new material ids, etc., which have never appeared before. This will cause the problem of OOV.
+在线训练的模型中, 往往会出现一些新的特征, 比如新的用户id, 新的物料id等, 这些特征之前从未出现过。这样就会出现OOV的问题。
 
 ## Solutions
 
-The reason for the OOV problem is mainly because the embedding in the training framework is implemented in the form of an array. Once the feature id is out of range, the problem of OOV will appear. We use [rocksdb](https://rocksdb.org/) to store embedding, which naturally avoids the problems of OOV and OOM, because rocksdb uses KV storage, which is similar to hash table and its capacity is only limited by the local disk.
+之所以会出现OOV的问题, 主要是因为训练框架中的Embedding采用的是数组的方式来实现的。一旦特征id超出范围就会出现OOV的问题。开发者采用[rocksdb](https://rocksdb.org/)来存放Embedding, 就天然避免了OOV和OOM的问题, 因为rocksdb采用的是KV存储, 类似于hash table且容量大小仅仅受本地磁盘的限制。
