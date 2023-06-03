@@ -1,14 +1,14 @@
-# Python3 Install
+# Python3的安装
 
 ## MacOS
 
-It is Recommended to install anaconda, refer to [anaconda's website](https://www.anaconda.com/)
+Mac下建议安装anaconda，参考[anaconda官网](https://www.anaconda.com/)
 
 ## Linux
 
-If you want to use anaconda,refer to [anaconda's website](https://www.anaconda.com/)
+如果安装anaconda，参考[anaconda官网](https://www.anaconda.com/)
 
-Below is python3.7 install script on centos7.
+下面是centos7下的源码安装的脚本，以python3.7为例
 
 ```bash
 #!/bin/sh

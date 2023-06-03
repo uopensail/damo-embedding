@@ -1,17 +1,16 @@
 # SWIG and NumPy
 
-We use SWIG in this project to encapsulate C++ code into Python, SWIG installation can refer to this web page:
+SWIG在该项目中主要是将c++代码封装成Python的工具，具体的安装可以参考这篇网页：
 
 [How To Install Swig On MacOS, Linux And Windows](https://www.dev2qa.com/how-to-install-swig-on-macos-linux-and-windows/)
 
-## Grammar
+## 语法
 
-The specific SWIG syntax can be referred to: [SWIG Official Documentation](https://www.swig.org/doc.html)
+具体的SWIG语法可以参考：[SWIG官方文档](https://www.swig.org/doc.html)
 
 ## NumPy
 
-In this project, the numpy library is used. SWIG and NumPy need to be used together, so it needs to be provided [numyp.i](https://github.com/numpy/numpy/blob/main/tools/swig/numpy.i) file, refer to [numpy.i: a SWIG Interface File for NumPy](https://numpy.org/doc/stable/reference/swig.interface-file.html)。
-
+在该项目中，使用了numpy库，需要将SWIG和numpy结合起来使用，所以需要提供[numyp.i](https://github.com/numpy/numpy/blob/main/tools/swig/numpy.i)文件，具体使用方法参考[numpy.i: a SWIG Interface File for NumPy](https://numpy.org/doc/stable/reference/swig.interface-file.html)。
 ### NumPy Add to System Path
 
 ```bash

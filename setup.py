@@ -95,7 +95,7 @@ setup(
     packages=find_packages(),
     py_modules=["damo"],
     ext_modules=[damoModule],
-    keywords="sparse embedding using rocksdb",
+    keywords=["sparse embedding using rocksdb","parameter server","ftrl","adam","adagrad"],
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["numpy>=1.19.0"],
