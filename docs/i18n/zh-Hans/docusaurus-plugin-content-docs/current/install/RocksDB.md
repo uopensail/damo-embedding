@@ -1,6 +1,6 @@
 # Rocksdb Install
 
-详细的安装方式，请参考[rocksdb官方安装说明]([rocksdb/INSTALL.md at master · facebook/rocksdb · GitHub](https://github.com/facebook/rocksdb/blob/master/INSTALL.md))。下面提供一些简单易上手的安装脚本。
+详细的安装方式，请参考[rocksdb官方安装说明](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)。下面提供一些简单易上手的安装脚本。
 
 ## MacOS X
 

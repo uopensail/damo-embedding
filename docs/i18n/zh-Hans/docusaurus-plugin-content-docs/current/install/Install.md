@@ -4,11 +4,11 @@
 
 ### Rocksdb安装
 
-[Rocksdb安装脚本](rocksdb.md)
+[Rocksdb安装脚本](Rocksdb.md)
 
 ### Python3安装
 
-[Python3安装脚本](python3.md)
+[Python3安装脚本](Python3.md)
 
 ### Numpy安装
 
