@@ -4,7 +4,7 @@
 
 ### Rocksdb安装
 
-[Rocksdb安装脚本](Rocksdb.md)
+[Rocksdb安装脚本](RocksDB.md)
 
 ### Python3安装
 
