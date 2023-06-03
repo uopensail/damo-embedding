@@ -234,4 +234,4 @@ class DeepFM(torch.nn.Module):
 ```
 
 # Document
-[Doc Website] (https://uopensail.github.io/damo-embedding/zh-Hans/docs/Intro)
+[Doc Website](https://uopensail.github.io/damo-embedding/docs/Intro)
