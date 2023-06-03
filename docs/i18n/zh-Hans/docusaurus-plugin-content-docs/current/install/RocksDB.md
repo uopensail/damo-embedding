@@ -1,12 +1,12 @@
-# RocksDB Install
+# Rocksdb Install
 
-Refer to [rocksdb/INSTALL.md at master · facebook/rocksdb · GitHub](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)。Below are some easy install commands.
+详细的安装方式，请参考[rocksdb官方安装说明](https://github.com/facebook/rocksdb/blob/master/INSTALL.md)。下面提供一些简单易上手的安装脚本。
 
 ## MacOS X
 
 ```bash
-# if brew is not installed
-# please refer to brew's website: https://brew.sh/
+# 如果brew没有安装
+# 请参考brew的官网：https://brew.sh/
 brew install rocksdb
 ```
 
@@ -26,9 +26,10 @@ mkdir build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=/usr/local/rocksdb ..
 
-# online env NOT USE make/make all
-# online env make static_lib/make shared_lib
-# please refer to the official documentation for details
+# 线上环境不要用make/make all
+# 因为会编译出debug模型
+# 建议线上环境make static_lib/make shared_lib
+# 具体参考官方文档
 make shared_lib EXTRA_CXXFLAGS=-fPIC EXTRA_CFLAGS=-fPIC USE_RTTI=1 DEBUG_LEVEL=0 
 make install-shared
 

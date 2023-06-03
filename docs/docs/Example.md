@@ -1,11 +1,3 @@
-# Damo-Embedding
-
-[![Deploy to GitHub Pages](https://github.com/uopensail/damo-embedding/actions/workflows/gh-pages.yml/badge.svg)](https://uopensail.github.io/damo-embedding/docs/Intro) [![Build and upload to PyPI](https://github.com/uopensail/damo-embedding/actions/workflows/main.yml/badge.svg?event=release)](https://pypi.org/project/damo-embedding/)
-# Quick Install
-
-```shell
-pip install damo-embedding
-```
 
 # Example
 
@@ -235,6 +227,3 @@ class DeepFM(torch.nn.Module):
         return out
 
 ```
-
-# Document
-[Doc Website](https://uopensail.github.io/damo-embedding/docs/Intro)

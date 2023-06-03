@@ -1,25 +1,35 @@
+# Damo-Embedding安装
 
-## Install
+## 安装依赖
 
-### Swig And Numpy
-When using damo-embedding,it is Not necessary to install SWIG. It is for development.
+### Rocksdb安装
 
-[Swig And Numpy](Swig&NumPy.md)
+[Rocksdb安装脚本](RocksDB.md)
 
-Use `swig -python -c++ damo.i` to regenerate the `damo_wrap.cxx` and `damo.py`
+### Python3安装
 
-### RocksDB
-[RocksDB](RocksDB.md)
+[Python3安装脚本](Python3.md)
 
-When make rocksdb, must add these:
+### Numpy安装
 
-`EXTRA_CXXFLAGS=-fPIC EXTRA_CFLAGS=-fPIC USE_RTTI=1 DEBUG_LEVEL=0`
-
-### Python3
-This is python3 tool, [Python3](Python3.md) Is required. 
-
-NumPy is needed, NumPy's include and lib path should add to system path, please refer to [Swig&NumPy.md](Swig&NumPy.md).
-
-### install
 ```bash
-python setup.py install
+pip3.7 install numpy
+```
+
+一般来说numpy安装在了python的路径下`site-packages`文件中
+
+```bash
+PYTHONPATH=/usr/local/python3/lib/python3.7
+NUMPY_INCLUDE_PATH=$PYTHONPATH/site-packages/numpy/core/include
+NUMPY_LIBRARY_PATH=$PYTHONPATH/site-packages/numpy/core/lib
+
+export CPLUS_INCLUDE_PATH=$CPLUS_INCLUDE_PATH:$NUMPY_INCLUDE_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$NUMPY_LIBRARY_PATH
+export LIBRARY_PATH=$LIBRARY_PATH:NUMPY_LIBRARY_PATH
+```
+
+## damo-enmbedding安装
+
+```bash
+python3.7 setup.py install
+```
