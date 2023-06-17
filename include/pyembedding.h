@@ -100,19 +100,21 @@ public:
   /**
    * @brief where the key in the filter
    *
+   * @param group key group
    * @param key key to find
    * @return true in the filter
    * @return false not in the filter
    */
-  bool check(unsigned long long key);
+  bool check(int group, unsigned long long key);
 
   /**
    * @brief add key to the filter
    *
+   * @param group key group
    * @param key key to ad
    * @param num add counts
    */
-  void add(unsigned long long key, unsigned long long num);
+  void add(int group, unsigned long long key, unsigned long long num);
   ~PyFilter();
 
 private:

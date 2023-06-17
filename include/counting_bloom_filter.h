@@ -75,7 +75,7 @@ public:
    * @return true in the filter
    * @return false not in the filter
    */
-  bool check(const u_int64_t &key);
+  bool check(const Key &key);
 
   /**
    * @brief add key to the filter
@@ -83,10 +83,11 @@ public:
    * @param key key to ad
    * @param num add counts
    */
-  void add(const u_int64_t &key, const u_int64_t &num = 1);
+  void add(const Key &key, const u_int64_t &num = 1);
   int get_count() const;
 };
 u_int64_t hash_func(const u_int64_t &x);
+u_int64_t hash_func(const Key &x);
 void create_empty_file(const std::string &filename, const size_t &size);
 
 #endif // DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H

@@ -16,9 +16,7 @@
 # GNU Affero General Public License for more details.
 #
 import unittest
-from test import support
 import damo
-import random
 
 
 class CountBloomFilterTestCase(unittest.TestCase):
@@ -31,9 +29,11 @@ class CountBloomFilterTestCase(unittest.TestCase):
 
     def testAdd(self):
         key = 10000000
+
         for i in range(16):
-            self.filter.add(key, 1)
-            print(self.filter.check(key))
+            self.filter.add(1, key, 1)
+            print(self.filter.check(1, key))
+            print(self.filter.check(2, key))
 
 
 if __name__ == "__main__":

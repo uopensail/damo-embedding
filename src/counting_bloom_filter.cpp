@@ -4,6 +4,11 @@ u_int64_t hash_func(const u_int64_t &x) {
   return ((x >> 31) & high_mask) | ((x & low_mask) << 33);
 }
 
+u_int64_t hash_func(const Key &x) {
+  u_int64_t hash = x.group;
+  return hash_func(x.key) | (hash << 15);
+}
+
 void create_empty_file(const std::string &filename, const size_t &size) {
   FILE *w = fopen(filename.c_str(), "wb");
   char tmp = '\0';
@@ -76,9 +81,10 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
   }
 }
 
-bool CountingBloomFilter::check(const u_int64_t &key) {
+bool CountingBloomFilter::check(const Key &key) {
   int min_count = max_count;
-  u_int64_t hash = key;
+  u_int64_t hash = hash_func(key);
+
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->counter_num_;
     if (idx & 1) {
@@ -97,8 +103,8 @@ bool CountingBloomFilter::check(const u_int64_t &key) {
   return min_count >= count_;
 }
 
-void CountingBloomFilter::add(const u_int64_t &key, const u_int64_t &num) {
-  u_int64_t hash = key;
+void CountingBloomFilter::add(const Key &key, const u_int64_t &num) {
+  u_int64_t hash = hash_func(key);
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->counter_num_;
     if (idx & 1) {

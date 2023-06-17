@@ -137,7 +137,7 @@ private:
 private:
   int dim_;
   int group_;
-  u_int64_t group_mask_;
+  // u_int64_t group_mask_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   const std::shared_ptr<Optimizer> optimizer_;
   const std::shared_ptr<Initializer> initializer_;
