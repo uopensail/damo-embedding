@@ -40,17 +40,12 @@ Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
                      int group)
-    : dim_(dim),
-      group_(group),
-      group_mask_(0),
-      db_(storage.db_),
-      optimizer_(optimizer),
+    : dim_(dim), group_(group), db_(storage.db_), optimizer_(optimizer),
       initializer_(initializer) {
   if (group < 0 || group >= max_group) {
     std::cout << "group: " << group << " out of range" << std::endl;
     exit(-1);
   }
-  this->group_mask_ = (static_cast<u_int64_t>(group)) << 56;
   std::lock_guard<std::mutex> guard(group_lock);
   if (group_configs[group].group != -1) {
     std::cout << "group: " << group << " exists" << std::endl;
@@ -86,11 +81,11 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
 
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;
-  u_int64_t *group_keys = (u_int64_t *)malloc(len * sizeof(u_int64_t));
+  Key *group_keys = (Key *)malloc(len * sizeof(Key));
   for (int i = 0; i < len; i++) {
-    group_keys[i] = mask_group(keys[i], this->group_mask_);
-    s_keys.emplace_back(
-        rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)));
+    group_keys[i].group = this->group_;
+    group_keys[i].key = keys[i];
+    s_keys.emplace_back(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)));
   }
   rocksdb::ReadOptions get_options;
   auto status = this->db_->MultiGet(get_options, s_keys, &result);
@@ -105,8 +100,7 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
       auto value = this->create(keys[i]);
       ptr = (MetaData *)(value->data());
       memcpy(&(data[i * this->dim_]), ptr->data, sizeof(Float) * this->dim_);
-      batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
-                *value);
+      batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)), *value);
     }
   }
 
@@ -119,15 +113,16 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
 
 void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n) {
   assert(len * this->dim_ == n);
-  u_int64_t *group_keys = (u_int64_t *)malloc(len * sizeof(u_int64_t));
+  Key *group_keys = (Key *)malloc(len * sizeof(Key));
 
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
   rocksdb::WriteBatch batch;
 
   for (int i = 0; i < len; i++) {
-    group_keys[i] = mask_group(keys[i], this->group_mask_);
-    batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(u_int64_t)),
+    group_keys[i].group = this->group_;
+    group_keys[i].key = keys[i];
+    batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)),
                 rocksdb::Slice((char *)&gds[i * this->dim_],
                                sizeof(Float) * this->dim_));
   }

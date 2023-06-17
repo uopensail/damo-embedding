@@ -48,10 +48,11 @@ print(param.to_json())
 
 filter = damo.PyFilter(param)
 
+group = 1
 key = 123456
 for i in range(16):
-    filter.add(key, 1)
-    print(filter.check(key))
+    filter.add(group, key, 1)
+    print(filter.check(group, key))
 ```
 
 ## Reference

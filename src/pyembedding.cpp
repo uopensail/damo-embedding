@@ -139,16 +139,18 @@ PyFilter &PyFilter::operator=(const PyFilter &p) {
   return *this;
 }
 
-bool PyFilter::check(unsigned long long key) {
+bool PyFilter::check(int group, unsigned long long key) {
   if (this->filter_ == nullptr) {
     return true;
   }
-  return filter_->check(key);
+  Key x{group, key};
+  return filter_->check(x);
 }
 
-void PyFilter::add(unsigned long long key, unsigned long long num) {
+void PyFilter::add(int group, unsigned long long key, unsigned long long num) {
   if (this->filter_ != nullptr) {
-    this->filter_->add(key, num);
+    Key x{group, key};
+    this->filter_->add(x, num);
   }
 }
 

@@ -60,11 +60,11 @@ class Embedding(torch.nn.Module):
         self.dim = dim
         if group != -1:
             self.group = group
-            assert 0 <= self.group < 256
+            assert 0 <= self.group < 1024
         else:
             Embedding._group += 1
             self.group = Embedding._group
-            assert 0 <= self.group < 256
+            assert 0 <= self.group < 1024
         self.storage = Storage(**kwargs).storage
 
         # create initializer
@@ -83,23 +83,17 @@ class Embedding(torch.nn.Module):
             self.storage, self.optimizer, self.initializer, self.dim, self.group
         )
 
-    def forward(self, inputs: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """embedding lookup
 
         Args:
-            inputs (Union[torch.Tensor, np.ndarray]): input values
+            input (torch.Tensor): input values
 
         Returns:
-            torch.Tensor: embedding values (inputs.shape[0], inputs.shape[1], self.dim)
+            torch.Tensor: embedding values (input.shape[0], input.shape[1], self.dim)
         """
 
-        data = inputs
-        if isinstance(inputs, torch.Tensor):
-            data = inputs.numpy().astype(np.uint64)
-        elif isinstance(inputs, np.ndarray):
-            if data.type != np.uint64:
-                data = inputs.astype(np.uint64)
-
+        data = input.numpy().astype(np.uint64)
         batch_size, width = data.shape
         keys = np.unique(np.concatenate(data)).astype(np.uint64)
         length = keys.shape[0]

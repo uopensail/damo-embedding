@@ -30,5 +30,5 @@ filter = damo.PyFilter(param)
 
 key = 123456
 for i in range(16):
-    filter.add(key, 1)
-    print(filter.check(key))
+    filter.add(1, key, 1)
+    print(filter.check(1, key))

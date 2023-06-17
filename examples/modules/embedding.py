@@ -45,6 +45,7 @@ keys[0] = 1234567890
 w = np.zeros(dim * keys.shape[0], dtype=np.float32)
 gds = np.random.random(dim * keys.shape[0]).astype(np.float32)
 
+print(w)
 embedding.lookup(keys, w)
 embedding.apply_gradients(keys, gds)
 embedding.lookup(keys, w)
