@@ -86,9 +86,9 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.0.4",
+    version="1.0.5",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
-    license="License :: GLP3",
+    license="License :: AGLP3",
     author="timepi",
     author_email="",
     url="https://github.com/uopensail/damo-embedding",
