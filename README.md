@@ -20,9 +20,6 @@ from typing import Union
 from collections import defaultdict
 
 
-GLOBAL_MAX_GROUP = 128
-
-
 class Storage(object):
     """singleton storage class."""
 
@@ -59,12 +56,11 @@ class Embedding(torch.nn.Module):
     _group = -1
 
     def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
-        global GLOBAL_MAX_GROUP
         super(Embedding, self).__init__()
         self.dim = dim
         Embedding._group += 1
         self.group = Embedding._group
-        assert 0 <= self.group < GLOBAL_MAX_GROUP
+        assert self.group >= 0
         self.storage = Storage(**kwargs).storage
 
         # create initializer
@@ -182,7 +178,6 @@ class DeepFM(torch.nn.Module):
             1,
             initializer=initializer,
             optimizer=optimizer,
-            group=0,
             **kwargs,
         )
 
@@ -190,7 +185,6 @@ class DeepFM(torch.nn.Module):
             self.emb_size,
             initializer=initializer,
             optimizer=optimizer,
-            group=1,
             **kwargs,
         )
         self.w0 = torch.zeros(1, dtype=torch.float32, requires_grad=True)
@@ -206,11 +200,11 @@ class DeepFM(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
         """forward
 
         Args:
-            inputs (Union[torch.Tensor, np.ndarray]): input tensor
+            inputs (torch.Tensor): input tensor
 
         Returns:
             tensor.Tensor: deepfm forward values
