@@ -71,4 +71,3 @@ def process(train_loader, valid_loader, epochs=1):
 if __name__ == "__main__":
     train_loader, valid_loader = data_process("train.txt")
     process(train_loader, valid_loader, 1)
-    test(valid_loader)

@@ -43,9 +43,6 @@ const Float Epsilon = 1e-8f;
 #define int64_t long long
 #endif
 
-// the feature number must <= 1024
-const int max_group = 1024;
-
 int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);

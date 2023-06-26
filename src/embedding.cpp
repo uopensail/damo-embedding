@@ -7,6 +7,33 @@ Configure::Configure() {
   initializer = nullptr;
 }
 
+GlobalGroupConfigure::GlobalGroupConfigure()
+    : configures_(std::make_shared<std::unordered_map<int, Configure>>()) {}
+
+const Configure *GlobalGroupConfigure::operator[](int group) const {
+  auto iter = this->configures_->find(group);
+  if (iter != this->configures_->end()) {
+    return &iter->second;
+  }
+  return nullptr;
+}
+
+void GlobalGroupConfigure::add(int group, const Configure &configure) {
+  std::lock_guard<std::mutex> guard(this->group_lock_);
+  auto iter = this->configures_->find(group);
+  if (iter == this->configures_->end()) {
+    auto configures = std::make_shared<std::unordered_map<int, Configure>>();
+    for (auto &config : *this->configures_) {
+      configures->insert(std::make_pair(config.first, config.second));
+    }
+    configures->insert(std::make_pair(group, configure));
+    this->configures_.swap(configures);
+  } else {
+    std::cerr << "group: " << group << " exists" << std::endl;
+    exit(-1);
+  }
+}
+
 bool ApplyGredientsOperator::FullMerge(
     const rocksdb::Slice &key, const rocksdb::Slice *existing_value,
     const std::deque<std::string> &operand_list, std::string *new_value,
@@ -17,9 +44,8 @@ bool ApplyGredientsOperator::FullMerge(
   }
 
   MetaData *ptr = (MetaData *)(const_cast<char *>(existing_value->data()));
-
-  if (ptr->group < 0 || ptr->group >= max_group ||
-      group_configs[ptr->group].group == -1) {
+  auto cfg = global_groiup_configure[ptr->group];
+  if (ptr->group < 0 || cfg == nullptr) {
     return false;
   }
   assert(new_value != nullptr);
@@ -29,8 +55,7 @@ bool ApplyGredientsOperator::FullMerge(
   for (const auto &value : operand_list) {
     new_ptr->update_num++;
     float *gds = (float *)(const_cast<char *>(value.data()));
-    group_configs[new_ptr->group].optimizer->call(
-        new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
+    cfg->optimizer->call(new_ptr->data, gds, new_ptr->dim, new_ptr->update_num);
   }
   new_ptr->update_time = get_current_time();
   return true;
@@ -44,21 +69,19 @@ Embedding::Embedding(Storage &storage,
       group_(group),
       db_(storage.db_),
       optimizer_(optimizer),
+
       initializer_(initializer) {
-  if (group < 0 || group >= max_group) {
-    std::cout << "group: " << group << " out of range" << std::endl;
-    exit(-1);
-  }
-  std::lock_guard<std::mutex> guard(group_lock);
-  if (group_configs[group].group != -1) {
-    std::cout << "group: " << group << " exists" << std::endl;
+  if (group < 0) {
+    std::cerr << "group: " << group << " out of range" << std::endl;
     exit(-1);
   }
 
-  group_configs[group].dim = dim;
-  group_configs[group].group = group;
-  group_configs[group].initializer = initializer;
-  group_configs[group].optimizer = optimizer;
+  Configure cfg;
+  cfg.dim = dim;
+  cfg.group = group;
+  cfg.optimizer = optimizer;
+  cfg.initializer = initializer;
+  global_groiup_configure.add(group, cfg);
 }
 
 Embedding::~Embedding() {}
@@ -170,16 +193,22 @@ void Storage::dump(const std::string &path,
   read_option.snapshot = sp;
   rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
   MetaData *ptr;
-  size_t group_counts[max_group];
-  int group_dims[max_group];
-  for (int i = 0; i < max_group; i++) {
-    group_counts[i] = 0;
-    group_dims[i] = group_configs[i].dim;
+  int size = global_groiup_configure.configures_->size();
+  int *group = (int *)calloc(size, sizeof(int));
+  int *group_dims = (int *)calloc(size, sizeof(int));
+  int index = 0;
+  for (auto &ptr : *global_groiup_configure.configures_) {
+    group[index] = ptr.first;
+    group_dims[index] = ptr.second.dim;
+    index++;
   }
+  int64_t *group_counts = (int64_t *)calloc(size, sizeof(int64_t));
 
   std::ofstream writer(path, std::ios::out | std::ios::binary);
-  writer.write((char *)&group_dims, sizeof(int) * max_group);
-  writer.write((char *)&group_counts, sizeof(size_t) * max_group);
+  writer.write((char *)&size, sizeof(int));
+  writer.write((char *)&group, sizeof(int) * size);
+  writer.write((char *)&group_dims, sizeof(int) * size);
+  writer.write((char *)&group_counts, sizeof(int64_t) * size);
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
@@ -193,10 +222,9 @@ void Storage::dump(const std::string &path,
   assert(it->status().ok());
   delete it;
   this->db_->ReleaseSnapshot(sp);
-  // update group key dim and counts
-  writer.seekp(0, std::ios::beg);
-  writer.write((char *)&group_dims, sizeof(int) * max_group);
-  writer.write((char *)&group_counts, sizeof(size_t) * max_group);
+  // update group counts
+  writer.seekp(sizeof(int) * (1 + size * 2), std::ios::beg);
+  writer.write((char *)&group_counts, sizeof(size_t) * size);
   writer.close();
 }
 

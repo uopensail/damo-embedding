@@ -16,7 +16,6 @@
 # GNU Affero General Public License for more details.
 #
 import unittest
-from test import support
 import damo
 import numpy as np
 

@@ -50,13 +50,12 @@ class GroupWiseEmbeddingNetwork(torch.nn.Module):
             "epsilon": float(kwargs.get("epsilon", 1e-8)),
         }
 
-        self.embeddings = []
-        for i, emb_size in enumerate(emb_sizes):
+        self.embeddings = nn.ModuleList()
+        for emb_size in emb_sizes:
             embedding = Embedding(
                 emb_size,
                 initializer=initializer,
                 optimizer=optimizer,
-                group=i,
                 **kwargs,
             )
             self.embeddings.append(embedding)
@@ -72,12 +71,13 @@ class GroupWiseEmbeddingNetwork(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: Union[torch.Tensor, np.ndarray]):
+    def forward(self, inputs: torch.Tensor):
         batch_size, groups = inputs.shape
         assert groups == self.groups
         weights = []
         for i in range(groups):
-            w = self.embeddings[i].forward(inputs[:][:, i].reshape(batch_size, 1))
+            w = self.embeddings[i].forward(
+                inputs[:][:, i].reshape(batch_size, 1))
             weights.append(torch.sum(w, dim=1))
         dnn_out = torch.concat(weights, dim=1)
         for layer in self.layers:

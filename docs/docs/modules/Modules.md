@@ -1,4 +1,3 @@
-
 ## Modules
 
 Counting Bloom Filter
@@ -29,7 +28,7 @@ This is the most important module in this project. When creating an embedding ob
   
 - **dimension**: int type, dim of embedding
   
-- **group**: int type, [0, 256), defaul: 0
+- **group**: int type, [0, 2^16), defaul: 0
   
 
 Embedding moule has two member functions: lookup and apply_gradients, both have no return values. For more detail, please refer to [Embedding](Embedding.md).

@@ -16,7 +16,6 @@
 # GNU Affero General Public License for more details.
 #
 import unittest
-from test import support
 import damo
 import numpy as np
 import os
@@ -61,7 +60,8 @@ class LionTestCase(unittest.TestCase):
         self.embedding.lookup(keys, w)
         m = np.zeros(self.dim * n).astype(np.float32)
         gds = np.random.random(self.dim * n).astype(np.float32)
-        tmp_mu = np.sign(self.beta1 * m + (1.0 - self.beta1) * gds) + w * self.lambda_
+        tmp_mu = np.sign(self.beta1 * m + (1.0 - self.beta1)
+                         * gds) + w * self.lambda_
         m = self.beta2 * +(1.0 - self.beta2) * gds
         self.embedding.apply_gradients(keys, gds)
         new_w = w - self.eta * tmp_mu

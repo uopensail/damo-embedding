@@ -20,7 +20,7 @@ configure parameters:
 
 ### group
 
-If the group is setted (0 <= group < 128),  we will only dump keys have the same group.
+If the group is setted (0 <= group < 2^16),  we will only dump keys have the same group.
 
 configure parameters:
 
@@ -44,14 +44,16 @@ When model training finishes, you may dump the weights of keys with some conditi
 
 ### file format
 
-First part stores the dim and count of each group, totally 256 groups. Second part stores all the key and weigh.
+First part stores the group, dim and count of each group. Second part stores all the key and weight.
 
 #### first part
 
 | type   | size | length | description                       |
 | ------ | ---- | ------ | --------------------------------- |
-| int32  | 4bit | 128    | dim of 128 group, default 0       |
-| size_t | 8bit | 128    | key count of 128 group, default 0 |
+| int32  | 4bit | 1      | size                              |
+| int32  | 4bit | size   | group ids                         |
+| int32  | 4bit | size   | group dims                        |
+| int64_t| 8bit | size   | key count of group                |
 
 #### second part
 

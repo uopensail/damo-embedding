@@ -17,7 +17,6 @@
 #
 
 import unittest
-from test import support
 import numpy as np
 import torch
 import damo

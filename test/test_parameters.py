@@ -16,9 +16,7 @@
 # GNU Affero General Public License for more details.
 #
 import unittest
-from test import support
 import damo
-import random
 
 
 class ParametersTestCase(unittest.TestCase):

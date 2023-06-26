@@ -22,7 +22,7 @@ import numpy as np
 # zero
 param = damo.Parameters()
 param.insert("name", "zeros")
-# 必须是float32类型
+# must be float32
 value = np.random.random(10).astype(np.float32)
 obj = damo.PyInitializer(param)
 obj.call(value)
@@ -31,7 +31,7 @@ print("zeros: ", value)
 # ones
 param = damo.Parameters()
 param.insert("name", "ones")
-# 必须是float32类型
+# must be float32
 value = np.random.random(10).astype(np.float32)
 obj = damo.PyInitializer(param)
 obj.call(value)
@@ -42,7 +42,7 @@ param = damo.Parameters()
 param.insert("name", "random_uniform")
 param.insert("min", -1.0)
 param.insert("max", 1.0)
-# 必须是float32类型
+# must be float32
 value = np.random.random(10).astype(np.float32)
 obj = damo.PyInitializer(param)
 obj.call(value)
@@ -53,7 +53,7 @@ param = damo.Parameters()
 param.insert("name", "random_normal")
 param.insert("mean", 0.0)
 param.insert("stddev", 1.0)
-# 必须是float32类型
+# must be float32
 value = np.random.random(10).astype(np.float32)
 obj = damo.PyInitializer(param)
 obj.call(value)
@@ -64,7 +64,7 @@ param = damo.Parameters()
 param.insert("name", "truncate_normal")
 param.insert("mean", 0.0)
 param.insert("stddev", 1.0)
-# 必须是float32类型
+# must be float32
 value = np.random.random(10).astype(np.float32)
 obj = damo.PyInitializer(param)
 obj.call(value)

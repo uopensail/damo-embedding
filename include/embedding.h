@@ -29,18 +29,34 @@
 #include "initializer.h"
 #include "optimizer.h"
 
-struct Configure {
+typedef struct Configure {
   int dim;
   int group;
   std::shared_ptr<Optimizer> optimizer;
   std::shared_ptr<Initializer> initializer;
   Configure();
-};
-using Configure = struct Configure;
+} Configure;
 
-// lock for group configs
-static std::mutex group_lock;
-static Configure group_configs[max_group];
+class Embedding;
+class Storage;
+
+class GlobalGroupConfigure {
+ public:
+  GlobalGroupConfigure();
+  ~GlobalGroupConfigure() = default;
+  const Configure *operator[](int group) const;
+
+ private:
+  void add(int group, const Configure &configure);
+
+ private:
+  std::mutex group_lock_;
+  std::shared_ptr<std::unordered_map<int, Configure>> configures_;
+  friend class Embedding;
+  friend class Storage;
+};
+
+static GlobalGroupConfigure global_groiup_configure;
 
 class ApplyGredientsOperator : public rocksdb::MergeOperator {
  public:
@@ -64,10 +80,9 @@ class ApplyGredientsOperator : public rocksdb::MergeOperator {
   static const char *kClassName() { return "ApplyGredientsOperator"; }
   static const char *kNickName() { return "apply_gredients"; }
   [[nodiscard]] const char *Name() const override { return kClassName(); }
-  [[nodiscard]] const char *NickName() const { return kNickName(); }
+  [[nodiscard]] const char *NickName() const override { return kNickName(); }
 };
 
-class Embedding;
 class Storage {
  public:
   Storage() = delete;

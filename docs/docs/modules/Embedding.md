@@ -14,6 +14,7 @@ struct MetaData {
     int64_t key;  
     int64_t update_time;
     int64_t update_num;
+    int dim;
     float data[];
 };
 ```
@@ -36,7 +37,7 @@ The arguments are listed below:
 
 4. **dimension**: int type, dim of embedding
 
-5. **group**: int type, [0, 256), defaul: 0
+5. **group**: int type, [0, 2^16), defaul: 0
 
 ```python
 import damo
@@ -56,7 +57,7 @@ There are two member functions of embedding, both have no return values, which a
 
 The arguments are listed below:
 
-1. keys: numpy.ndarray type, one dimension, dtype MUST BE np.uint64
+1. keys: numpy.ndarray type, one dimension, dtype MUST BE np.int64
 
 2. weights: numpy.ndarray type, one dimension
    
