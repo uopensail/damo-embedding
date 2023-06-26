@@ -22,20 +22,20 @@
 #include "common.h"
 
 using lr_scheduler = std::function<Float(
-    Float learning_rate, u_int64_t global_step, const Params &params)>;
+    Float learning_rate, int64_t global_step, const Params &params)>;
 
-Float exponential_decay(Float learning_rate, u_int64_t global_step,
+Float exponential_decay(Float learning_rate, int64_t global_step,
                         const Params &params);
-Float polynomial_decay(Float learning_rate, u_int64_t global_step,
+Float polynomial_decay(Float learning_rate, int64_t global_step,
                        const Params &params);
-Float nature_exponential_decay(Float learning_rate, u_int64_t global_step,
+Float nature_exponential_decay(Float learning_rate, int64_t global_step,
                                const Params &params);
-Float inverse_time_decay(Float learning_rate, u_int64_t global_step,
+Float inverse_time_decay(Float learning_rate, int64_t global_step,
                          const Params &params);
-Float cosine__decay(Float learning_rate, u_int64_t global_step,
+Float cosine__decay(Float learning_rate, int64_t global_step,
                     const Params &params);
-Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
+Float liner_cosine_decay(Float learning_rate, int64_t global_step,
                          const Params &params);
 lr_scheduler get_lr_scheduler(const Params &p);
 
-#endif // DAMO_EMBEDDING_LEARNING_RATE_SCHEDULER_H
+#endif  // DAMO_EMBEDDING_LEARNING_RATE_SCHEDULER_H

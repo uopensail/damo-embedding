@@ -16,9 +16,9 @@ Embedding模块使用rocksdb来磁盘来存储Embedding的值, 采用KV的方式
 ```c++
 struct MetaData {
     int group; 
-    u_int64_t key;     // original key, not group-masked key
-    u_int64_t update_time;
-    u_int64_t update_num;
+    int64_t key;
+    int64_t update_time;
+    int64_t update_num;
     float data[];
 };
 ```

@@ -37,11 +37,11 @@ storage.dump(path, cond)
 # extract weights
 weight_dict = [{} for _ in range(256)]
 with open(path, "rb") as f:
-    data_for_dim = f.read(256 * 4)
-    group_dims = struct.unpack("@256i", data_for_dim)
+    data_for_dim = f.read(128 * 4)
+    group_dims = struct.unpack("@128i", data_for_dim)
     print(group_dims)
-    data_for_count = f.read(256 * 8)
-    group_counts = struct.unpack("@256Q", data_for_count)
+    data_for_count = f.read(128 * 8)
+    group_counts = struct.unpack("@128q", data_for_count)
     print(group_counts)
 
     def get_weight(key):
@@ -56,6 +56,6 @@ with open(path, "rb") as f:
 
     data_for_key = f.read(8)
     while data_for_key:
-        key = struct.unpack("@Q", data_for_key)[0]
+        key = struct.unpack("@q", data_for_key)[0]
         get_weight(key)
         data_for_key = f.read(8)

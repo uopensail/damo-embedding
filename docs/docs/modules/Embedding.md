@@ -11,9 +11,9 @@ All features are discretization and represented by the unique u_int64_t value. W
 ```c++
 struct MetaData {
     int group; 
-    u_int64_t key;     // original key, not group-masked key
-    u_int64_t update_time;
-    u_int64_t update_num;
+    int64_t key;  
+    int64_t update_time;
+    int64_t update_num;
     float data[];
 };
 ```
@@ -71,11 +71,11 @@ import numpy as np
 
 # example
 n = 8
-keys = np.zeros(n).astype(np.uint64)
+keys = np.zeros(n).astype(np.int64)
 for i in range(n):
     keys[i] = i+1
 
-# array([1, 2, 3, 4, 5, 6, 7, 8], dtype=uint64)
+# array([1, 2, 3, 4, 5, 6, 7, 8], dtype=int64)
 
 weight = np.zeros(n*dimension).astype(np.float32)
 
@@ -90,7 +90,7 @@ weight_dict = {k: v for k,v in zip(keys, tmp)}
 
 The arguments are listed below:
 
-1. keys: same as lookup, numpy.ndarray type, one dimension, dtype MUST BE np.uint64
+1. keys: same as lookup, numpy.ndarray type, one dimension, dtype MUST BE np.int64
 
 2. gradients: numpy.ndarray type, one dimension, dtype MUST BE np.float32 type, 
    

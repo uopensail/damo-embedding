@@ -120,7 +120,7 @@ PyOptimizer &PyOptimizer::operator=(const PyOptimizer &p) {
 PyOptimizer::~PyOptimizer() {}
 
 void PyOptimizer::call(float *data, int wn, float *gds, int gn,
-                       unsigned long long global_step) {
+                       long long global_step) {
   assert(optimizer_->get_space(gn) == wn);
   optimizer_->call(data, gds, wn, global_step);
 }
@@ -139,7 +139,7 @@ PyFilter &PyFilter::operator=(const PyFilter &p) {
   return *this;
 }
 
-bool PyFilter::check(int group, unsigned long long key) {
+bool PyFilter::check(int group, long long key) {
   if (this->filter_ == nullptr) {
     return true;
   }
@@ -147,7 +147,7 @@ bool PyFilter::check(int group, unsigned long long key) {
   return filter_->check(x);
 }
 
-void PyFilter::add(int group, unsigned long long key, unsigned long long num) {
+void PyFilter::add(int group, long long key, long long num) {
   if (this->filter_ != nullptr) {
     Key x{group, key};
     this->filter_->add(x, num);
@@ -181,7 +181,7 @@ void PyStorage::dump(const std::string &path, Parameters condition) {
 
     Params p(condition.params_);
     if (p.contains("expire_days")) {
-      u_int64_t expire_days = p.get<u_int64_t>("expire_days");
+      int64_t expire_days = p.get<int64_t>("expire_days");
       auto oldest_ts = get_current_time() - expire_days * 86400000;
       if (ptr->update_time < oldest_ts) {
         return false;
@@ -189,7 +189,7 @@ void PyStorage::dump(const std::string &path, Parameters condition) {
     }
 
     if (p.contains("min_count")) {
-      u_int64_t min_count = p.get<u_int64_t>("min_count");
+      int64_t min_count = p.get<int64_t>("min_count");
       if (ptr->update_num < min_count) {
         return false;
       }
@@ -233,12 +233,10 @@ PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
 
 PyEmbedding::~PyEmbedding() {}
 
-void PyEmbedding::lookup(unsigned long long *keys, int len, float *data,
-                         int n) {
-  this->embedding_->lookup((u_int64_t *)keys, len, data, n);
+void PyEmbedding::lookup(long long *keys, int len, float *data, int n) {
+  this->embedding_->lookup((int64_t *)keys, len, data, n);
 }
 
-void PyEmbedding::apply_gradients(unsigned long long *keys, int len, float *gds,
-                                  int n) {
-  this->embedding_->apply_gradients((u_int64_t *)keys, len, gds, n);
+void PyEmbedding::apply_gradients(long long *keys, int len, float *gds, int n) {
+  this->embedding_->apply_gradients((int64_t *)keys, len, gds, n);
 }

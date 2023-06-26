@@ -43,7 +43,7 @@ static std::mutex group_lock;
 static Configure group_configs[max_group];
 
 class ApplyGredientsOperator : public rocksdb::MergeOperator {
-public:
+ public:
   ApplyGredientsOperator() {}
   ~ApplyGredientsOperator() {}
 
@@ -69,7 +69,7 @@ public:
 
 class Embedding;
 class Storage {
-public:
+ public:
   Storage() = delete;
   Storage(int ttl, const std::string &data_dir);
   ~Storage();
@@ -97,14 +97,14 @@ public:
    */
   void load_from_checkpoint(const std::string &path);
 
-private:
+ private:
   int ttl_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   friend class Embedding;
 };
 
 class Embedding {
-public:
+ public:
   Embedding() = delete;
   Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
             const std::shared_ptr<Initializer> &initializer, int dim,
@@ -119,7 +119,7 @@ public:
    * @param wn length of the weights
    * @return
    */
-  void lookup(u_int64_t *keys, int len, Float *data, int n);
+  void lookup(int64_t *keys, int len, Float *data, int n);
 
   /**
    * @brief update the embedding weights
@@ -129,18 +129,17 @@ public:
    * @param gds gradients for the keys
    * @param gn length of the gradients
    */
-  void apply_gradients(u_int64_t *keys, int len, Float *gds, int n);
+  void apply_gradients(int64_t *keys, int len, Float *gds, int n);
 
-private:
-  std::shared_ptr<std::string> create(const u_int64_t &key);
+ private:
+  std::shared_ptr<std::string> create(const int64_t &key);
 
-private:
+ private:
   int dim_;
   int group_;
-  // u_int64_t group_mask_;
   std::shared_ptr<rocksdb::DBWithTTL> db_;
   const std::shared_ptr<Optimizer> optimizer_;
   const std::shared_ptr<Initializer> initializer_;
 };
 
-#endif // DAMO_EMBEDDING_EMBEDDING_H
+#endif  // DAMO_EMBEDDING_EMBEDDING_H

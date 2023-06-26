@@ -40,7 +40,10 @@ Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
                      int group)
-    : dim_(dim), group_(group), db_(storage.db_), optimizer_(optimizer),
+    : dim_(dim),
+      group_(group),
+      db_(storage.db_),
+      optimizer_(optimizer),
       initializer_(initializer) {
   if (group < 0 || group >= max_group) {
     std::cout << "group: " << group << " out of range" << std::endl;
@@ -60,7 +63,7 @@ Embedding::Embedding(Storage &storage,
 
 Embedding::~Embedding() {}
 
-std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
+std::shared_ptr<std::string> Embedding::create(const int64_t &key) {
   auto value = std::make_shared<std::string>(
       sizeof(MetaData) +
           sizeof(Float) * this->optimizer_->get_space(this->dim_),
@@ -75,7 +78,7 @@ std::shared_ptr<std::string> Embedding::create(const u_int64_t &key) {
   return value;
 }
 
-void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
+void Embedding::lookup(int64_t *keys, int len, Float *data, int n) {
   assert(len * this->dim_ == n);
   memset(data, 0, n * sizeof(Float));
 
@@ -111,7 +114,7 @@ void Embedding::lookup(u_int64_t *keys, int len, Float *data, int n) {
   return;
 }
 
-void Embedding::apply_gradients(u_int64_t *keys, int len, Float *gds, int n) {
+void Embedding::apply_gradients(int64_t *keys, int len, Float *gds, int n) {
   assert(len * this->dim_ == n);
   Key *group_keys = (Key *)malloc(len * sizeof(Key));
 
@@ -182,7 +185,7 @@ void Storage::dump(const std::string &path,
     ptr = (MetaData *)it->value().data();
     if (filter == nullptr || filter(ptr)) {
       group_counts[ptr->group]++;
-      writer.write((char *)&ptr->key, sizeof(u_int64_t));
+      writer.write((char *)&ptr->key, sizeof(int64_t));
       writer.write((char *)&ptr->group, sizeof(int));
       writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
     }
@@ -198,7 +201,7 @@ void Storage::dump(const std::string &path,
 }
 
 // checkpoint file format:
-// u_int64_t: key count
+// int64_t: key count
 // (size_t: key length, bytes: key data, size_t: value length, bytes: value
 // data)+
 void Storage::checkpoint(const std::string &path) {
@@ -207,11 +210,11 @@ void Storage::checkpoint(const std::string &path) {
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
   rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
-  u_int64_t count = 0;
+  int64_t count = 0;
   size_t key_len = 0, value_len = 0;
 
   std::ofstream writer(checkpoint_path, std::ios::out | std::ios::binary);
-  writer.write((char *)&count, sizeof(u_int64_t));
+  writer.write((char *)&count, sizeof(int64_t));
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     count++;
@@ -226,7 +229,7 @@ void Storage::checkpoint(const std::string &path) {
   delete it;
   this->db_->ReleaseSnapshot(sp);
   writer.seekp(0, std::ios::beg);
-  writer.write((char *)&count, sizeof(u_int64_t));
+  writer.write((char *)&count, sizeof(int64_t));
   writer.close();
 }
 
@@ -240,14 +243,14 @@ void Storage::load_from_checkpoint(const std::string &path) {
   rocksdb::WriteOptions options;
   options.sync = false;
   std::ifstream reader(path, std::ios::in | std::ios::binary);
-  u_int64_t count = 0;
+  int64_t count = 0;
   size_t key_len = 0, value_len = 0;
-  reader.read((char *)&count, sizeof(u_int64_t));
+  reader.read((char *)&count, sizeof(int64_t));
   size_t max_key_length = 1024, max_value_length = 1024;
   char *key = (char *)malloc(max_key_length);
   char *value = (char *)malloc(max_value_length);
 
-  for (u_int64_t i = 0; i < count; i++) {
+  for (int64_t i = 0; i < count; i++) {
     reader.read((char *)&key_len, sizeof(size_t));
     if (key_len > max_key_length) {
       max_key_length = key_len * 2;

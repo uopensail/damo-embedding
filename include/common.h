@@ -39,10 +39,14 @@ const Float Epsilon = 1e-8f;
 #define u_int64_t unsigned long long
 #endif
 
+#ifndef int64_t
+#define int64_t long long
+#endif
+
 // the feature number must <= 1024
 const int max_group = 1024;
 
-u_int64_t get_current_time();
+int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);
 
@@ -52,14 +56,14 @@ Float sign(Float x);
 
 struct Key {
   int group;
-  u_int64_t key;
+  int64_t key;
 };
 
 struct MetaData {
   int group;
-  u_int64_t key;
-  u_int64_t update_time; // ms
-  u_int64_t update_num;
+  int64_t key;
+  int64_t update_num;
+  int64_t update_time;  // ms
   int dim;
   Float data[];
 };
@@ -69,10 +73,10 @@ using MetaData = struct MetaData;
 using Key = struct Key;
 
 class Params {
-private:
+ private:
   std::shared_ptr<cpptoml::table> table;
 
-public:
+ public:
   Params() = delete;
   Params(const std::shared_ptr<cpptoml::table> &table);
   Params(const Params &p);
@@ -82,7 +86,8 @@ public:
 
   bool contains(const std::string &key);
 
-  template <class T> T get(const std::string &key) const {
+  template <class T>
+  T get(const std::string &key) const {
     if (table != nullptr && table->contains(key)) {
       return *table->get_as<T>(key);
     }
@@ -99,4 +104,4 @@ public:
   ~Params();
 };
 
-#endif // DAMO_COMMON_H
+#endif  // DAMO_COMMON_H

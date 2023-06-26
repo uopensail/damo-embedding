@@ -20,7 +20,7 @@ configure parameters:
 
 ### group
 
-If the group is setted (0 <= group < 256),  we will only dump keys have the same group.
+If the group is setted (0 <= group < 128),  we will only dump keys have the same group.
 
 configure parameters:
 
@@ -50,14 +50,14 @@ First part stores the dim and count of each group, totally 256 groups. Second pa
 
 | type   | size | length | description                       |
 | ------ | ---- | ------ | --------------------------------- |
-| int32  | 4bit | 256    | dim of 256 group, default 0       |
-| size_t | 8bit | 256    | key count of 256 group, default 0 |
+| int32  | 4bit | 128    | dim of 128 group, default 0       |
+| size_t | 8bit | 128    | key count of 128 group, default 0 |
 
 #### second part
 
 | type      | size | length            | description       |
 | --------- | ---- | ----------------- | ----------------- |
-| u_int64_t | 8bit | 1                 | key value         |
+| int64_t | 8bit | 1                 | key value         |
 | int32     | 4bit | 1                 | group of the key  |
 | float     | 4bit | dim of this group | weight of the key |
 

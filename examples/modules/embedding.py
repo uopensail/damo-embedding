@@ -15,38 +15,241 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-
-import damo
+import os
+import struct
+from typing import Tuple, Dict, List
+from collections import defaultdict
+import torch
 import numpy as np
+import damo
 
-# create storage
-storage = damo.PyStorage("/tmp/data_dir", 0)
+__all__ = [
+    "Embedding",
+    "save_model",
+    "checkpoint",
+    "load_from_checkpoint",
+]
 
-# create initializer
-init_params = damo.Parameters()
-init_params.insert("name", "truncate_normal")
-init_params.insert("mean", 0.0)
-init_params.insert("stddev", 1.0)
-initializer = damo.PyInitializer(init_params)
+GLOBAL_MAX_GROUP = 128
 
-# create optimizer
-optm_params = damo.Parameters()
-optm_params.insert("name", "sgd")
-optm_params.insert("gamma", 0.001)
-optm_params.insert("lambda", 0.0)
-optimizer = damo.PyOptimizer(optm_params)
 
-dim = 16
-group = 0
-embedding = damo.PyEmbedding(storage, optimizer, initializer, dim, group)
+class Storage(object):
+    """singleton storage class."""
 
-keys = np.zeros(1, dtype=np.uint64)
-keys[0] = 1234567890
-w = np.zeros(dim * keys.shape[0], dtype=np.float32)
-gds = np.random.random(dim * keys.shape[0]).astype(np.float32)
+    _instance = None
 
-print(w)
-embedding.lookup(keys, w)
-embedding.apply_gradients(keys, gds)
-embedding.lookup(keys, w)
-print(w)
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = object.__new__(cls)
+            cls._instance.dir = kwargs.get("dir", "./embeddings")
+            cls._instance.ttl = kwargs.get("ttl", 8640000)
+            cls._instance.storage = damo.PyStorage(
+                cls._instance.dir, cls._instance.ttl)
+        return cls._instance
+
+    @staticmethod
+    def checkpoint(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.checkpoint(path)
+
+    @staticmethod
+    def dump(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.dump(path)
+
+    @staticmethod
+    def load_from_checkpoint(path: str):
+        assert Storage._instance is not None
+        Storage._instance.storage.load_from_checkpoint(path)
+
+
+class Embedding(torch.nn.Module):
+    """embedding module for training."""
+
+    _group = -1
+
+    def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
+        global GLOBAL_MAX_GROUP
+        super(Embedding, self).__init__()
+        self.dim = dim
+        Embedding._group += 1
+        self.group = Embedding._group
+        assert 0 <= self.group < GLOBAL_MAX_GROUP
+        self.storage = Storage(**kwargs)._instance.storage
+
+        # create initializer
+        init_params = damo.Parameters()
+        for k, v in initializer.items():
+            init_params.insert(k, v)
+        self.initializer = damo.PyInitializer(init_params)
+
+        # create optimizer
+        opt_params = damo.Parameters()
+        for k, v in optimizer.items():
+            opt_params.insert(k, v)
+        self.optimizer = damo.PyOptimizer(opt_params)
+
+        self.embedding = damo.PyEmbedding(
+            self.storage, self.optimizer, self.initializer, self.dim, self.group
+        )
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """embedding lookup
+
+        Args:
+            inputs (torch.Tensor): input values
+
+        Returns:
+            torch.Tensor: embedding values (input.shape[0], input.shape[1], self.dim)
+        """
+
+        data = input.numpy().astype(np.int64)
+        batch_size, width = data.shape
+        keys = np.unique(np.concatenate(data)).astype(np.int64)
+        length = keys.shape[0]
+        weights = np.zeros(length * self.dim, dtype=np.float32)
+        self.embedding.lookup(keys, weights)
+        weights = weights.reshape((length, self.dim))
+        weight_dict = {k: v for k, v in zip(keys, weights)}
+        values = np.zeros(
+            shape=(batch_size, width, self.dim), dtype=np.float32)
+
+        for i in range(batch_size):
+            for j in range(width):
+                key = data[i][j]
+                # 0 is padding value
+                if key != 0:
+                    values[i][j] = weight_dict[key]
+
+        def apply_gradients(gradients):
+            grad = gradients.numpy()
+            grad = grad.reshape((batch_size, width, self.dim))
+            grad_dict = defaultdict(
+                lambda: np.zeros(self.dim, dtype=np.float32))
+            for i in range(batch_size):
+                for j in range(width):
+                    key = data[i][j]
+                    if key != 0:
+                        grad_dict[key] += grad[i][j]
+
+            values = np.zeros(length * self.dim, dtype=np.float32)
+            for i in range(length):
+                values[i * self.dim: (i + 1) * self.dim] = (
+                    grad_dict[keys[i]] / batch_size
+                )
+
+            self.embedding.apply_gradients(keys, values)
+
+        ret = torch.from_numpy(values)
+        ret.requires_grad_()
+        ret.register_hook(apply_gradients)
+        return ret
+
+
+class KeyMapper(torch.nn.Module):
+    """hashed key to embedding key."""
+
+    def __init__(self, keys: Dict[int, int]):
+        super(KeyMapper, self).__init__()
+        self.dict: Dict[int, int] = keys
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        keys = input.flatten()
+        values: List[int] = [self.dict.get(
+            int(keys[i]), 0) for i in range(len(keys))]
+        ret = torch.tensor(values, dtype=torch.int64, requires_grad=False)
+        return ret.reshape(input.shape)
+
+
+class DummyEmbedding(torch.nn.Module):
+    """embedding module for inference."""
+
+    def __init__(self, keys: Dict[int, int], data: np.ndarray):
+        super(DummyEmbedding, self).__init__()
+        self.keymapper = KeyMapper(keys)
+        self.embedding = torch.nn.Embedding(data.shape[0],
+                                            data.shape[1], padding_idx=0)
+        self.embedding.weight.data = torch.from_numpy(data)
+        self.embedding.requires_grad_ = False
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        return self.embedding(self.keymapper(input))
+
+
+def sparse_to_numpy(sparse_path: str, groups: Dict[int, int]) -> Tuple[
+        Dict[int, np.ndarray], Dict[int, Dict[int, int]]]:
+    """read from the sparse file, which dumped by Storage
+
+    Args:
+        sparse_path (str): data path
+        groups (Dict[int, int]): group and it's dim
+    Returns:
+        Tuple[Dict[int, np.ndarray], Dict[int, Dict[int, int]]]: data and ids
+    """
+    global GLOBAL_MAX_GROUP
+    max_group = GLOBAL_MAX_GROUP
+    group_data, group_index, group_ids = {}, {}, {}
+    with open(sparse_path, "rb") as f:
+        dims = struct.unpack(f"@{max_group}i", f.read(max_group * 4))
+        counts = struct.unpack(f"@{max_group}q", f.read(max_group * 8))
+
+        for group, dim in groups.items():
+            capacity = counts[group] + 1
+            group_data[group] = np.zeros((capacity, dim), dtype=np.float32)
+            group_index[group] = 1
+            group_ids[group] = {}
+
+        buffer = f.read(8)
+        while buffer:
+            key = struct.unpack("@q", buffer)[0]
+            group = struct.unpack("@I", f.read(4))[0]
+            weight = struct.unpack(
+                f"@{dims[group]}f", f.read(4 * dims[group]))
+            group_data[group][group_index[group]] = np.array(
+                weight, dtype=np.float32)
+            group_ids[group][key] = group_index[group]
+            group_index[group] += 1
+            buffer = f.read(8)
+    return group_data, group_ids
+
+
+def load_from_checkpoint(path: str):
+    """load from checkpoint
+
+    Args:
+        path (str): checkpoint file path
+    """
+    Storage.load_from_checkpoint(path)
+
+
+def checkpoint(path: str):
+    """do a checkpoint
+
+    Args:
+        path (str): checkpoint file path
+    """
+    Storage.checkpoint(path)
+
+
+def save_model(model: torch.nn.Module, output_dir: str) -> None:
+    """save mode to dir
+
+    Args:
+        model (torch.nn.Module): torch module
+        output_dir (str): output dir
+    """
+    sparse_path = os.path.join(output_dir, "sparse.dat")
+    Storage.dump(sparse_path)
+    groups = {}
+    for k, v in model.__dict__['_modules'].items():
+        if isinstance(v, Embedding):
+            groups[v.group] = v.dim
+
+    group_data, group_ids = sparse_to_numpy(sparse_path, groups)
+    for k, v in model.__dict__['_modules'].items():
+        if isinstance(v, Embedding):
+            model.__dict__['_modules'][k] = DummyEmbedding(group_ids[v.group],
+                                                           group_data[v.group])
+
+    model_scripted = torch.jit.script(model)
+    model_scripted.save(os.path.join(output_dir, "model.pt"))

@@ -26,7 +26,7 @@
 #include "optimizer.h"
 
 class Parameters {
-public:
+ public:
   Parameters();
   Parameters(const Parameters &p);
   Parameters &operator=(const Parameters &p);
@@ -37,14 +37,14 @@ public:
   void insert(std::string key, bool value);
   std::string to_json();
 
-public:
+ public:
   std::shared_ptr<cpptoml::table> params_;
 };
 
 class PyEmbedding;
 
 class PyInitializer {
-public:
+ public:
   PyInitializer();
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
@@ -59,13 +59,13 @@ public:
   void call(float *w, int wn);
   ~PyInitializer();
 
-private:
+ private:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
 };
 
 class PyOptimizer {
-public:
+ public:
   PyOptimizer();
   PyOptimizer(Parameters op_params);
   PyOptimizer(Parameters op_params, Parameters decay_params);
@@ -81,17 +81,16 @@ public:
    * @param gn width of the grad
    * @param global_step global step
    */
-  void call(float *w, int wn, float *gds, int gn,
-            unsigned long long global_step = 0);
+  void call(float *w, int wn, float *gds, int gn, long long global_step = 0);
   ~PyOptimizer();
 
-private:
+ private:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
 };
 
 class PyFilter {
-public:
+ public:
   PyFilter();
   PyFilter(Parameters params);
   PyFilter(const PyFilter &p);
@@ -105,7 +104,7 @@ public:
    * @return true in the filter
    * @return false not in the filter
    */
-  bool check(int group, unsigned long long key);
+  bool check(int group, long long key);
 
   /**
    * @brief add key to the filter
@@ -114,16 +113,16 @@ public:
    * @param key key to ad
    * @param num add counts
    */
-  void add(int group, unsigned long long key, unsigned long long num);
+  void add(int group, long long key, long long num);
   ~PyFilter();
 
-private:
+ private:
   std::shared_ptr<CountingBloomFilter> filter_;
   friend class PyEmbedding;
 };
 
 class PyStorage {
-public:
+ public:
   /**
    * @brief Construct a new Py Storage object
    *
@@ -162,13 +161,13 @@ public:
    */
   void load_from_checkpoint(const std::string &path);
 
-private:
+ private:
   std::shared_ptr<Storage> storage_;
   friend class PyEmbedding;
 };
 
 class PyEmbedding {
-public:
+ public:
   PyEmbedding() = delete;
   PyEmbedding(PyStorage storage, PyOptimizer optimizer,
               PyInitializer initializer, int dim, int group = 0);
@@ -185,7 +184,7 @@ public:
    * @param wn length of the weights
    * @return
    */
-  void lookup(unsigned long long *keys, int kn, float *w, int wn);
+  void lookup(long long *keys, int kn, float *w, int wn);
 
   /**
    * @brief update the embedding weights
@@ -195,10 +194,10 @@ public:
    * @param gds gradients for the keys
    * @param gn length of the gradients
    */
-  void apply_gradients(unsigned long long *keys, int kn, float *gds, int gn);
+  void apply_gradients(long long *keys, int kn, float *gds, int gn);
 
-private:
+ private:
   std::shared_ptr<Embedding> embedding_;
 };
 
-#endif // DAMO_EMBEDDING_PY_EMBEDDING_H
+#endif  // DAMO_EMBEDDING_PY_EMBEDDING_H

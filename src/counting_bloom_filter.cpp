@@ -1,6 +1,6 @@
 #include "counting_bloom_filter.h"
 
-u_int64_t hash_func(const u_int64_t &x) {
+u_int64_t hash_func(const int64_t &x) {
   return ((x >> 31) & high_mask) | ((x & low_mask) << 33);
 }
 
@@ -103,7 +103,7 @@ bool CountingBloomFilter::check(const Key &key) {
   return min_count >= count_;
 }
 
-void CountingBloomFilter::add(const Key &key, const u_int64_t &num) {
+void CountingBloomFilter::add(const Key &key, const int64_t &num) {
   u_int64_t hash = hash_func(key);
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->counter_num_;

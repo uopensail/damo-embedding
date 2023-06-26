@@ -2,7 +2,8 @@
 
 Optimizer::Optimizer(const Params &optimizer_params, const Params &scheduler)
     : name_(optimizer_params.get<std::string>("name")),
-      function_(get_lr_scheduler(scheduler)), scheduler_(scheduler) {}
+      function_(get_lr_scheduler(scheduler)),
+      scheduler_(scheduler) {}
 
 const std::string &Optimizer::get_name() { return name_; }
 
@@ -10,7 +11,7 @@ Optimizer::~Optimizer(){};
 
 int Optimizer::get_space(int dim) { return dim; }
 
-inline Float Optimizer::get_lr(u_int64_t global_step, Float learning_rate_) {
+inline Float Optimizer::get_lr(int64_t global_step, Float learning_rate_) {
   if (function_) {
     return function_(learning_rate_, global_step, this->scheduler_);
   }
@@ -25,8 +26,7 @@ SGDOptimizer::SGDOptimizer(const Params &optimizer_params,
 
 SGDOptimizer::~SGDOptimizer() {}
 
-void SGDOptimizer::call(Float *data, Float *gds, int dim,
-                        u_int64_t global_step) {
+void SGDOptimizer::call(Float *data, Float *gds, int dim, int64_t global_step) {
   auto lr = get_lr(global_step, this->gamma_);
   for (int i = 0; i < dim; i++) {
     data[i] -=
@@ -47,7 +47,7 @@ FTRLOptimizer::~FTRLOptimizer() {}
 int FTRLOptimizer::get_space(int dim) { return 3 * dim; }
 
 void FTRLOptimizer::call(Float *data, Float *gds, int dim,
-                         u_int64_t global_step) {
+                         int64_t global_step) {
   Float *w = data;
   Float *z = &(data[dim]);
   Float *n = &(data[dim << 1]);
@@ -98,7 +98,7 @@ AdagradOptimizer::~AdagradOptimizer() {}
 int AdagradOptimizer::get_space(int dim) { return 2 * dim; }
 
 void AdagradOptimizer::call(Float *data, Float *gds, int dim,
-                            u_int64_t global_step) {
+                            int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float lr = get_lr(global_step, this->gamma_);
@@ -130,7 +130,7 @@ AdamOptimizer::~AdamOptimizer() {}
 int AdamOptimizer::get_space(int dim) { return 3 * dim; }
 
 void AdamOptimizer::call(Float *data, Float *gds, int dim,
-                         u_int64_t global_step) {
+                         int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim << 1]);
@@ -162,7 +162,7 @@ AmsGradOptimizer::~AmsGradOptimizer() {}
 int AmsGradOptimizer::get_space(int dim) { return 4 * dim; }
 
 void AmsGradOptimizer::call(Float *data, Float *gds, int dim,
-                            u_int64_t global_step) {
+                            int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim * 2]);
@@ -196,7 +196,7 @@ AdamWOptimizer::~AdamWOptimizer() {}
 int AdamWOptimizer::get_space(int dim) { return 3 * dim; }
 
 void AdamWOptimizer::call(Float *data, Float *gds, int dim,
-                          u_int64_t global_step) {
+                          int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float *v = &(data[dim << 1]);
@@ -228,7 +228,7 @@ LionOptimizer::~LionOptimizer() {}
 int LionOptimizer::get_space(int dim) { return 2 * dim; }
 
 void LionOptimizer::call(Float *data, Float *gds, int dim,
-                         u_int64_t global_step) {
+                         int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
   Float lr = get_lr(global_step, this->eta_);

@@ -11,9 +11,9 @@ All features are discretization and represented by the unique u_int64_t value. W
 ```c++
 struct MetaData {
     int group; 
-    u_int64_t key;     // original key, not group-masked key
-    u_int64_t update_time;
-    u_int64_t update_num;
+    int64_t key;
+    int64_t update_time;
+    int64_t update_num;
     float data[];
 };
 ```

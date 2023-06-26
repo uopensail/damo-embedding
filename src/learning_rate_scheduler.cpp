@@ -1,13 +1,13 @@
 #include "learning_rate_scheduler.h"
 
-Float exponential_decay(Float learning_rate, u_int64_t global_step,
+Float exponential_decay(Float learning_rate, int64_t global_step,
                         const Params &params) {
   auto decay_steps = params.get<double>("decay_steps");
   auto decay_rate = params.get<double>("decay_rate");
   return learning_rate * powf(decay_rate, global_step / decay_steps);
 }
 
-Float polynomial_decay(Float learning_rate, u_int64_t global_step,
+Float polynomial_decay(Float learning_rate, int64_t global_step,
                        const Params &params) {
   auto decay_steps = params.get<double>("decay_steps");
   auto gstep = global_step < decay_steps ? global_step : decay_steps;
@@ -19,27 +19,27 @@ Float polynomial_decay(Float learning_rate, u_int64_t global_step,
          end_learning_rate;
 }
 
-Float nature_exponential_decay(Float learning_rate, u_int64_t global_step,
+Float nature_exponential_decay(Float learning_rate, int64_t global_step,
                                const Params &params) {
   auto decay_steps = params.get<double>("decay_steps");
   auto decay_rate = params.get<double>("decay_rate");
   return learning_rate * expf(-decay_rate * global_step / decay_steps);
 }
 
-Float inverse_time_decay(Float learning_rate, u_int64_t global_step,
+Float inverse_time_decay(Float learning_rate, int64_t global_step,
                          const Params &params) {
   auto decay_steps = params.get<double>("decay_steps");
   auto decay_rate = params.get<double>("decay_rate");
   return learning_rate / (1.0 + decay_rate * global_step / decay_steps);
 }
 
-Float cosine_decay(Float learning_rate, u_int64_t global_step,
+Float cosine_decay(Float learning_rate, int64_t global_step,
                    const Params &params) {
   auto decay_steps = params.get<double>("decay_steps");
   return learning_rate * 0.5 * (1.0 + cosf(M_PI * global_step / decay_steps));
 }
 
-Float liner_cosine_decay(Float learning_rate, u_int64_t global_step,
+Float liner_cosine_decay(Float learning_rate, int64_t global_step,
                          const Params &params) {
   auto alpha = params.get<double>("alpha", 0.0);
   auto beta = params.get<double>("beta", 0.001);

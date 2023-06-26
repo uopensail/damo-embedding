@@ -43,23 +43,23 @@ using Counter = struct Counter;
 
 const double FPR = 0.001;
 const int max_count = 15;
-const u_int64_t min_size = 268435456ull;   // 2^28
-const u_int64_t high_mask = 8589934591ull; // 2^33-1
-const u_int64_t low_mask = 2147483647ull;  // 2^31-1
+const u_int64_t min_size = 268435456ull;    // 2^28
+const u_int64_t high_mask = 8589934591ull;  // 2^33-1
+const u_int64_t low_mask = 2147483647ull;   // 2^31-1
 
 class CountingBloomFilter final {
-private:
-  double fpr_;           // false positive rate
-  size_t capacity_;      // The capacity of the filter
-  std::string filename_; // persist files
-  int count_;            // minimum count for the filter
-  size_t counter_num_;   // the amount of counter
-  size_t space_;         // memory space for counter
-  int k_;                // the number of hash functions
-  int fd_;               // file descriptor
-  Counter *data_;        // stored data
+ private:
+  double fpr_;            // false positive rate
+  size_t capacity_;       // The capacity of the filter
+  std::string filename_;  // persist files
+  int count_;             // minimum count for the filter
+  size_t counter_num_;    // the amount of counter
+  size_t space_;          // memory space for counter
+  int k_;                 // the number of hash functions
+  int fd_;                // file descriptor
+  Counter *data_;         // stored data
 
-public:
+ public:
   CountingBloomFilter();
   CountingBloomFilter(const Params &config);
   CountingBloomFilter(const CountingBloomFilter &) = delete;
@@ -67,7 +67,7 @@ public:
                       bool reload = false, double fpr = FPR);
   ~CountingBloomFilter();
 
-public:
+ public:
   /**
    * @brief where the key in the filter
    *
@@ -83,11 +83,11 @@ public:
    * @param key key to ad
    * @param num add counts
    */
-  void add(const Key &key, const u_int64_t &num = 1);
+  void add(const Key &key, const int64_t &num = 1);
   int get_count() const;
 };
-u_int64_t hash_func(const u_int64_t &x);
+u_int64_t hash_func(const int64_t &x);
 u_int64_t hash_func(const Key &x);
 void create_empty_file(const std::string &filename, const size_t &size);
 
-#endif // DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H
+#endif  // DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H
