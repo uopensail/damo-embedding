@@ -20,6 +20,9 @@ from typing import Union
 from collections import defaultdict
 
 
+GLOBAL_MAX_GROUP = 128
+
+
 class Storage(object):
     """singleton storage class."""
 
@@ -30,7 +33,8 @@ class Storage(object):
             cls._instance = object.__new__(cls)
             cls._instance.dir = kwargs.get("dir", "./embeddings")
             cls._instance.ttl = kwargs.get("ttl", 8640000)
-            cls._instance.storage = damo.PyStorage(cls._instance.dir, cls._instance.ttl)
+            cls._instance.storage = damo.PyStorage(
+                cls._instance.dir, cls._instance.ttl)
         return cls._instance
 
     @staticmethod
@@ -50,18 +54,17 @@ class Storage(object):
 
 
 class Embedding(torch.nn.Module):
+    """embedding module for training."""
+
     _group = -1
 
-    def __init__(self, dim: int, initializer={}, optimizer={}, group=-1, **kwargs):
+    def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
+        global GLOBAL_MAX_GROUP
         super(Embedding, self).__init__()
         self.dim = dim
-        if group != -1:
-            self.group = group
-            assert 0 <= self.group < 256
-        else:
-            Embedding._group += 1
-            self.group = Embedding._group
-            assert 0 <= self.group < 256
+        Embedding._group += 1
+        self.group = Embedding._group
+        assert 0 <= self.group < GLOBAL_MAX_GROUP
         self.storage = Storage(**kwargs).storage
 
         # create initializer
@@ -80,31 +83,26 @@ class Embedding(torch.nn.Module):
             self.storage, self.optimizer, self.initializer, self.dim, self.group
         )
 
-    def forward(self, inputs: Union[torch.Tensor, np.ndarray]) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """embedding lookup
 
         Args:
-            inputs (Union[torch.Tensor, np.ndarray]): input values
+            inputs (torch.Tensor): input values
 
         Returns:
-            torch.Tensor: embedding values (inputs.shape[0], inputs.shape[1], self.dim)
+            torch.Tensor: embedding values (input.shape[0], input.shape[1], self.dim)
         """
 
-        data = inputs
-        if isinstance(inputs, torch.Tensor):
-            data = inputs.numpy().astype(np.uint64)
-        elif isinstance(inputs, np.ndarray):
-            if data.type != np.uint64:
-                data = inputs.astype(np.uint64)
-
+        data = input.numpy().astype(np.int64)
         batch_size, width = data.shape
-        keys = np.unique(np.concatenate(data)).astype(np.uint64)
+        keys = np.unique(np.concatenate(data)).astype(np.int64)
         length = keys.shape[0]
         weights = np.zeros(length * self.dim, dtype=np.float32)
         self.embedding.lookup(keys, weights)
         weights = weights.reshape((length, self.dim))
         weight_dict = {k: v for k, v in zip(keys, weights)}
-        values = np.zeros(shape=(batch_size, width, self.dim), dtype=np.float32)
+        values = np.zeros(
+            shape=(batch_size, width, self.dim), dtype=np.float32)
 
         for i in range(batch_size):
             for j in range(width):
@@ -116,7 +114,8 @@ class Embedding(torch.nn.Module):
         def apply_gradients(gradients):
             grad = gradients.numpy()
             grad = grad.reshape((batch_size, width, self.dim))
-            grad_dict = defaultdict(lambda: np.zeros(self.dim, dtype=np.float32))
+            grad_dict = defaultdict(
+                lambda: np.zeros(self.dim, dtype=np.float32))
             for i in range(batch_size):
                 for j in range(width):
                     key = data[i][j]
@@ -125,7 +124,7 @@ class Embedding(torch.nn.Module):
 
             values = np.zeros(length * self.dim, dtype=np.float32)
             for i in range(length):
-                values[i * self.dim : (i + 1) * self.dim] = (
+                values[i * self.dim: (i + 1) * self.dim] = (
                     grad_dict[keys[i]] / batch_size
                 )
 

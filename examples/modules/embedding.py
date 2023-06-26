@@ -75,7 +75,7 @@ class Embedding(torch.nn.Module):
         Embedding._group += 1
         self.group = Embedding._group
         assert 0 <= self.group < GLOBAL_MAX_GROUP
-        self.storage = Storage(**kwargs)._instance.storage
+        self.storage = Storage(**kwargs).storage
 
         # create initializer
         init_params = damo.Parameters()
