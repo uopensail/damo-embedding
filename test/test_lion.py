@@ -56,7 +56,7 @@ class LionTestCase(unittest.TestCase):
 
     def test(self):
         n = 8
-        keys = np.random.randint(1, 10000 + 1, n, dtype=np.uint64)
+        keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
         w = np.zeros(self.dim * n, dtype=np.float32)
         self.embedding.lookup(keys, w)
         m = np.zeros(self.dim * n).astype(np.float32)

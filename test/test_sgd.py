@@ -47,7 +47,7 @@ class SGDTestCase(unittest.TestCase):
 
     def test(self):
         n = 8
-        keys = np.zeros(n, dtype=np.uint64)
+        keys = np.zeros(n, dtype=np.int64)
         for i in range(n):
             keys[i] = i + 1
         w = np.zeros(self.dim * keys.shape[0], dtype=np.float32)

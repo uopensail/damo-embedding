@@ -54,7 +54,7 @@ class FTRLTestCase(unittest.TestCase):
 
     def test(self):
         n = 8
-        keys = np.random.randint(1, 10000 + 1, n, dtype=np.uint64)
+        keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
         N = np.zeros(self.dim * n, dtype=np.float32)
         z = np.zeros(self.dim * n, dtype=np.float32)
         w = np.zeros(self.dim * n, dtype=np.float32)
