@@ -69,10 +69,10 @@ class Parameters(object):
         _damo.Parameters_swiginit(self, _damo.new_Parameters(*args))
     __swig_destroy__ = _damo.delete_Parameters
 
-    def insert(self, *args):
+    def insert(self, *args) -> "void":
         return _damo.Parameters_insert(self, *args)
 
-    def to_json(self):
+    def to_json(self) -> "std::string":
         return _damo.Parameters_to_json(self)
     params_ = property(_damo.Parameters_params__get, _damo.Parameters_params__set)
 
@@ -86,7 +86,7 @@ class PyInitializer(object):
     def __init__(self, *args):
         _damo.PyInitializer_swiginit(self, _damo.new_PyInitializer(*args))
 
-    def call(self, w):
+    def call(self, w: "float *") -> "void":
         return _damo.PyInitializer_call(self, w)
     __swig_destroy__ = _damo.delete_PyInitializer
 
@@ -100,7 +100,7 @@ class PyOptimizer(object):
     def __init__(self, *args):
         _damo.PyOptimizer_swiginit(self, _damo.new_PyOptimizer(*args))
 
-    def call(self, w, gds, global_step=0):
+    def call(self, w: "float *", gds: "float *", global_step: "long long"=0) -> "void":
         return _damo.PyOptimizer_call(self, w, gds, global_step)
     __swig_destroy__ = _damo.delete_PyOptimizer
 
@@ -114,10 +114,10 @@ class PyFilter(object):
     def __init__(self, *args):
         _damo.PyFilter_swiginit(self, _damo.new_PyFilter(*args))
 
-    def check(self, group, key):
+    def check(self, group: "int", key: "long long") -> "bool":
         return _damo.PyFilter_check(self, group, key)
 
-    def add(self, group, key, num):
+    def add(self, group: "int", key: "long long", num: "long long") -> "void":
         return _damo.PyFilter_add(self, group, key, num)
     __swig_destroy__ = _damo.delete_PyFilter
 
@@ -128,17 +128,17 @@ class PyStorage(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, data_dir, ttl=0):
+    def __init__(self, data_dir: "std::string const &", ttl: "int"=0):
         _damo.PyStorage_swiginit(self, _damo.new_PyStorage(data_dir, ttl))
     __swig_destroy__ = _damo.delete_PyStorage
 
-    def dump(self, *args):
+    def dump(self, *args) -> "void":
         return _damo.PyStorage_dump(self, *args)
 
-    def checkpoint(self, path):
+    def checkpoint(self, path: "std::string const &") -> "void":
         return _damo.PyStorage_checkpoint(self, path)
 
-    def load_from_checkpoint(self, path):
+    def load_from_checkpoint(self, path: "std::string const &") -> "void":
         return _damo.PyStorage_load_from_checkpoint(self, path)
 
 # Register PyStorage in _damo:
@@ -152,10 +152,10 @@ class PyEmbedding(object):
         _damo.PyEmbedding_swiginit(self, _damo.new_PyEmbedding(*args))
     __swig_destroy__ = _damo.delete_PyEmbedding
 
-    def lookup(self, keys, w):
+    def lookup(self, keys: "long long *", w: "float *") -> "void":
         return _damo.PyEmbedding_lookup(self, keys, w)
 
-    def apply_gradients(self, keys, gds):
+    def apply_gradients(self, keys: "long long *", gds: "float *") -> "void":
         return _damo.PyEmbedding_apply_gradients(self, keys, gds)
 
 # Register PyEmbedding in _damo:
