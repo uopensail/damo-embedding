@@ -86,7 +86,7 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.0.5",
+    version="1.0.6",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: AGLP3",
     author="timepi",
@@ -95,7 +95,8 @@ setup(
     packages=find_packages(),
     py_modules=["damo"],
     ext_modules=[damoModule],
-    keywords=["sparse embedding using rocksdb","parameter server","ftrl","adam","adagrad"],
+    keywords=["sparse embedding using rocksdb",
+              "parameter server", "ftrl", "adam", "adagrad"],
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["numpy>=1.19.0"],
