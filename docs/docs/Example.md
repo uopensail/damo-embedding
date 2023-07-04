@@ -1,138 +1,12 @@
 # Example
 
-## Embedding
-```python
-import damo
-import torch
-import numpy as np
-from typing import Union
-from collections import defaultdict
-
-
-class Storage(object):
-    """singleton storage class."""
-
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = object.__new__(cls)
-            cls._instance.dir = kwargs.get("dir", "./embeddings")
-            cls._instance.ttl = kwargs.get("ttl", 8640000)
-            cls._instance.storage = damo.PyStorage(
-                cls._instance.dir, cls._instance.ttl)
-        return cls._instance
-
-    @staticmethod
-    def checkpoint(path: str):
-        assert Storage._instance is not None
-        Storage._instance.storage.checkpoint(path)
-
-    @staticmethod
-    def dump(path: str):
-        assert Storage._instance is not None
-        Storage._instance.storage.dump(path)
-
-    @staticmethod
-    def load_from_checkpoint(path: str):
-        assert Storage._instance is not None
-        Storage._instance.storage.load_from_checkpoint(path)
-
-
-class Embedding(torch.nn.Module):
-    """embedding module for training."""
-
-    _group = -1
-
-    def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
-        super(Embedding, self).__init__()
-        self.dim = dim
-        Embedding._group += 1
-        self.group = Embedding._group
-        assert self.group >= 0
-        self.storage = Storage(**kwargs).storage
-
-        # create initializer
-        init_params = damo.Parameters()
-        for k, v in initializer.items():
-            init_params.insert(k, v)
-        self.initializer = damo.PyInitializer(init_params)
-
-        # create optimizer
-        opt_params = damo.Parameters()
-        for k, v in optimizer.items():
-            opt_params.insert(k, v)
-        self.optimizer = damo.PyOptimizer(opt_params)
-
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, self.group
-        )
-
-    def forward(self, input: torch.Tensor) -> torch.Tensor:
-        """embedding lookup
-
-        Args:
-            inputs (torch.Tensor): input values
-
-        Returns:
-            torch.Tensor: embedding values (input.shape[0], input.shape[1], self.dim)
-        """
-
-        data = input.numpy().astype(np.int64)
-        batch_size, width = data.shape
-        keys = np.unique(np.concatenate(data)).astype(np.int64)
-        length = keys.shape[0]
-        weights = np.zeros(length * self.dim, dtype=np.float32)
-        self.embedding.lookup(keys, weights)
-        weights = weights.reshape((length, self.dim))
-        weight_dict = {k: v for k, v in zip(keys, weights)}
-        values = np.zeros(
-            shape=(batch_size, width, self.dim), dtype=np.float32)
-
-        for i in range(batch_size):
-            for j in range(width):
-                key = data[i][j]
-                # 0 is padding value
-                if key != 0:
-                    values[i][j] = weight_dict[key]
-
-        def apply_gradients(gradients):
-            grad = gradients.numpy()
-            grad = grad.reshape((batch_size, width, self.dim))
-            grad_dict = defaultdict(
-                lambda: np.zeros(self.dim, dtype=np.float32))
-            for i in range(batch_size):
-                for j in range(width):
-                    key = data[i][j]
-                    if key != 0:
-                        grad_dict[key] += grad[i][j]
-
-            values = np.zeros(length * self.dim, dtype=np.float32)
-            for i in range(length):
-                values[i * self.dim: (i + 1) * self.dim] = (
-                    grad_dict[keys[i]] / batch_size
-                )
-
-            self.embedding.apply_gradients(keys, values)
-
-        ret = torch.from_numpy(values)
-        ret.requires_grad_()
-        ret.register_hook(apply_gradients)
-        return ret
-
-
-
-```
-
 ## DeepFM
 
 ```python
-
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Union
-from embedding import Embedding
+
+from damo_embedding import Embedding
 
 
 class DeepFM(torch.nn.Module):
@@ -190,22 +64,23 @@ class DeepFM(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """forward
 
         Args:
-            inputs (torch.Tensor): input tensor
+            input (torch.Tensor): input tensor
 
         Returns:
             tensor.Tensor: deepfm forward values
         """
-        assert inputs.shape[1] == self.fea_size
-        w = self.w.forward(inputs)
-        v = self.v.forward(inputs)
+        assert input.shape[1] == self.fea_size
+        w = self.w.forward(input)
+        v = self.v.forward(input)
         square_of_sum = torch.pow(torch.sum(v, dim=1), 2)
         sum_of_square = torch.sum(v * v, dim=1)
         fm_out = (
-            torch.sum((square_of_sum - sum_of_square) * 0.5, dim=1, keepdim=True)
+            torch.sum((square_of_sum - sum_of_square)
+                      * 0.5, dim=1, keepdim=True)
             + torch.sum(w, dim=1)
             + self.w0
         )
@@ -217,4 +92,12 @@ class DeepFM(torch.nn.Module):
         out = self.sigmoid(out)
         return out
 
+```
+
+## Save Model
+
+```python
+from damo_embedding import save_model
+model = DeepFM(8, 39)
+save_model(model, "./")
 ```

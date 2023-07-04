@@ -17,11 +17,13 @@
 #
 
 import time
+
 import torch
-from embedding import Storage
-from sklearn.metrics import roc_auc_score
-from gwen import GroupWiseEmbeddingNetwork
 from data_prepare import process as data_process
+from gwen import GroupWiseEmbeddingNetwork
+from sklearn.metrics import roc_auc_score
+
+from damo_embedding import Storage, save_model, load_from_checkpoint
 
 
 def process(train_loader, valid_loader, epochs=1):
@@ -66,8 +68,9 @@ def process(train_loader, valid_loader, epochs=1):
             # torch.save(model.state_dict(), "data/deepfm_best.pth")
         print("Current AUC: %.6f, Best AUC: %.6f\n" % (cur_auc, best_auc))
     Storage.checkpoint("./checkpoint")
+    save_model(model, "./")
 
 
 if __name__ == "__main__":
-    train_loader, valid_loader = data_process("train.txt")
-    process(train_loader, valid_loader, 1)
+    train_loader, valid_loader = data_process("sample.txt")
+    process(train_loader, valid_loader, 3)

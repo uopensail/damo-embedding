@@ -18,9 +18,8 @@
 
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Union
-from embedding import Embedding
+
+from damo_embedding import Embedding
 
 
 class DeepFM(torch.nn.Module):
@@ -45,7 +44,7 @@ class DeepFM(torch.nn.Module):
 
         optimizer = {
             "name": "adam",
-            "gamma": float(kwargs.get("gamma", 0.001)),
+            "gamma": float(kwargs.get("gamma", 0.0001)),
             "beta1": float(kwargs.get("beta1", 0.9)),
             "beta2": float(kwargs.get("beta2", 0.999)),
             "lambda": float(kwargs.get("lambda", 0.0)),
@@ -78,23 +77,22 @@ class DeepFM(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: torch.Tensor) -> torch.Tensor:
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
         """forward
 
         Args:
-            inputs (torch.Tensor): input tensor
+            input (torch.Tensor): input tensor
 
         Returns:
             tensor.Tensor: deepfm forward values
         """
-        assert inputs.shape[1] == self.fea_size
-        w = self.w.forward(inputs)
-        v = self.v.forward(inputs)
+        assert input.shape[1] == self.fea_size
+        w = self.w.forward(input)
+        v = self.v.forward(input)
         square_of_sum = torch.pow(torch.sum(v, dim=1), 2)
         sum_of_square = torch.sum(v * v, dim=1)
         fm_out = (
-            torch.sum((square_of_sum - sum_of_square)
-                      * 0.5, dim=1, keepdim=True)
+            torch.sum((square_of_sum - sum_of_square) * 0.5, dim=1, keepdim=True)
             + torch.sum(w, dim=1)
             + self.w0
         )

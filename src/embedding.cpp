@@ -196,24 +196,26 @@ void Storage::dump(const std::string &path,
   int size = global_groiup_configure.configures_->size();
   int *group = (int *)calloc(size, sizeof(int));
   int *group_dims = (int *)calloc(size, sizeof(int));
+  std::unordered_map<int, int> group_index;
   int index = 0;
   for (auto &ptr : *global_groiup_configure.configures_) {
     group[index] = ptr.first;
     group_dims[index] = ptr.second.dim;
+    group_index[ptr.first] = index;
     index++;
   }
   int64_t *group_counts = (int64_t *)calloc(size, sizeof(int64_t));
 
   std::ofstream writer(path, std::ios::out | std::ios::binary);
   writer.write((char *)&size, sizeof(int));
-  writer.write((char *)&group, sizeof(int) * size);
-  writer.write((char *)&group_dims, sizeof(int) * size);
-  writer.write((char *)&group_counts, sizeof(int64_t) * size);
+  writer.write((char *)group, sizeof(int) * size);
+  writer.write((char *)group_dims, sizeof(int) * size);
+  writer.write((char *)group_counts, sizeof(int64_t) * size);
 
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
     if (filter == nullptr || filter(ptr)) {
-      group_counts[ptr->group]++;
+      group_counts[group_index[ptr->group]]++;
       writer.write((char *)&ptr->key, sizeof(int64_t));
       writer.write((char *)&ptr->group, sizeof(int));
       writer.write((char *)ptr->data, sizeof(Float) * ptr->dim);
@@ -224,7 +226,7 @@ void Storage::dump(const std::string &path,
   this->db_->ReleaseSnapshot(sp);
   // update group counts
   writer.seekp(sizeof(int) * (1 + size * 2), std::ios::beg);
-  writer.write((char *)&group_counts, sizeof(size_t) * size);
+  writer.write((char *)group_counts, sizeof(size_t) * size);
   writer.close();
 }
 

@@ -16,11 +16,12 @@
 # GNU Affero General Public License for more details.
 #
 
+from typing import List
+
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import Union, List
-from embedding import Embedding
+
+from damo_embedding import Embedding
 
 
 class GroupWiseEmbeddingNetwork(torch.nn.Module):
@@ -34,7 +35,7 @@ class GroupWiseEmbeddingNetwork(torch.nn.Module):
     ):
         super(GroupWiseEmbeddingNetwork, self).__init__()
         self.emb_sizes = emb_sizes
-        self.groups = len(self.emb_sizes)
+        self.groups: int = len(self.emb_sizes)
         initializer = {
             "name": "truncate_normal",
             "mean": float(kwargs.get("mean", 0.0)),
@@ -71,13 +72,12 @@ class GroupWiseEmbeddingNetwork(torch.nn.Module):
         self.layers.append(nn.Linear(self.dims[-1], num_classes))
         self.sigmoid = nn.Sigmoid()
 
-    def forward(self, inputs: torch.Tensor):
-        batch_size, groups = inputs.shape
+    def forward(self, input: torch.Tensor):
+        batch_size, groups = input.shape
         assert groups == self.groups
         weights = []
-        for i in range(groups):
-            w = self.embeddings[i].forward(
-                inputs[:][:, i].reshape(batch_size, 1))
+        for i, embedding in enumerate(self.embeddings):
+            w = embedding.forward(input[:][:, i].reshape(batch_size, 1))
             weights.append(torch.sum(w, dim=1))
         dnn_out = torch.concat(weights, dim=1)
         for layer in self.layers:
