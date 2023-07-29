@@ -65,10 +65,7 @@ Embedding::Embedding(Storage &storage,
                      const std::shared_ptr<Optimizer> &optimizer,
                      const std::shared_ptr<Initializer> &initializer, int dim,
                      int group)
-    : dim_(dim),
-      group_(group),
-      db_(storage.db_),
-      optimizer_(optimizer),
+    : dim_(dim), group_(group), db_(storage.db_), optimizer_(optimizer),
 
       initializer_(initializer) {
   if (group < 0) {
@@ -191,7 +188,7 @@ void Storage::dump(const std::string &path,
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
-  rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
+  rocksdb::Iterator *it = this->db_->NewIterator(read_option);
   MetaData *ptr;
   int size = global_groiup_configure.configures_->size();
   int *group = (int *)calloc(size, sizeof(int));
@@ -239,7 +236,7 @@ void Storage::checkpoint(const std::string &path) {
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
-  rocksdb::Iterator *it = this->db_->NewIterator(rocksdb::ReadOptions());
+  rocksdb::Iterator *it = this->db_->NewIterator(read_option);
   int64_t count = 0;
   size_t key_len = 0, value_len = 0;
 
