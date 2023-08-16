@@ -1,11 +1,11 @@
 #include "counting_bloom_filter.h"
 
-u_int64_t hash_func(const int64_t &x) {
+uint64_t hash_func(const int64_t &x) {
   return ((x >> 31) & high_mask) | ((x & low_mask) << 33);
 }
 
-u_int64_t hash_func(const Key &x) {
-  u_int64_t hash = x.group;
+uint64_t hash_func(const Key &x) {
+  uint64_t hash = x.group;
   return hash_func(x.key) | (hash << 15);
 }
 
@@ -23,7 +23,7 @@ CountingBloomFilter::CountingBloomFilter()
 
 CountingBloomFilter::CountingBloomFilter(const Params &config)
     : CountingBloomFilter(
-          config.get<u_int64_t>("capacity", min_size),
+          config.get<uint64_t>("capacity", min_size),
           config.get<int>("count", max_count),
           config.get<std::string>("path", "/tmp/COUNTING_BLOOM_FILTER_DATA"),
           config.get<bool>("reload", true), config.get<double>("fpr", FPR)) {}
@@ -83,7 +83,7 @@ CountingBloomFilter::CountingBloomFilter(size_t capacity, int count,
 
 bool CountingBloomFilter::check(const Key &key) {
   int min_count = max_count;
-  u_int64_t hash = hash_func(key);
+  uint64_t hash = hash_func(key);
 
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->counter_num_;
@@ -104,7 +104,7 @@ bool CountingBloomFilter::check(const Key &key) {
 }
 
 void CountingBloomFilter::add(const Key &key, const int64_t &num) {
-  u_int64_t hash = hash_func(key);
+  uint64_t hash = hash_func(key);
   for (int i = 0; i < this->k_; i++) {
     auto idx = hash % this->counter_num_;
     if (idx & 1) {

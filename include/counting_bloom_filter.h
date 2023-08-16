@@ -43,9 +43,9 @@ using Counter = struct Counter;
 
 const double FPR = 0.001;
 const int max_count = 15;
-const u_int64_t min_size = 268435456ull;    // 2^28
-const u_int64_t high_mask = 8589934591ull;  // 2^33-1
-const u_int64_t low_mask = 2147483647ull;   // 2^31-1
+const uint64_t min_size = 268435456ull;    // 2^28
+const uint64_t high_mask = 8589934591ull;  // 2^33-1
+const uint64_t low_mask = 2147483647ull;   // 2^31-1
 
 class CountingBloomFilter final {
  private:
@@ -86,8 +86,8 @@ class CountingBloomFilter final {
   void add(const Key &key, const int64_t &num = 1);
   int get_count() const;
 };
-u_int64_t hash_func(const int64_t &x);
-u_int64_t hash_func(const Key &x);
+uint64_t hash_func(const int64_t &x);
+uint64_t hash_func(const Key &x);
 void create_empty_file(const std::string &filename, const size_t &size);
 
 #endif  // DAMO_EMBEDDING_COUNTING_BLOOM_FILTER_H

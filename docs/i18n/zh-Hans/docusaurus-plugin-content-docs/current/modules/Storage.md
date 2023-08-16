@@ -57,7 +57,7 @@ First part stores the dim and count of each group, totally 256 groups. Second pa
 
 | type      | size | length            | description       |
 | --------- | ---- | ----------------- | ----------------- |
-| u_int64_t | 8bit | 1                 | key value         |
+| uint64_t | 8bit | 1                 | key value         |
 | int32     | 4bit | 1                 | group of the key  |
 | float     | 4bit | dim of this group | weight of the key |
 

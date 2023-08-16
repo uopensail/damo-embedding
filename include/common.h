@@ -35,12 +35,12 @@
 #define Float float
 const Float Epsilon = 1e-8f;
 
-#ifndef u_int64_t
-#define u_int64_t unsigned long long
+#ifndef uint64_t
+//#define uint64_t unsigned long long
 #endif
 
 #ifndef int64_t
-#define int64_t long long
+//#define int64_t long long
 #endif
 
 int64_t get_current_time();
