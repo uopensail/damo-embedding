@@ -39,10 +39,6 @@ const Float Epsilon = 1e-8f;
 #define u_int64_t unsigned long long
 #endif
 
-#ifndef int64_t
-#define int64_t long long
-#endif
-
 int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);

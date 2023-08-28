@@ -11,12 +11,16 @@ const std::string &Initializer::get_name() { return name_; }
 Zeros::Zeros(const Params &initializer_params)
     : Initializer(initializer_params) {}
 
+std::string Zeros::to_string() const { return "zeros"; }
+
 Zeros::~Zeros() {}
 
 void Zeros::call(Float *data, int dim) { memset(data, 0, sizeof(Float) * dim); }
 
 Ones::Ones(const Params &initializer_params)
     : Initializer(initializer_params) {}
+
+std::string Ones::to_string() const { return "ones"; }
 
 Ones::~Ones() {}
 
@@ -30,8 +34,14 @@ RandomUniform::RandomUniform(const Params &initializer_params)
     : Initializer(initializer_params),
       min_(initializer_params.get<double>("min", -1.0)),
       max_(initializer_params.get<double>("max", 1.0)),
-      distribution(min_, max_), random(time(NULL)) {
+      distribution(min_, max_),
+      random(time(NULL)) {
   assert(max_ > min_);
+}
+
+std::string RandomUniform::to_string() const {
+  return "random_uniform: [" + std::to_string(min_) + ", " +
+         std::to_string(max_) + "]";
 }
 
 RandomUniform::~RandomUniform() {}
@@ -46,8 +56,14 @@ RandomNormal::RandomNormal(const Params &initializer_params)
     : Initializer(initializer_params),
       mean_(initializer_params.get<double>("mean", 0.0)),
       stddev_(initializer_params.get<double>("stddev", 1.0)),
-      distribution(mean_, stddev_), random(time(NULL)) {
+      distribution(mean_, stddev_),
+      random(time(NULL)) {
   assert(stddev_ > 0.0);
+}
+
+std::string RandomNormal::to_string() const {
+  return "random_normal: (mean=" + std::to_string(mean_) +
+         ", std=" + std::to_string(stddev_) + ")";
 }
 
 RandomNormal::~RandomNormal() {}
@@ -62,8 +78,14 @@ TruncateNormal::TruncateNormal(const Params &initializer_params)
     : Initializer(initializer_params),
       mean_(initializer_params.get<double>("mean", 0.0)),
       stddev_(initializer_params.get<double>("stddev", 1.0)),
-      distribution(mean_, stddev_), random(time(NULL)) {
+      distribution(mean_, stddev_),
+      random(time(NULL)) {
   assert(stddev_ > 0.0);
+}
+
+std::string TruncateNormal::to_string() const {
+  return "truncate_normal: (mean=" + std::to_string(mean_) +
+         ", std=" + std::to_string(stddev_) + ")";
 }
 
 TruncateNormal::~TruncateNormal() {}

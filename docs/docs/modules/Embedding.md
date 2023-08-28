@@ -1,10 +1,10 @@
 # Embedding
 
-The Embedding module uses Rocksdb to store the values of Embedding, which is KV format. The Key of feature is u_int64_t type, the value is a list of floating point numbers and some other values.
+The Embedding module uses Rocksdb to store the values of Embedding, which is KV format. The Key of feature is int64_t type, the value is a list of floating point numbers and some other values.
 
 ## Key and Group
 
-All features are discretization and represented by the unique u_int64_t value. We use group to represent the same type of features.Different group can have different optimizer, initializer and dimension.
+All features are discretization and represented by the unique int64_t value. We use group to represent the same type of features.Different group can have different optimizer, initializer and dimension.
 
 ## Value
 

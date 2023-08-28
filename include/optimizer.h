@@ -31,6 +31,7 @@ class Optimizer {
   Optimizer(const Optimizer &) = delete;
   Optimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~Optimizer();
+  virtual std::string to_string() const = 0;
   const std::string &get_name();
 
   /**
@@ -75,6 +76,7 @@ class SGDOptimizer : public Optimizer {
   SGDOptimizer(const Params &optimizer_params, const Params &scheduler);
   virtual ~SGDOptimizer();
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float gamma_;
@@ -89,6 +91,7 @@ class FTRLOptimizer : public Optimizer {
   virtual ~FTRLOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float alpha_;
@@ -105,6 +108,7 @@ class AdagradOptimizer : public Optimizer {
   virtual ~AdagradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float gamma_;
@@ -125,6 +129,7 @@ class AdamOptimizer : public Optimizer {
   virtual ~AdamOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float gamma_;
@@ -142,6 +147,7 @@ class AmsGradOptimizer : public Optimizer {
   virtual ~AmsGradOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float gamma_;
@@ -159,6 +165,7 @@ class AdamWOptimizer : public Optimizer {
   virtual ~AdamWOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float gamma_;
@@ -176,6 +183,7 @@ class LionOptimizer : public Optimizer {
   virtual ~LionOptimizer();
   virtual int get_space(int dim);
   virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
+  virtual std::string to_string() const;
 
  private:
   Float eta_;

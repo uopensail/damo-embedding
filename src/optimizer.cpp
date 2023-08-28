@@ -24,6 +24,11 @@ SGDOptimizer::SGDOptimizer(const Params &optimizer_params,
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       lambda_(optimizer_params.get<double>("lambda", 0.0)) {}
 
+std::string SGDOptimizer::to_string() const {
+  return "{\"SGD\": { \"gamma\":" + std::to_string(gamma_) +
+         ", \"lambda\":" + std::to_string(lambda_) + "}}";
+}
+
 SGDOptimizer::~SGDOptimizer() {}
 
 void SGDOptimizer::call(Float *data, Float *gds, int dim, int64_t global_step) {
@@ -41,6 +46,13 @@ FTRLOptimizer::FTRLOptimizer(const Params &optimizer_params,
       beta_(optimizer_params.get<double>("beta", 0.0)),
       lambda1_(optimizer_params.get<double>("lambda1", 0.0)),
       lambda2_(optimizer_params.get<double>("lambda2", 0.0)) {}
+
+std::string FTRLOptimizer::to_string() const {
+  return "{\"FTRL\": { \"alpha\":" + std::to_string(alpha_) +
+         ", \"beta\":" + std::to_string(beta_) +
+         ", \"lambda1\":" + std::to_string(lambda1_) +
+         ", \"lambda2\":" + std::to_string(lambda2_) + "}}";
+}
 
 FTRLOptimizer::~FTRLOptimizer() {}
 
@@ -87,6 +99,13 @@ AdagradOptimizer::AdagradOptimizer(const Params &optimizer_params,
       eta_(optimizer_params.get<double>("eta", 0.0)),
       epsilon_(optimizer_params.get<double>("epsilon", 1e-10)) {}
 
+std::string AdagradOptimizer::to_string() const {
+  return "{\"Adagrad\": { \"gamma\":" + std::to_string(gamma_) +
+         ", \"lambda\":" + std::to_string(lambda_) +
+         ", \"eta\":" + std::to_string(eta_) +
+         ", \"epsilon\":" + std::to_string(epsilon_) + "}}";
+}
+
 AdagradOptimizer::~AdagradOptimizer() {}
 
 /**
@@ -118,6 +137,14 @@ AdamOptimizer::AdamOptimizer(const Params &optimizer_params,
       beta2_(optimizer_params.get<double>("beta2", 0.999)),
       lambda_(optimizer_params.get<double>("lambda", 0.0)),
       epsilon_(optimizer_params.get<double>("epsilon", 1e-8)) {}
+
+std::string AdamOptimizer::to_string() const {
+  return "{\"Adam\": { \"gamma\":" + std::to_string(gamma_) +
+         ", \"beta1\":" + std::to_string(beta1_) +
+         ", \"beta2\":" + std::to_string(beta2_) +
+         ", \"lambda\":" + std::to_string(lambda_) +
+         ", \"epsilon\":" + std::to_string(epsilon_) + "}}";
+}
 
 AdamOptimizer::~AdamOptimizer() {}
 
@@ -157,6 +184,14 @@ AmsGradOptimizer::AmsGradOptimizer(const Params &optimizer_params,
       lambda_(optimizer_params.get<double>("lambda", 0.0)),
       epsilon_(optimizer_params.get<double>("epsilon", 1e-8)) {}
 
+std::string AmsGradOptimizer::to_string() const {
+  return "{\"Amsgrad\": { \"gamma\":" + std::to_string(gamma_) +
+         ", \"beta1\":" + std::to_string(beta1_) +
+         ", \"beta2\":" + std::to_string(beta2_) +
+         ", \"lambda\":" + std::to_string(lambda_) +
+         ", \"epsilon\":" + std::to_string(epsilon_) + "}}";
+}
+
 AmsGradOptimizer::~AmsGradOptimizer() {}
 
 int AmsGradOptimizer::get_space(int dim) { return 4 * dim; }
@@ -191,6 +226,14 @@ AdamWOptimizer::AdamWOptimizer(const Params &optimizer_params,
       lambda_(optimizer_params.get<double>("lambda", 0.01)),
       epsilon_(optimizer_params.get<double>("epsilon", 1e-8)) {}
 
+std::string AdamWOptimizer::to_string() const {
+  return "{\"AdamW\": { \"gamma\":" + std::to_string(gamma_) +
+         ", \"beta1\":" + std::to_string(beta1_) +
+         ", \"beta2\":" + std::to_string(beta2_) +
+         ", \"lambda\":" + std::to_string(lambda_) +
+         ", \"epsilon\":" + std::to_string(epsilon_) + "}}";
+}
+
 AdamWOptimizer::~AdamWOptimizer() {}
 
 int AdamWOptimizer::get_space(int dim) { return 3 * dim; }
@@ -222,6 +265,13 @@ LionOptimizer::LionOptimizer(const Params &optimizer_params,
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.99)),
       lambda_(optimizer_params.get<double>("lambda", 0.01)) {}
+
+std::string LionOptimizer::to_string() const {
+  return "{\"Lion\": { \"eta\":" + std::to_string(eta_) +
+         ", \"beta1\":" + std::to_string(beta1_) +
+         ", \"beta2\":" + std::to_string(beta2_) +
+         ", \"lambda\":" + std::to_string(lambda_) + "}}";
+}
 
 LionOptimizer::~LionOptimizer() {}
 

@@ -86,7 +86,13 @@ PyInitializer &PyInitializer::operator=(const PyInitializer &p) {
   return *this;
 }
 
-void PyInitializer::call(float *w, int wn) { initializer_->call(w, wn); }
+void PyInitializer::call(py::array_t<float> w) {
+  py::buffer_info info = w.request();
+  assert(info.ndim == 1);
+  size_t size = info.size;
+  float *ptr = static_cast<float *>(info.ptr);
+  initializer_->call(ptr, size);
+}
 
 PyInitializer::~PyInitializer() {}
 
@@ -119,10 +125,19 @@ PyOptimizer &PyOptimizer::operator=(const PyOptimizer &p) {
 }
 PyOptimizer::~PyOptimizer() {}
 
-void PyOptimizer::call(float *data, int wn, float *gds, int gn,
-                       long long global_step) {
-  assert(optimizer_->get_space(gn) == wn);
-  optimizer_->call(data, gds, wn, global_step);
+void PyOptimizer::call(py::array_t<float> w, py::array_t<float> gd,
+                       int64_t global_step) {
+  py::buffer_info winfo = w.request();
+  assert(winfo.ndim == 1);
+  size_t wsize = winfo.size;
+  float *wptr = static_cast<float *>(winfo.ptr);
+
+  py::buffer_info gdinfo = gd.request();
+  assert(gdinfo.ndim == 1);
+  size_t gdsize = gdinfo.size;
+  float *gdptr = static_cast<float *>(gdinfo.ptr);
+  assert(optimizer_->get_space(gdsize) == wsize);
+  optimizer_->call(wptr, gdptr, wsize, global_step);
 }
 
 PyFilter::PyFilter() : filter_(nullptr) {}
@@ -139,7 +154,7 @@ PyFilter &PyFilter::operator=(const PyFilter &p) {
   return *this;
 }
 
-bool PyFilter::check(int group, long long key) {
+bool PyFilter::check(int group, int64_t key) {
   if (this->filter_ == nullptr) {
     return true;
   }
@@ -147,7 +162,7 @@ bool PyFilter::check(int group, long long key) {
   return filter_->check(x);
 }
 
-void PyFilter::add(int group, long long key, long long num) {
+void PyFilter::add(int group, int64_t key, int64_t num) {
   if (this->filter_ != nullptr) {
     Key x{group, key};
     this->filter_->add(x, num);
@@ -233,10 +248,26 @@ PyEmbedding &PyEmbedding::operator=(const PyEmbedding &p) {
 
 PyEmbedding::~PyEmbedding() {}
 
-void PyEmbedding::lookup(long long *keys, int len, float *data, int n) {
-  this->embedding_->lookup((int64_t *)keys, len, data, n);
+void PyEmbedding::lookup(py::array_t<int64_t> keys, py::array_t<float> w) {
+  py::buffer_info keys_info = keys.request();
+  assert(keys_info.ndim == 1);
+  int64_t *keys_ptr = static_cast<int64_t *>(keys_info.ptr);
+
+  py::buffer_info w_info = w.request();
+  assert(w_info.ndim == 1);
+  float *w_ptr = static_cast<float *>(w_info.ptr);
+  this->embedding_->lookup(keys_ptr, keys_info.size, w_ptr, w_info.size);
 }
 
-void PyEmbedding::apply_gradients(long long *keys, int len, float *gds, int n) {
-  this->embedding_->apply_gradients((int64_t *)keys, len, gds, n);
+void PyEmbedding::apply_gradients(py::array_t<int64_t> keys,
+                                  py::array_t<float> gds) {
+  py::buffer_info keys_info = keys.request();
+  assert(keys_info.ndim == 1);
+  int64_t *keys_ptr = static_cast<int64_t *>(keys_info.ptr);
+
+  py::buffer_info gds_info = gds.request();
+  assert(gds_info.ndim == 1);
+  float *gds_ptr = static_cast<float *>(gds_info.ptr);
+  this->embedding_->apply_gradients(keys_ptr, keys_info.size, gds_ptr,
+                                    gds_info.size);
 }

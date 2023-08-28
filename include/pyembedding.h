@@ -19,11 +19,17 @@
 
 #pragma once
 
+#include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
 #include "counting_bloom_filter.h"
 #include "cpptoml.h"
 #include "embedding.h"
 #include "initializer.h"
 #include "optimizer.h"
+
+namespace py = pybind11;
 
 class Parameters {
  public:
@@ -49,17 +55,10 @@ class PyInitializer {
   PyInitializer(Parameters params);
   PyInitializer(const PyInitializer &p);
   PyInitializer &operator=(const PyInitializer &p);
-
-  /**
-   * @brief initialize the weights
-   *
-   * @param w weights to be initialized
-   * @param wn width of the weights
-   */
-  void call(float *w, int wn);
+  void call(py::array_t<float> w);
   ~PyInitializer();
 
- private:
+ public:
   std::shared_ptr<Initializer> initializer_;
   friend class PyEmbedding;
 };
@@ -71,20 +70,12 @@ class PyOptimizer {
   PyOptimizer(Parameters op_params, Parameters decay_params);
   PyOptimizer(const PyOptimizer &p);
   PyOptimizer &operator=(const PyOptimizer &p);
+  void call(py::array_t<float> w, py::array_t<float> gd,
+            int64_t global_step = 0);
 
-  /**
-   * @brief call the optimizer, updating the embedding
-   *
-   * @param w weights
-   * @param wn width of the weights
-   * @param gds gradients for weights
-   * @param gn width of the grad
-   * @param global_step global step
-   */
-  void call(float *w, int wn, float *gds, int gn, long long global_step = 0);
   ~PyOptimizer();
 
- private:
+ public:
   std::shared_ptr<Optimizer> optimizer_;
   friend class PyEmbedding;
 };
@@ -104,7 +95,7 @@ class PyFilter {
    * @return true in the filter
    * @return false not in the filter
    */
-  bool check(int group, long long key);
+  bool check(int group, int64_t key);
 
   /**
    * @brief add key to the filter
@@ -113,7 +104,7 @@ class PyFilter {
    * @param key key to ad
    * @param num add counts
    */
-  void add(int group, long long key, long long num);
+  void add(int group, int64_t key, int64_t num);
   ~PyFilter();
 
  private:
@@ -175,26 +166,8 @@ class PyEmbedding {
   PyEmbedding &operator=(const PyEmbedding &p);
   ~PyEmbedding();
 
-  /**
-   * @brief lookup the embeddings
-   *
-   * @param keys keys to lookup
-   * @param kn length of the keys
-   * @param w weight for the keys
-   * @param wn length of the weights
-   * @return
-   */
-  void lookup(long long *keys, int kn, float *w, int wn);
-
-  /**
-   * @brief update the embedding weights
-   *
-   * @param keys keys to update
-   * @param kn length of the keys
-   * @param gds gradients for the keys
-   * @param gn length of the gradients
-   */
-  void apply_gradients(long long *keys, int kn, float *gds, int gn);
+  void lookup(py::array_t<int64_t> keys, py::array_t<float> w);
+  void apply_gradients(py::array_t<int64_t> keys, py::array_t<float> gds);
 
  private:
   std::shared_ptr<Embedding> embedding_;
