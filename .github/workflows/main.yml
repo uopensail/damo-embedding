@@ -30,11 +30,9 @@ jobs:
         uses: pypa/cibuildwheel@v2.6.1
         env:
           CIBW_BEFORE_ALL_MACOS: >
-            pip install "pybind11[global]" &&
             brew install rocksdb
           CIBW_BEFORE_ALL_LINUX: >
             cmake --version &&
-            pip install "pybind11[global]" && 
             yum install -y python3-devel python-devel
           CIBW_ARCHS_LINUX: auto, aarch64 
 
