@@ -1,11 +1,11 @@
 name: Build and upload to PyPI
 
 on:
-  #release:
-  #  types: [published]
-  push:
-    branches:
-      - pypi
+  release:
+    types: [published]
+  #push:
+  #  branches:
+  #    - pypi
 
 jobs:
   build_wheels:
@@ -76,7 +76,7 @@ jobs:
           skip_existing: true
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: '!github.event.prerelease'
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
