@@ -68,7 +68,7 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: 'github.event.prerelease'
+        if: 'github.event.release.prerelease'
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
