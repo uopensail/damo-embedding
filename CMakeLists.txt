@@ -8,13 +8,12 @@ include_directories(/usr/local/include)
 include_directories(/usr/include)
 
 # Find and link to Python
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
+find_package(Python3 COMPONENTS Interpreter Development)
+include_directories(${Python3_INCLUDE_DIRS})
 
 # Include pybind11
 find_package(pybind11 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
+include_directories(${Python3_INCLUDE_DIRS})
 
 find_package(RocksDB REQUIRED)
 
