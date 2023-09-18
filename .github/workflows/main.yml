@@ -37,6 +37,8 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: >
             cmake --version &&
             yum install -y python3-devel python-devel
+          CIBW_BEFORE_BUILD: >
+            pip install pybind11 ninja
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
