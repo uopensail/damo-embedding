@@ -3,6 +3,9 @@ name: Build and upload to PyPI
 on:
   release:
     types: [published]
+  #push:
+  #  branches:
+  #    - pypi
 
 jobs:
   build_wheels:
@@ -29,7 +32,13 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.6.1
         env:
-          CIBW_BEFORE_ALL_MACOS: brew install rocksdb
+          CIBW_BEFORE_ALL_MACOS: >
+            brew install rocksdb
+          CIBW_BEFORE_ALL_LINUX: >
+            cmake --version &&
+            yum install -y python3-devel python-devel
+          CIBW_BEFORE_BUILD: >
+            pip install pybind11 ninja
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
@@ -59,7 +68,7 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: 'github.event.prerelease'
+        if: 'github.event.release.prerelease'
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -67,7 +76,7 @@ jobs:
           skip_existing: true
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: '!github.event.prerelease'
+        if: github.event_name == 'release' && github.event.action == 'published'
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}

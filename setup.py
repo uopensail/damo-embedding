@@ -42,7 +42,10 @@ class CMakeExtension(Extension):
         super().__init__(name, sources=[])
         self.sourcedir = os.fspath(Path(sourcedir).resolve())
 
-
+def site_dir():
+    import site
+    python_lib_dir = site.getsitepackages()[0] if hasattr(site, 'getsitepackages') else sys.prefix
+    return python_lib_dir
 class CMakeBuild(build_ext):
     def build_extension(self, ext: CMakeExtension) -> None:
         # Must be in this form due to bug in .resolve() only fixed in Python 3.10+
@@ -61,9 +64,13 @@ class CMakeBuild(build_ext):
 
         # Set Python_EXECUTABLE instead if you use PYBIND11_FINDPYTHON
         # from Python.
+        site_packages_dir = site_dir()
+        pybind11_dir=f"{site_packages_dir}/pybind11/share/cmake/pybind11"
+    
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
+            f"-Dpybind11_DIR={pybind11_dir}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
         build_args = []
@@ -142,7 +149,7 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.0.6",
+    version="1.1.0",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: AGLP3",
     author="timepi",
@@ -163,7 +170,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["numpy>=1.19.0"],
-    setup_requires=["numpy>=1.19.0"],
+    setup_requires=["numpy>=1.19.0","pybind11>=2.11.1","ninja>=1.11.1"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
