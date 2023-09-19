@@ -66,7 +66,7 @@ class CMakeBuild(build_ext):
         # from Python.
         site_packages_dir = site_dir()
         pybind11_dir=f"{site_packages_dir}/pybind11/share/cmake/pybind11"
-    
+        python_dir=os.path.abspath(sys.executable+"/../../")
         cmake_args = [
             f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
@@ -119,6 +119,9 @@ class CMakeBuild(build_ext):
 
         if sys.platform.startswith("darwin"):
             # Cross-compile support for macOS - respect ARCHFLAGS if set
+            cmake_args += [
+                    f"-DPython3_ROOT_DIR={python_dir}"
+                ]
             archs = re.findall(r"-arch (\S+)", os.environ.get("ARCHFLAGS", ""))
             if archs:
                 cmake_args += ["-DCMAKE_OSX_ARCHITECTURES={}".format(";".join(archs))]
@@ -149,7 +152,7 @@ with open("README.md", "r", encoding="utf-8") as fd:
 
 setup(
     name="damo-embedding",
-    version="1.1.0",
+    version="1.1.1",
     description="Python wrapper for damo, a set of fast and robust hash functions.",
     license="License :: AGLP3",
     author="timepi",
@@ -182,4 +185,5 @@ setup(
         "Topic :: Software Development :: Libraries",
         "Topic :: Utilities",
     ],
+    python_requires=">=3.6",
 )
