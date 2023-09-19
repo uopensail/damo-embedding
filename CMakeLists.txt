@@ -13,6 +13,9 @@ link_directories(/usr/local/lib)
 # Find and link to Python
 find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${Python3_INCLUDE_DIRS})
+message(STATUS "PYTHON3_LIBRARIES = ${Python3_LIBRARIES}")
+message(STATUS "PYTHON3_EXECUTABLE = ${PYTHON_EXECUTABLE}")
+message(STATUS "PYTHON3_INCLUDE_DIRS = ${Python3_INCLUDE_DIRS}")
 
 find_package(RocksDB)
 if(ROCKSDB_FOUND)
