@@ -17,15 +17,19 @@
 #
 import os
 import damo
+import json
 import struct
 import torch
 import numpy as np
+import shutil
 from typing import Tuple, Dict, List
 from collections import defaultdict
+
 
 __all__ = [
     "Embedding",
     "save_model",
+    "load_model",
     "checkpoint",
     "load_from_checkpoint",
 ]
@@ -57,6 +61,7 @@ class Storage(object):
     @staticmethod
     def load_from_checkpoint(path: str):
         assert Storage._instance is not None
+        print("Loading From Checkpoint: %s" % path)
         Storage._instance.storage.load_from_checkpoint(path)
 
 
@@ -68,12 +73,20 @@ class Embedding(torch.nn.Module):
     def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
         super(Embedding, self).__init__()
         self.dim = dim
-        Embedding._group += 1
-        self.group = Embedding._group
+        if "group" in kwargs:
+            self.group = kwargs["group"]
+            Embedding._group = max(Embedding._group, self.group)
+        else:
+            # if `group` not in arguments, use default
+            Embedding._group += 1
+            self.group = Embedding._group
+
         assert self.group >= 0
+        self.kwargs = kwargs
         self.storage = Storage(**kwargs).storage
 
         # create initializer
+        self.init_params = initializer
         init_params = damo.Parameters()
         for k, v in initializer.items():
             init_params.insert(k, v)
@@ -81,6 +94,7 @@ class Embedding(torch.nn.Module):
 
         # create optimizer
         opt_params = damo.Parameters()
+        self.opt_params = optimizer
         for k, v in optimizer.items():
             opt_params.insert(k, v)
         self.optimizer = damo.PyOptimizer(opt_params)
@@ -231,14 +245,156 @@ def checkpoint(path: str):
     Storage.checkpoint(path)
 
 
-def save_model(model: torch.nn.Module, output_dir: str) -> None:
-    """save mode to dir
+def save_model_for_training(model: torch.nn.Module, output_dir: str):
+    """save model to dir, for training again
 
     Args:
         model (torch.nn.Module): torch module
         output_dir (str): output dir
     """
-    sparse_path = os.path.join(output_dir, "sparse.dat")
+    # remove output dir
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
+    checkpoint_dir = os.path.join(output_dir, "checkpoint")
+    checkpoint(checkpoint_dir)
+
+    sparse_embedding_params = {}
+    original_modules = {}
+    for k, v in model.__dict__["_modules"].items():
+        original_modules[k] = v
+        if isinstance(v, Embedding):
+            sparse_embedding_params["e_%s" % k] = {
+                "init_params": v.init_params,
+                "opt_params": v.opt_params,
+                "kwargs": v.kwargs,
+                "dim": v.dim,
+                "group": v.group,
+            }
+            model.__dict__["_modules"][k] = torch.nn.Embedding(1, v.dim, padding_idx=0)
+        elif isinstance(v, torch.nn.ModuleList):
+            modules = torch.nn.ModuleList()
+            for i, m in enumerate(v):
+                if isinstance(m, Embedding):
+                    sparse_embedding_params["l_%s_%d" % (k, i)] = {
+                        "init_params": v.init_params,
+                        "opt_params": v.opt_params,
+                        "kwargs": v.kwargs,
+                        "dim": v.dim,
+                        "group": v.group,
+                    }
+                    modules.append(torch.nn.Embedding(1, v.dim, padding_idx=0))
+                else:
+                    modules.append(m)
+            model.__dict__["_modules"][k] = modules
+        elif isinstance(v, torch.nn.ModuleDict):
+            modules = torch.nn.ModuleDict()
+            for n, m in v.items():
+                if isinstance(m, Embedding):
+                    sparse_embedding_params["d_%s_%s" % (n, k)] = {
+                        "init_params": v.init_params,
+                        "opt_params": v.opt_params,
+                        "kwargs": v.kwargs,
+                        "dim": v.dim,
+                        "group": v.group,
+                    }
+                    modules[n] = torch.nn.Embedding(1, v.dim, padding_idx=0)
+                else:
+                    modules[n] = m
+            model.__dict__["_modules"][k] = modules
+
+    torch.save(model, os.path.join(output_dir, "model.pt"))
+    json.dump(
+        sparse_embedding_params,
+        open(os.path.join(output_dir, "sparse_config.json"), "w"),
+    )
+
+    # recover
+    for k, _ in model.__dict__["_modules"].items():
+        model.__dict__["_modules"][k] = original_modules[k]
+
+
+def load_model(dir: str) -> torch.nn.Module:
+    """load model to for training again
+
+    Args:
+        dir (str): model directory
+
+    Returns:
+        torch.nn.Module: model to train
+    """
+    sparse_embedding_params = json.load(
+        open(os.path.join(dir, "sparse_config.json"), "r")
+    )
+    model = torch.load(os.path.join(dir, "model.pt"))
+
+    for file in os.listdir(dir):
+        if file.startswith("checkpoint"):
+            if Storage._instance is None:
+                for _, v in sparse_embedding_params.items():
+                    Storage(**v["kwargs"])
+                    break
+            load_from_checkpoint(os.path.join(dir, file))
+            Embedding._group = -1
+            break
+    for k, v in model.__dict__["_modules"].items():
+        if isinstance(v, torch.nn.Embedding):
+            key = "e_%s" % k
+            if key not in sparse_embedding_params:
+                continue
+            config = sparse_embedding_params[key]
+            model.__dict__["_modules"][k] = Embedding(
+                config["dim"],
+                config["init_params"],
+                config["opt_params"],
+                group=config["group"],
+                **config["kwargs"],
+            )
+        elif isinstance(v, torch.nn.ModuleList):
+            modules = torch.nn.ModuleList()
+            for i, m in enumerate(v):
+                key = "l_%s_%d" % (k, i)
+                if key not in sparse_embedding_params:
+                    modules.append(m)
+                else:
+                    config = sparse_embedding_params[key]
+                    modules.append(
+                        Embedding(
+                            config["dim"],
+                            config["init_params"],
+                            config["opt_params"],
+                            group=config["group"],
+                            **config["kwargs"],
+                        )
+                    )
+            model.__dict__["_modules"][k] = modules
+        elif isinstance(v, torch.nn.ModuleDict):
+            modules = torch.nn.ModuleDict()
+            for n, m in v.items():
+                key = "d_%s_%s" % (n, k)
+                if key not in sparse_embedding_params:
+                    modules[n] = m
+                else:
+                    config = sparse_embedding_params[key]
+                    modules[n] = Embedding(
+                        config["dim"],
+                        config["init_params"],
+                        config["opt_params"],
+                        group=config["group"],
+                        **config["kwargs"],
+                    )
+            model.__dict__["_modules"][k] = modules
+    return model
+
+
+def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
+    """save model to dir for inference
+
+    Args:
+        model (torch.nn.Module): torch module
+        output_dir (str): output dir
+    """
+    sparse_path = os.path.join(output_dir, ".sparse.dat")
     Storage.dump(sparse_path)
     groups = {}
     for k, v in model.__dict__["_modules"].items():
@@ -289,3 +445,17 @@ def save_model(model: torch.nn.Module, output_dir: str) -> None:
         model.__dict__["_modules"][k] = original_modules[k]
 
     os.remove(sparse_path)
+
+
+def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):
+    """save mode
+
+    Args:
+        model (torch.nn.Module): model
+        output_dir (str): model directory
+        training (bool, optional): training or inference. Defaults to True.
+    """
+    if training:
+        save_model_for_training(model, output_dir)
+    else:
+        save_model_for_inference(model, output_dir)

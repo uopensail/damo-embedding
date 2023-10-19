@@ -1,0 +1,360 @@
+{
+    "user_features": [],
+    "item_features": [
+        {
+            "name": "C_0_T",
+            "expr": "concat(\"C-0\",C_0[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_1_T",
+            "expr": "concat(\"C-1\",C_1[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_2_T",
+            "expr": "concat(\"C-2\",C_2[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_3_T",
+            "expr": "concat(\"C-3\",C_3[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_4_T",
+            "expr": "concat(\"C-4\",C_4[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_5_T",
+            "expr": "concat(\"C-5\",C_5[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_6_T",
+            "expr": "concat(\"C-6\",C_6[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_7_T",
+            "expr": "concat(\"C-7\",C_7[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_8_T",
+            "expr": "concat(\"C-8\",C_8[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_9_T",
+            "expr": "concat(\"C-9\",C_9[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_10_T",
+            "expr": "concat(\"C-10\",C_10[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_11_T",
+            "expr": "concat(\"C-11\",C_11[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_12_T",
+            "expr": "concat(\"C-12\",C_12[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_13_T",
+            "expr": "concat(\"C-13\",C_13[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_14_T",
+            "expr": "concat(\"C-14\",C_14[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_15_T",
+            "expr": "concat(\"C-15\",C_15[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_16_T",
+            "expr": "concat(\"C-16\",C_16[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_17_T",
+            "expr": "concat(\"C-17\",C_17[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_18_T",
+            "expr": "concat(\"C-18\",C_18[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_19_T",
+            "expr": "concat(\"C-19\",C_19[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_20_T",
+            "expr": "concat(\"C-20\",C_20[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_21_T",
+            "expr": "concat(\"C-21\",C_21[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_22_T",
+            "expr": "concat(\"C-22\",C_22[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_23_T",
+            "expr": "concat(\"C-23\",C_23[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_24_T",
+            "expr": "concat(\"C-24\",C_24[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "C_25_T",
+            "expr": "concat(\"C-25\",C_25[string])",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_0_T",
+            "expr": "concat(\"I_0\",round(I_0[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_1_T",
+            "expr": "concat(\"I_1\",round(I_1[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_2_T",
+            "expr": "concat(\"I_2\",round(I_2[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_3_T",
+            "expr": "concat(\"I_3\",round(I_3[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_4_T",
+            "expr": "concat(\"I_4\",round(I_4[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_5_T",
+            "expr": "concat(\"I_5\",round(I_5[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_6_T",
+            "expr": "concat(\"I_6\",round(I_6[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_7_T",
+            "expr": "concat(\"I_7\",round(I_7[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_8_T",
+            "expr": "concat(\"I_8\",round(I_8[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_9_T",
+            "expr": "concat(\"I_9\",round(I_9[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_10_T",
+            "expr": "concat(\"I_10\",round(I_10[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_11_T",
+            "expr": "concat(\"I_11\",round(I_11[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        },
+        {
+            "name": "I_12_T",
+            "expr": "concat(\"I_12\",round(I_12[float32]))",
+            "type": 0,
+            "hash": true,
+            "padding": 0,
+            "dim": 1
+        }
+    ],
+    "groups": [
+        [
+            "C_0_T",
+            "C_1_T",
+            "C_2_T",
+            "C_3_T",
+            "C_4_T",
+            "C_5_T",
+            "C_6_T",
+            "C_7_T",
+            "C_8_T",
+            "C_9_T",
+            "C_10_T",
+            "C_11_T",
+            "C_12_T",
+            "C_13_T",
+            "C_14_T",
+            "C_15_T",
+            "C_16_T",
+            "C_17_T",
+            "C_18_T",
+            "C_19_T",
+            "C_20_T",
+            "C_21_T",
+            "C_22_T",
+            "C_23_T",
+            "C_24_T",
+            "C_25_T",
+            "I_0_T",
+            "I_1_T",
+            "I_2_T",
+            "I_3_T",
+            "I_4_T",
+            "I_5_T",
+            "I_6_T",
+            "I_7_T",
+            "I_8_T",
+            "I_9_T",
+            "I_10_T",
+            "I_11_T",
+            "I_12_T"
+        ]
+    ]
+}

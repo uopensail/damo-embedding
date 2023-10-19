@@ -23,7 +23,7 @@ from data_prepare import process as data_process
 from deepfm import DeepFM
 from sklearn.metrics import roc_auc_score
 
-from damo_embedding import Storage, save_model, load_from_checkpoint
+from damo_embedding import Storage, save_model, load_model
 
 
 def process(train_loader, valid_loader, epochs=1):
@@ -54,6 +54,9 @@ def process(train_loader, valid_loader, epochs=1):
                         time.time() - start_time,
                     )
                 )
+        save_model(model, "train", True)
+        Storage.checkpoint("./checkpoint")
+
         model.eval()
         with torch.no_grad():
             valid_labels, valid_preds = [], []
@@ -67,11 +70,40 @@ def process(train_loader, valid_loader, epochs=1):
             best_auc = cur_auc
             # torch.save(model.state_dict(), "data/deepfm_best.pth")
         print("Current AUC: %.6f, Best AUC: %.6f\n" % (cur_auc, best_auc))
-    Storage.checkpoint("./checkpoint")
-    save_model(model, "./")
+        save_model(model, "./", False)
 
+
+def validate(valid_loader):
+    new_model = load_model("train")
+    new_model.eval()
+    with torch.no_grad():
+        valid_labels, valid_preds = [], []
+        for idx, x in enumerate(valid_loader):
+            features, label = x[0], x[1]
+            pred = new_model(features).reshape(-1).numpy().tolist()
+            valid_preds.extend(pred)
+            valid_labels.extend(label.numpy().tolist())
+        cur_auc = roc_auc_score(valid_labels, valid_preds)
+        print("Current AUC: %.6f\n" % cur_auc)
+    return new_model
+
+
+def validate2(new_model, valid_loader):
+    new_model.eval()
+    with torch.no_grad():
+        valid_labels, valid_preds = [], []
+        for idx, x in enumerate(valid_loader):
+            features, label = x[0], x[1]
+            pred = new_model(features).reshape(-1).numpy().tolist()
+            valid_preds.extend(pred)
+            valid_labels.extend(label.numpy().tolist())
+        cur_auc = roc_auc_score(valid_labels, valid_preds)
+        print("Current AUC: %.6f\n" % cur_auc)
 
 
 if __name__ == "__main__":
-    train_loader, valid_loader = data_process("sample.txt")
-    process(train_loader, valid_loader, 100)
+    train_loader, valid_loader = data_process("config.json", "sample.txt")
+    # process(train_loader, valid_loader, 1)
+    m = validate(valid_loader)
+    m = validate(valid_loader)
+    # validate2(m, valid_loader)

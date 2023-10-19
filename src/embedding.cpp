@@ -21,17 +21,15 @@ const Configure *GlobalGroupConfigure::operator[](int group) const {
 void GlobalGroupConfigure::add(int group, const Configure &configure) {
   std::lock_guard<std::mutex> guard(this->group_lock_);
   auto iter = this->configures_->find(group);
-  if (iter == this->configures_->end()) {
-    auto configures = std::make_shared<std::unordered_map<int, Configure>>();
-    for (auto &config : *this->configures_) {
-      configures->insert(std::make_pair(config.first, config.second));
-    }
-    configures->insert(std::make_pair(group, configure));
-    this->configures_.swap(configures);
-  } else {
-    std::cerr << "group: " << group << " exists" << std::endl;
-    exit(-1);
+  if (iter != this->configures_->end()) {
+    std::cout << "group: " << group << " exists" << std::endl;
   }
+  auto configures = std::make_shared<std::unordered_map<int, Configure>>();
+  for (auto &config : *this->configures_) {
+    configures->insert(std::make_pair(config.first, config.second));
+  }
+  configures->insert(std::make_pair(group, configure));
+  this->configures_.swap(configures);
 }
 
 bool ApplyGredientsOperator::FullMerge(
