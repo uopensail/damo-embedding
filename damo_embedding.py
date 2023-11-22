@@ -253,6 +253,7 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
         output_dir (str): output dir
     """
     # remove output dir
+    output_dir = os.path.join(output_dir,"save_model")
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
