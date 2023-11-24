@@ -1,9 +1,7 @@
 #include "optimizer.h"
 
-Optimizer::Optimizer(const Params &optimizer_params, const Params &scheduler)
-    : name_(optimizer_params.get<std::string>("name")),
-      function_(get_lr_scheduler(scheduler)),
-      scheduler_(scheduler) {}
+Optimizer::Optimizer(const Params &optimizer_params)
+    : name_(optimizer_params.get<std::string>("name")) {}
 
 const std::string &Optimizer::get_name() { return name_; }
 
@@ -11,16 +9,8 @@ Optimizer::~Optimizer(){};
 
 int Optimizer::get_space(int dim) { return dim; }
 
-inline Float Optimizer::get_lr(int64_t global_step, Float learning_rate_) {
-  if (function_) {
-    return function_(learning_rate_, global_step, this->scheduler_);
-  }
-  return learning_rate_;
-}
-
-SGDOptimizer::SGDOptimizer(const Params &optimizer_params,
-                           const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+SGDOptimizer::SGDOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       lambda_(optimizer_params.get<double>("lambda", 0.0)) {}
 
@@ -32,16 +22,14 @@ std::string SGDOptimizer::to_string() const {
 SGDOptimizer::~SGDOptimizer() {}
 
 void SGDOptimizer::call(Float *data, Float *gds, int dim, int64_t global_step) {
-  auto lr = get_lr(global_step, this->gamma_);
   for (int i = 0; i < dim; i++) {
-    data[i] -=
-        lr * (this->lambda_ != 0 ? gds[i] + this->lambda_ * data[i] : gds[i]);
+    data[i] -= this->gamma_ *
+               (this->lambda_ != 0 ? gds[i] + this->lambda_ * data[i] : gds[i]);
   }
 }
 
-FTRLOptimizer::FTRLOptimizer(const Params &optimizer_params,
-                             const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+FTRLOptimizer::FTRLOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       alpha_(optimizer_params.get<double>("alpha", 0.005)),
       beta_(optimizer_params.get<double>("beta", 0.0)),
       lambda1_(optimizer_params.get<double>("lambda1", 0.0)),
@@ -91,9 +79,8 @@ void FTRLOptimizer::call(Float *data, Float *gds, int dim,
  * @param decay_params
  */
 
-AdagradOptimizer::AdagradOptimizer(const Params &optimizer_params,
-                                   const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+AdagradOptimizer::AdagradOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       gamma_(optimizer_params.get<double>("gamma", 0.01)),
       lambda_(optimizer_params.get<double>("lambda", 0.0)),
       eta_(optimizer_params.get<double>("eta", 0.0)),
@@ -120,8 +107,8 @@ void AdagradOptimizer::call(Float *data, Float *gds, int dim,
                             int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
-  Float lr = get_lr(global_step, this->gamma_);
   Float tmp;
+  Float lr = this->gamma_;
   for (int i = 0; i < dim; i++) {
     tmp = this->lambda_ != 0 ? gds[i] + this->lambda_ * w[i] : gds[i];
     m[i] += tmp * tmp;
@@ -129,9 +116,8 @@ void AdagradOptimizer::call(Float *data, Float *gds, int dim,
   }
 }
 
-AdamOptimizer::AdamOptimizer(const Params &optimizer_params,
-                             const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+AdamOptimizer::AdamOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.999)),
@@ -163,7 +149,7 @@ void AdamOptimizer::call(Float *data, Float *gds, int dim,
   Float *v = &(data[dim << 1]);
   Float beta1_t = powf(this->beta1_, global_step);
   Float beta2_t = powf(this->beta2_, global_step);
-  Float lr = get_lr(global_step, this->gamma_);
+  Float lr = this->gamma_;
   Float tmp_gd, tmp_m, tmp_v;
   for (int i = 0; i < dim; i++) {
     tmp_gd = gds[i] + this->lambda_ * w[i];
@@ -175,9 +161,8 @@ void AdamOptimizer::call(Float *data, Float *gds, int dim,
   }
 }
 
-AmsGradOptimizer::AmsGradOptimizer(const Params &optimizer_params,
-                                   const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+AmsGradOptimizer::AmsGradOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.999)),
@@ -204,7 +189,7 @@ void AmsGradOptimizer::call(Float *data, Float *gds, int dim,
   Float *v_max = &(data[dim * 3]);
   Float beta1_t = powf(this->beta1_, global_step);
   Float beta2_t = powf(this->beta2_, global_step);
-  Float lr = get_lr(global_step, this->gamma_);
+  Float lr = this->gamma_;
   Float tmp_gd, tmp_m, tmp_v;
   for (int i = 0; i < dim; i++) {
     tmp_gd = this->lambda_ != 0 ? gds[i] + this->lambda_ * w[i] : gds[i];
@@ -217,9 +202,8 @@ void AmsGradOptimizer::call(Float *data, Float *gds, int dim,
   }
 }
 
-AdamWOptimizer::AdamWOptimizer(const Params &optimizer_params,
-                               const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+AdamWOptimizer::AdamWOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       gamma_(optimizer_params.get<double>("gamma", 0.001)),
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.999)),
@@ -245,7 +229,7 @@ void AdamWOptimizer::call(Float *data, Float *gds, int dim,
   Float *v = &(data[dim << 1]);
   Float beta1_t = powf(this->beta1_, global_step);
   Float beta2_t = powf(this->beta2_, global_step);
-  Float lr = get_lr(global_step, this->gamma_);
+  Float lr = this->gamma_;
   Float tmp_m, tmp_v;
 
   for (int i = 0; i < dim; i++) {
@@ -258,9 +242,8 @@ void AdamWOptimizer::call(Float *data, Float *gds, int dim,
   }
 }
 
-LionOptimizer::LionOptimizer(const Params &optimizer_params,
-                             const Params &scheduler)
-    : Optimizer(optimizer_params, scheduler),
+LionOptimizer::LionOptimizer(const Params &optimizer_params)
+    : Optimizer(optimizer_params),
       eta_(optimizer_params.get<double>("eta", 0.0003)),
       beta1_(optimizer_params.get<double>("beta1", 0.9)),
       beta2_(optimizer_params.get<double>("beta2", 0.99)),
@@ -281,7 +264,7 @@ void LionOptimizer::call(Float *data, Float *gds, int dim,
                          int64_t global_step) {
   Float *w = data;
   Float *m = &(data[dim]);
-  Float lr = get_lr(global_step, this->eta_);
+  Float lr = this->eta_;
   Float tmp_mu;
   for (int i = 0; i < dim; i++) {
     tmp_mu = sign(this->beta1_ * m[i] + (1.0 - this->beta1_) * gds[i]) +
@@ -291,31 +274,26 @@ void LionOptimizer::call(Float *data, Float *gds, int dim,
   }
 }
 
-std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params,
-                                          const Params &scheduler) {
+std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params) {
   if (optimizer_params.isnil()) {
     std::cerr << "optimizer params is nil" << std::endl;
     exit(0);
   }
   auto name = optimizer_params.get<std::string>("name", "sgd");
   if (name == "sgd") {
-    return std::shared_ptr<Optimizer>(
-        new SGDOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new SGDOptimizer{optimizer_params});
   } else if (name == "ftrl") {
-    return std::shared_ptr<Optimizer>(
-        new FTRLOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new FTRLOptimizer{optimizer_params});
   } else if (name == "adam") {
-    return std::shared_ptr<Optimizer>(
-        new AdamOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new AdamOptimizer{optimizer_params});
+  } else if (name == "adagrad") {
+    return std::shared_ptr<Optimizer>(new AdagradOptimizer{optimizer_params});
   } else if (name == "amsgrad") {
-    return std::shared_ptr<Optimizer>(
-        new AmsGradOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new AmsGradOptimizer{optimizer_params});
   } else if (name == "adamw") {
-    return std::shared_ptr<Optimizer>(
-        new AdamWOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new AdamWOptimizer{optimizer_params});
   } else if (name == "lion") {
-    return std::shared_ptr<Optimizer>(
-        new LionOptimizer{optimizer_params, scheduler});
+    return std::shared_ptr<Optimizer>(new LionOptimizer{optimizer_params});
   } else {
     std::cout << "No Such Optimizer: " << name << std::endl;
     exit(-3);

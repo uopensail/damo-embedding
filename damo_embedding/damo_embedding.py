@@ -16,17 +16,23 @@
 # GNU Affero General Public License for more details.
 #
 import os
-import damo
 import json
 import struct
 import torch
 import numpy as np
+import zmq
+import damo
+import requests
 import shutil
 from typing import Tuple, Dict, List
+from enum import IntEnum
 from collections import defaultdict
-
+import tornado.web
+import tornado.ioloop
 
 __all__ = [
+    "initialize",
+    "close",
     "Embedding",
     "save_model",
     "load_model",
@@ -35,73 +41,239 @@ __all__ = [
 ]
 
 
-class Storage(object):
-    """singleton storage class."""
+DAMO_EMBEDDING_SERVICE_ADDRESS = "http://localhost:9275"
 
-    _instance = None
+EMBEDDING_DEFAULT_TTL = 86400 * 30
+EMBEDDING_DEFAULT_PATH = "./embeddings"
 
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = object.__new__(cls)
-            cls._instance.dir = kwargs.get("dir", "./embeddings")
-            cls._instance.ttl = kwargs.get("ttl", 8640000)
-            cls._instance.storage = damo.PyStorage(cls._instance.dir, cls._instance.ttl)
-        return cls._instance
 
-    @staticmethod
-    def checkpoint(path: str):
-        assert Storage._instance is not None
-        Storage._instance.storage.checkpoint(path)
+class DamoEmbeddingServer(tornado.web.Application):
+    def __init__(
+        self,
+        ttl: int = EMBEDDING_DEFAULT_TTL,
+        dir: str = EMBEDDING_DEFAULT_PATH,
+        **kwargs,
+    ):
+        self.ttl = ttl
+        self.dir = dir
+        damo.opendb(self.ttl, self.dir)
+        super(DamoEmbeddingServer, self).__init__(**kwargs)
 
-    @staticmethod
-    def dump(path: str):
-        assert Storage._instance is not None
-        Storage._instance.storage.dump(path)
 
-    @staticmethod
-    def load_from_checkpoint(path: str):
-        assert Storage._instance is not None
-        print("Loading From Checkpoint: %s" % path)
-        Storage._instance.storage.load_from_checkpoint(path)
+class PullHandler(tornado.web.RequestHandler):
+    def post(self, *args, **kwargs):
+        group = self.get_body_argument("group")
+        keys = np.array(self.get_body_argument("keys"), dtype=np.int64)
+        weights = np.array(self.get_body_argument("weights"), dtype=np.float32)
+
+        damo.pull(group, keys, weights)
+        self.write("Hello World, My name is 张岩林")
+
+
+class PushHandler(tornado.web.RequestHandler):
+    def post(self, *args, **kwargs):
+        group = self.get_body_argument("group")
+        keys = np.array(self.get_body_argument("keys"), dtype=np.int64)
+        gds = np.array(self.get_body_argument("gds"), dtype=np.float32)
+        damo.push(group, keys, gds)
+        self.set_status(200)
+
+
+application = DamoEmbeddingServer(
+    [
+        (r"/push", PushHandler),
+    ]
+)
+
+if __name__ == "__main__":
+    application.listen(8080)
+    tornado.ioloop.IOLoop.instance().start()
+
+
+def open(dir: str = "./embeddings", ttl: int = 86400 * 30, del_old: bool = False):
+    """open rocksdb
+
+    Args:
+        dir (str, optional): data dir. Defaults to "./embeddings".
+        ttl (int, optional): expire time. Defaults to 86400*30.
+        del_old (bool, optional): delete old path. Defaults to False.
+    """
+    if del_old and os.path.exists(dir):
+        shutil.rmtree(dir)
+    damo.open(ttl, dir)
+
+
+def close():
+    damo.close()
+
+
+def pull(group: int, keys: np.ndarray, weights: np.ndarray):
+    damo.pull(group, keys, weights)
+
+
+def dump(path: str):
+    """dump for inference
+
+    Args:
+        path (str): dump file path
+    """
+    damo.dump(path)
+
+
+def load_from_checkpoint(path: str):
+    """load from checkpoint
+
+    Args:
+        path (str): checkpoint file path
+    """
+    damo.load(path)
+
+
+def checkpoint(path: str):
+    """do a checkpoint
+
+    Args:
+        path (str): checkpoint file path
+    """
+    damo.checkpoint(path)
+
+
+class CommandType(IntEnum):
+    """define command type"""
+
+    kCreateEmbedding = 1
+    kPull = 2
+    kPush = 3
+    kDump = 4
+    kCheckPoint = 5
+    kLoadCheckPoint = 6
+
+
+ZMQ_DEFAULT_ADDRESS = "tcp://localhost:9275"
+
+
+class ZMQClient(object):
+    def __init__(self, address: str = ZMQ_DEFAULT_ADDRESS) -> None:
+        self.context = zmq.Context()
+        self.address = address
+        self.socket = self.context.socket(zmq.REQ)
+        self.socket.connect(self.address)
+
+    def __call__(self, msg: str) -> dict:
+        print(msg, len(msg))
+        self.socket.send_string(msg)
+        ret = self.socket.recv_string()
+        return json.loads(ret)
+
+
+def zmq_pull(client: ZMQClient, group: int, keys: np.ndarray) -> np.ndarray:
+    """pull weight from server
+
+    Args:
+        client (ZMQClient): zeromq client
+        group (int): embedding group
+        keys (np.ndarray): keys to pull
+
+    Returns:
+        np.ndarray: weights
+    """
+    keys = keys.tolist()
+    params = {
+        "cmd": CommandType.kPull,
+        "keys": keys,
+        "group": group,
+        "n": len(keys),
+    }
+    ret = client(json.dumps(params))
+    status = ret["status"] == 0
+    if status:
+        return np.array(ret["data"], dtype=np.float32)
+    return np.zeros(len(keys), dtype=np.float32)
+
+
+def zmq_push(client: ZMQClient, group: int, keys: np.ndarray, gds: np.ndarray) -> bool:
+    """push gradients to server
+
+    Args:
+        client (ZMQClient): zeromq client
+        group (int): group
+        keys (np.ndarray): key to push
+        gds (np.ndarray): gradients
+
+    Returns:
+        bool: pus ok or not
+    """
+    keys = keys.tolist()
+    gds = gds.tolist()
+    params = {
+        "cmd": CommandType.kPull,
+        "keys": keys,
+        "gds": keys,
+        "group": group,
+    }
+    ret = client(json.dumps(params))
+    return ret["status"] == 0
+
+
+def zmq_create_embedding(
+    client: ZMQClient,
+    dim: int,
+    group: int,
+    initializer: Dict[str, any] = {},
+    optimizer: Dict[str, any] = {},
+    scheduler: Dict[str, any] = {},
+) -> bool:
+    """_summary_
+
+    Args:
+        client (ZMQClient): zeromq client
+        dim (int): dim of embedding
+        group (int): group of embedding
+        initializer (Dict[str, any], optional): initializer params. Defaults to {}.
+        optimizer (Dict[str, any], optional): optimizer params. Defaults to {}.
+        scheduler (Dict[str, any], optional): scheduler params. Defaults to {}.
+
+    Returns:
+        bool: create ok or not
+    """
+    params = {
+        "cmd": CommandType.kCreateEmbedding,
+        "dim": dim,
+        "group": group,
+        "initializer": initializer,
+        "optimizer": optimizer,
+    }
+    if len(scheduler) > 0:
+        params["scheduler"] = scheduler
+    ret = client(json.dumps(params))
+    return ret["status"] == 0
 
 
 class Embedding(torch.nn.Module):
     """embedding module for training."""
 
-    _group = -1
-
-    def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
+    def __init__(
+        self,
+        dim: int,
+        group: int,
+        initializer={},
+        optimizer={},
+        scheduler={},
+        load=False,
+    ):
         super(Embedding, self).__init__()
         self.dim = dim
-        if "group" in kwargs:
-            self.group = kwargs["group"]
-            Embedding._group = max(Embedding._group, self.group)
-        else:
-            # if `group` not in arguments, use default
-            Embedding._group += 1
-            self.group = Embedding._group
-
-        assert self.group >= 0
-        self.kwargs = kwargs
-        self.storage = Storage(**kwargs).storage
-
-        # create initializer
+        self.group = group
         self.init_params = initializer
-        init_params = damo.Parameters()
-        for k, v in initializer.items():
-            init_params.insert(k, v)
-        self.initializer = damo.PyInitializer(init_params)
-
-        # create optimizer
-        opt_params = damo.Parameters()
         self.opt_params = optimizer
-        for k, v in optimizer.items():
-            opt_params.insert(k, v)
-        self.optimizer = damo.PyOptimizer(opt_params)
+        self.sch_params = scheduler
+        assert self.group >= 0
 
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, self.group
-        )
+        self.client = None
+        if not load:
+            assert zmq_create_embedding(
+                self.client, self.dim, self.group, initializer, optimizer, scheduler
+            )
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """embedding lookup
@@ -117,8 +289,7 @@ class Embedding(torch.nn.Module):
         batch_size, width = data.shape
         keys = np.unique(np.concatenate(data)).astype(np.int64)
         length = keys.shape[0]
-        weights = np.zeros(length * self.dim, dtype=np.float32)
-        self.embedding.lookup(keys, weights)
+        weights = zmq_pull(self.client, self.group, keys)
         weights = weights.reshape((length, self.dim))
         weight_dict = {k: v for k, v in zip(keys, weights)}
         values = np.zeros(shape=(batch_size, width, self.dim), dtype=np.float32)
@@ -146,7 +317,7 @@ class Embedding(torch.nn.Module):
                     grad_dict[keys[i]] / batch_size
                 )
 
-            self.embedding.apply_gradients(keys, values)
+            zmq_push(self.client, self.group, keys, values)
 
         ret = torch.from_numpy(values)
         ret.requires_grad_()
@@ -233,7 +404,7 @@ def load_from_checkpoint(path: str):
     Args:
         path (str): checkpoint file path
     """
-    Storage.load_from_checkpoint(path)
+    damo.load(path)
 
 
 def checkpoint(path: str):
@@ -242,7 +413,7 @@ def checkpoint(path: str):
     Args:
         path (str): checkpoint file path
     """
-    Storage.checkpoint(path)
+    damo.checkpoint(path)
 
 
 def save_model_for_training(model: torch.nn.Module, output_dir: str):
@@ -253,37 +424,36 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
         output_dir (str): output dir
     """
     # remove output dir
-    output_dir = os.path.join(output_dir,"save_model")
+    output_dir = os.path.join(output_dir, "save_model")
     if os.path.exists(output_dir):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
     checkpoint_dir = os.path.join(output_dir, "checkpoint")
     checkpoint(checkpoint_dir)
 
+    def get_embedding_params(embedding: Embedding):
+        return {
+            "init_params": embedding.init_params,
+            "opt_params": embedding.opt_params,
+            "sch_params": embedding.sch_params,
+            "dim": embedding.dim,
+            "group": embedding.group,
+        }
+
     sparse_embedding_params = {}
     original_modules = {}
     for k, v in model.__dict__["_modules"].items():
         original_modules[k] = v
         if isinstance(v, Embedding):
-            sparse_embedding_params["e_%s" % k] = {
-                "init_params": v.init_params,
-                "opt_params": v.opt_params,
-                "kwargs": v.kwargs,
-                "dim": v.dim,
-                "group": v.group,
-            }
+            sparse_embedding_params["e_%s" % k] = get_embedding_params(v)
             model.__dict__["_modules"][k] = torch.nn.Embedding(1, v.dim, padding_idx=0)
         elif isinstance(v, torch.nn.ModuleList):
             modules = torch.nn.ModuleList()
             for i, m in enumerate(v):
                 if isinstance(m, Embedding):
-                    sparse_embedding_params["l_%s_%d" % (k, i)] = {
-                        "init_params": v.init_params,
-                        "opt_params": v.opt_params,
-                        "kwargs": v.kwargs,
-                        "dim": v.dim,
-                        "group": v.group,
-                    }
+                    sparse_embedding_params["l_%s_%d" % (k, i)] = get_embedding_params(
+                        v
+                    )
                     modules.append(torch.nn.Embedding(1, v.dim, padding_idx=0))
                 else:
                     modules.append(m)
@@ -292,13 +462,9 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
             modules = torch.nn.ModuleDict()
             for n, m in v.items():
                 if isinstance(m, Embedding):
-                    sparse_embedding_params["d_%s_%s" % (n, k)] = {
-                        "init_params": v.init_params,
-                        "opt_params": v.opt_params,
-                        "kwargs": v.kwargs,
-                        "dim": v.dim,
-                        "group": v.group,
-                    }
+                    sparse_embedding_params["d_%s_%s" % (n, k)] = get_embedding_params(
+                        v
+                    )
                     modules[n] = torch.nn.Embedding(1, v.dim, padding_idx=0)
                 else:
                     modules[n] = m
@@ -324,33 +490,31 @@ def load_model(dir: str) -> torch.nn.Module:
     Returns:
         torch.nn.Module: model to train
     """
+    dir = os.path.join(dir, "save_model")
     sparse_embedding_params = json.load(
         open(os.path.join(dir, "sparse_config.json"), "r")
     )
     model = torch.load(os.path.join(dir, "model.pt"))
 
-    for file in os.listdir(dir):
-        if file.startswith("checkpoint"):
-            if Storage._instance is None:
-                for _, v in sparse_embedding_params.items():
-                    Storage(**v["kwargs"])
-                    break
-            load_from_checkpoint(os.path.join(dir, file))
-            Embedding._group = -1
-            break
+    def create_embedding(params):
+        return Embedding(
+            dim=params["dim"],
+            group=params["group"],
+            initializer=params["init_params"],
+            optimizer=params["opt_params"],
+            scheduler=params["sch_params"],
+            load=True,
+        )
+
+    load_from_checkpoint(os.path.join(dir, "checkpoint"))
+
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, torch.nn.Embedding):
             key = "e_%s" % k
             if key not in sparse_embedding_params:
                 continue
             config = sparse_embedding_params[key]
-            model.__dict__["_modules"][k] = Embedding(
-                config["dim"],
-                config["init_params"],
-                config["opt_params"],
-                group=config["group"],
-                **config["kwargs"],
-            )
+            model.__dict__["_modules"][k] = create_embedding(config)
         elif isinstance(v, torch.nn.ModuleList):
             modules = torch.nn.ModuleList()
             for i, m in enumerate(v):
@@ -359,15 +523,7 @@ def load_model(dir: str) -> torch.nn.Module:
                     modules.append(m)
                 else:
                     config = sparse_embedding_params[key]
-                    modules.append(
-                        Embedding(
-                            config["dim"],
-                            config["init_params"],
-                            config["opt_params"],
-                            group=config["group"],
-                            **config["kwargs"],
-                        )
-                    )
+                    modules.append(create_embedding(config))
             model.__dict__["_modules"][k] = modules
         elif isinstance(v, torch.nn.ModuleDict):
             modules = torch.nn.ModuleDict()
@@ -377,13 +533,7 @@ def load_model(dir: str) -> torch.nn.Module:
                     modules[n] = m
                 else:
                     config = sparse_embedding_params[key]
-                    modules[n] = Embedding(
-                        config["dim"],
-                        config["init_params"],
-                        config["opt_params"],
-                        group=config["group"],
-                        **config["kwargs"],
-                    )
+                    modules[n] = create_embedding(config)
             model.__dict__["_modules"][k] = modules
     return model
 
@@ -396,7 +546,7 @@ def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
         output_dir (str): output dir
     """
     sparse_path = os.path.join(output_dir, ".sparse.dat")
-    Storage.dump(sparse_path)
+    damo.dump(sparse_path)
     groups = {}
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, Embedding):

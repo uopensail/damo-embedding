@@ -24,13 +24,11 @@ if(ROCKSDB_FOUND)
 endif()
 
 
-SET(DAMO_INCLUDE include/common.h include/counting_bloom_filter.h include/cpptoml.h
-    include/embedding.h include/initializer.h include/learning_rate_scheduler.h
-    include/optimizer.h include/pyembedding.h)
+SET(DAMO_INCLUDE include/common.h include/json.hpp include/embedding.h 
+    include/initializer.h include/optimizer.h include/damo.h)
 
-SET(DAMO_SOURCE src/common.cpp src/counting_bloom_filter.cpp src/embedding.cpp
-    src/initializer.cpp src/learning_rate_scheduler.cpp src/optimizer.cpp
-    src/pydamo.cpp src/pyembedding.cpp)
+SET(DAMO_SOURCE src/common.cpp src/embedding.cpp src/initializer.cpp 
+    src/optimizer.cpp src/damo.cpp src/pydamo.cpp)
 
 # Include pybind11
 find_package(pybind11 REQUIRED)

@@ -23,7 +23,7 @@ from data_prepare import process as data_process
 from gwen import GroupWiseEmbeddingNetwork
 from sklearn.metrics import roc_auc_score
 
-from damo_embedding import Storage, save_model, load_from_checkpoint
+from damo_embedding.damo_embedding import Storage, save_model, load_from_checkpoint
 
 
 def process(train_loader, valid_loader, epochs=1):

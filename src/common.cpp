@@ -1,28 +1,29 @@
 #include "common.h"
 
-Params::Params(const std::shared_ptr<cpptoml::table> &table) : table(table) {}
+Params::Params() {}
 
-Params::Params(const Params &p) : table(p.table) {}
+Params::Params(json &params) : params_(params) {}
 
-const bool Params::isnil() const { return this->table == nullptr; }
+Params::Params(const std::string &str) { params_ = json::parse(str); }
+
+Params::Params(const Params &p) : params_(p.params_) {}
+
+const bool Params::isnil() const { return this->params_.size() == 0; }
 
 Params &Params::operator=(const Params &p) {
   if (this == &p) {
     return *this;
   }
-  table = p.table;
+  params_ = p.params_;
   return *this;
 }
 
-Params &Params::operator=(const std::shared_ptr<cpptoml::table> &table) {
-  this->table = table;
-  return *this;
-}
+std::string Params::to_json() const { return this->params_.dump(); }
 
 Params::~Params() {}
 
 bool Params::contains(const std::string &key) {
-  return this->table->contains(key);
+  return this->params_.contains(key);
 }
 
 int64_t get_current_time() {

@@ -29,37 +29,11 @@
 #include "initializer.h"
 #include "optimizer.h"
 
-typedef struct Configure {
-  int dim;
-  int group;
-  std::shared_ptr<Optimizer> optimizer;
-  std::shared_ptr<Initializer> initializer;
-  Configure();
-} Configure;
-
-class Embedding;
-class Storage;
-
-class GlobalGroupConfigure {
- public:
-  GlobalGroupConfigure();
-  ~GlobalGroupConfigure() = default;
-  const Configure *operator[](int group) const;
-
- private:
-  void add(int group, const Configure &configure);
-
- private:
-  std::mutex group_lock_;
-  std::shared_ptr<std::unordered_map<int, Configure>> configures_;
-  friend class Embedding;
-  friend class Storage;
-};
-
-static GlobalGroupConfigure global_groiup_configure;
+// damo embedding supports 256 embeddings
+const int max_embedding_num = 256;
 
 class ApplyGredientsOperator : public rocksdb::MergeOperator {
- public:
+public:
   ApplyGredientsOperator() {}
   ~ApplyGredientsOperator() {}
 
@@ -80,81 +54,52 @@ class ApplyGredientsOperator : public rocksdb::MergeOperator {
   static const char *kClassName() { return "ApplyGredientsOperator"; }
   static const char *kNickName() { return "apply_gredients"; }
   [[nodiscard]] const char *Name() const override { return kClassName(); }
-  [[nodiscard]] const char *NickName() const { return kNickName(); }
-};
-
-class Storage {
- public:
-  Storage() = delete;
-  Storage(int ttl, const std::string &data_dir);
-  ~Storage();
-
-  /**
-   * @brief save the data to filesystem, with the given filter condition
-   *
-   * @param path file path
-   * @param filter condition
-   */
-  void dump(const std::string &path,
-            const std::function<bool(MetaData *ptr)> &filter);
-
-  /**
-   * @brief do the checkpoint
-   *
-   * @param path file path
-   */
-  void checkpoint(const std::string &path);
-
-  /**
-   * @brief load from checkpoint file
-   *
-   * @param path file path
-   */
-  void load_from_checkpoint(const std::string &path);
-
- private:
-  int ttl_;
-  std::shared_ptr<rocksdb::DBWithTTL> db_;
-  friend class Embedding;
+  [[nodiscard]] const char *NickName() const override { return kNickName(); }
 };
 
 class Embedding {
- public:
+public:
   Embedding() = delete;
-  Embedding(Storage &storage, const std::shared_ptr<Optimizer> &optimizer,
-            const std::shared_ptr<Initializer> &initializer, int dim,
-            int group = 0);
+  explicit Embedding(json &params);
   ~Embedding();
-  /**
-   * @brief lookup the embeddings
-   *
-   * @param keys keys to lookup
-   * @param kn length of the keys
-   * @param w weight for the keys
-   * @param wn length of the weights
-   * @return
-   */
-  void lookup(int64_t *keys, int len, Float *data, int n);
 
-  /**
-   * @brief update the embedding weights
-   *
-   * @param keys keys to update
-   * @param kn length of the keys
-   * @param gds gradients for the keys
-   * @param gn length of the gradients
-   */
-  void apply_gradients(int64_t *keys, int len, Float *gds, int n);
-
- private:
-  std::shared_ptr<std::string> create(const int64_t &key);
-
- private:
-  int dim_;
-  int group_;
-  std::shared_ptr<rocksdb::DBWithTTL> db_;
-  const std::shared_ptr<Optimizer> optimizer_;
-  const std::shared_ptr<Initializer> initializer_;
+public:
+  json &params;
+  int dim;
+  int group;
+  std::shared_ptr<Optimizer> optimizer;
+  std::shared_ptr<Initializer> initializer;
 };
 
-#endif  // DAMO_EMBEDDING_EMBEDDING_H
+class EmbeddingWareHouse {
+public:
+  EmbeddingWareHouse();
+  ~EmbeddingWareHouse();
+
+  void opendb(int ttl, const std::string &data_dir);
+  void dump(const std::string &path);
+  void checkpoint(const std::string &path);
+  void load(const std::string &path);
+  void closedb();
+
+  int size() const;
+  Embedding *insert(json &params);
+  Embedding *operator[](int group) const;
+
+  void lookup(int group, int64_t *keys, int len, Float *data, int n);
+  void apply_gradients(int group, int64_t *keys, int len, Float *gds, int n);
+
+private:
+  std::shared_ptr<std::string> create_record(int group, const int64_t &key);
+
+private:
+  int size_;
+  std::mutex lock_;
+  Embedding **embeddings_;
+  rocksdb::DBWithTTL *db_;
+};
+
+static std::shared_ptr<EmbeddingWareHouse> global_embedding_warehouse =
+    std::shared_ptr<EmbeddingWareHouse>();
+
+#endif // DAMO_EMBEDDING_EMBEDDING_H
