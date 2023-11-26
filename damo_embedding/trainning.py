@@ -40,18 +40,20 @@ def list_all_sparse_embeddings(model: torch.nn.Module) -> List[Embedding]:
         List[Embedding]: all embeddings list
     """
     embeddings = []
-    for _, v in model.__dict__["_modules"].items():
+
+    for k, v in model.__dict__["_modules"].items():
         if isinstance(v, Embedding):
-            embeddings.append(v)
+            embeddings.append((k, v))
         elif isinstance(v, torch.nn.ModuleList):
-            for _, m in enumerate(v):
+            for i, m in enumerate(v):
                 if isinstance(m, Embedding):
-                    embeddings.append(m)
+                    embeddings.append((f"{k}-{i}", m))
         elif isinstance(v, torch.nn.ModuleDict):
-            for _, m in v.items():
+            for i, m in v.items():
                 if isinstance(m, Embedding):
-                    embeddings.append(m)
-    return embeddings
+                    embeddings.append((f"{k}-{i}", m))
+    embeddings.sort(key=lambda x: x[0])
+    return list(map(lambda x: x[1], embeddings))
 
 
 def save_model_for_training(model: torch.nn.Module, output_dir: str):

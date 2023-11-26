@@ -34,10 +34,8 @@ class Embedding(torch.nn.Module):
     ):
         super(Embedding, self).__init__()
         self.dim = dim
-        self.init_params = initializer
-        self.opt_params = optimizer
-        assert self.group >= 0
-        self.client = damo
+        self.initializer = initializer
+        self.optimizer = optimizer
 
     def pull(self, keys: np.ndarray):
         pass
