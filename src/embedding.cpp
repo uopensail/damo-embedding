@@ -1,5 +1,33 @@
 #include "embedding.h"
 
+Embedding::Embedding(json &p) {
+  assert(p.contains("initializer"));
+  assert(p.contains("optimizer"));
+  assert(p.contains("dim"));
+  assert(p.contains("group"));
+
+  this->dim = p["dim"].get<int>();
+  this->group = p["group"].get<int>();
+  assert(0 <= this->group && this->group < max_embedding_num);
+
+  this->initializer = get_initializers(Params{p["initializer"]});
+  this->optimizer = get_optimizers(Params{p["optimizer"]});
+}
+
+Embedding::~Embedding() {}
+
+ApplyGredientsOperator::ApplyGredientsOperator(json &configure) {
+  assert(configure.contains("embeddings"));
+  assert(configure["embeddings"].is_array());
+  for (int i = 0; i < max_embedding_num; i++) {
+    this->embeddings_[i] = nullptr;
+  }
+  for (auto &e : configure["embeddings"]) {
+    auto embedding = std::make_shared<Embedding>(e);
+    this->embeddings_[embedding->group] = embedding;
+  }
+}
+
 bool ApplyGredientsOperator::FullMerge(
     const rocksdb::Slice &key, const rocksdb::Slice *existing_value,
     const std::deque<std::string> &operand_list, std::string *new_value,
@@ -10,7 +38,7 @@ bool ApplyGredientsOperator::FullMerge(
   }
 
   MetaData *ptr = (MetaData *)(const_cast<char *>(existing_value->data()));
-  auto embedding = (*global_embedding_warehouse)[ptr->group];
+  auto embedding = this->embeddings_[ptr->group];
   if (ptr->group < 0 || embedding == nullptr) {
     return false;
   }
@@ -28,96 +56,54 @@ bool ApplyGredientsOperator::FullMerge(
   return true;
 }
 
-Embedding::Embedding(json &p) : params(p) {
-  assert(p.contains("initializer"));
-  assert(p.contains("optimizer"));
-  assert(p.contains("dim"));
-  assert(p.contains("group"));
-
-  this->dim = p["dim"].get<int>();
-  this->group = p["group"].get<int>();
-
-  this->initializer = get_initializers(Params{p["initializer"]});
-  this->optimizer = get_optimizers(Params{p["optimizer"]});
-}
-
-Embedding::~Embedding() {}
-
-EmbeddingWareHouse::EmbeddingWareHouse()
-    : size_(0), lock_(), embeddings_(nullptr), db_(nullptr) {
-  embeddings_ = new Embedding *[max_embedding_num];
+EmbeddingWareHouse::EmbeddingWareHouse(json &configure)
+    : configure_(configure) {
+  // create embeddings
+  assert(configure.contains("embeddings"));
   for (int i = 0; i < max_embedding_num; i++) {
-    embeddings_[i] = nullptr;
+    this->embeddings_[i] = nullptr;
   }
-}
+  assert(configure["embeddings"].is_array());
+  this->size_ = configure["embeddings"].size();
+  for (auto &e : configure["embeddings"]) {
+    auto embedding = std::make_shared<Embedding>(e);
+    this->embeddings_[embedding->group] = embedding;
+  }
 
-EmbeddingWareHouse::~EmbeddingWareHouse() {
-  this->closedb();
-  for (int i = 0; i < max_embedding_num; i++) {
-    if (embeddings_[i] != nullptr) {
-      delete embeddings_[i];
-    }
-  }
-  delete[] embeddings_;
-}
-
-void EmbeddingWareHouse::opendb(int ttl, const std::string &data_dir) {
-  std::lock_guard<std::mutex> guard(this->lock_);
-  if (this->db_ != nullptr) {
-    std::cout << "rocksdb is opened!" << std::endl;
-    return;
-  }
+  // open rocksdb
+  assert(configure.contains("ttl"));
+  assert(configure.contains("dir"));
+  int ttl = configure["ttl"].get<int>();
+  std::string dir = configure["dir"].get<std::string>();
   rocksdb::Options options;
   options.create_if_missing = true;
-  options.merge_operator.reset(new ApplyGredientsOperator());
-  rocksdb::Status status =
-      rocksdb::DBWithTTL::Open(options, data_dir, &this->db_, ttl);
+  options.merge_operator.reset(new ApplyGredientsOperator(configure));
+  rocksdb::DBWithTTL *db;
+  rocksdb::Status status = rocksdb::DBWithTTL::Open(options, dir, &db, ttl);
   if (!status.ok()) {
     std::cerr << "open leveldb error: " << status.ToString() << std::endl;
     exit(-1);
   }
-  assert(this->db_ != nullptr);
-  std::cout << "open leveldb: " << data_dir << " successfully!" << std::endl;
+  assert(db != nullptr);
+
+  this->db_ = std::shared_ptr<rocksdb::DBWithTTL>(db, [](void *ptr) {
+    if (ptr != nullptr) {
+      rocksdb::DBWithTTL *db = (rocksdb::DBWithTTL *)ptr;
+      db->Flush(rocksdb::FlushOptions());
+      // do compact
+      db->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
+      db->Close();
+      delete db;
+      db = nullptr;
+    }
+  });
+
+  std::cout << "open leveldb: " << dir << " successfully!" << std::endl;
 }
 
-void EmbeddingWareHouse::closedb() {
-  if (this->db_ != nullptr) {
-    this->db_->Flush(rocksdb::FlushOptions());
-    // do compact
-    this->db_->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
-    this->db_->Close();
-    delete this->db_;
-    this->db_ = nullptr;
-  }
-}
-
-int EmbeddingWareHouse::size() const { return this->size_; }
-
-Embedding *EmbeddingWareHouse::insert(json &params) {
-  assert(params.contains("group"));
-  int group = params["group"].get<int>();
-  assert(0 <= group && group < max_embedding_num);
-  std::lock_guard<std::mutex> guard(this->lock_);
-  if (this->embeddings_[group] != nullptr) {
-    std::cout << "group: " << group << " exists" << std::endl;
-    return this->embeddings_[group];
-  }
-  auto embedding = new Embedding(params);
-  this->embeddings_[group] = embedding;
-  this->size_++;
-  return embedding;
-}
-
-Embedding *EmbeddingWareHouse::operator[](int group) const {
-  assert(0 <= group && group < max_embedding_num);
-  return embeddings_[group];
-}
+std::string EmbeddingWareHouse::to_json() { return this->configure_.dump(); }
 
 void EmbeddingWareHouse::dump(const std::string &path) {
-  if (this->db_ == nullptr) {
-    std::cout << "rocksdb is closed." << std::endl;
-    return;
-  }
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
@@ -164,10 +150,6 @@ void EmbeddingWareHouse::dump(const std::string &path) {
 // (size_t: key length, bytes: key data, size_t: value length, bytes: value
 // data)+
 void EmbeddingWareHouse::checkpoint(const std::string &checkpoint_path) {
-  if (this->db_ == nullptr) {
-    std::cout << "rocksdb is closed." << std::endl;
-    return;
-  }
   const rocksdb::Snapshot *sp = this->db_->GetSnapshot();
   rocksdb::ReadOptions read_option;
   read_option.snapshot = sp;
@@ -191,30 +173,12 @@ void EmbeddingWareHouse::checkpoint(const std::string &checkpoint_path) {
   delete it;
   this->db_->ReleaseSnapshot(sp);
 
-  // write embedding params
-  int embedding_count = this->size_;
-  writer.write((char *)&embedding_count, sizeof(int));
-  for (int i = 0; i < max_embedding_num; i++) {
-    auto embedding = this->embeddings_[i];
-    if (embedding == nullptr) {
-      continue;
-    }
-    std::string params = embedding->params.dump();
-    int length = params.size();
-    writer.write((char *)&length, length);
-    writer.write(params.data(), length);
-  }
-
   writer.seekp(0, std::ios::beg);
   writer.write((char *)&count, sizeof(int64_t));
   writer.close();
 }
 
 void EmbeddingWareHouse::load(const std::string &path) {
-  if (this->db_ == nullptr) {
-    std::cout << "rocksdb is closed." << std::endl;
-    return;
-  }
   // first delete all the old keys
   auto status = this->db_->DeleteRange(rocksdb::WriteOptions(),
                                        this->db_->DefaultColumnFamily(),
@@ -250,27 +214,13 @@ void EmbeddingWareHouse::load(const std::string &path) {
   }
   free(key);
   free(value);
-
-  // read embedding params
-  int embedding_count;
-  int length;
-
-  reader.read((char *)&embedding_count, sizeof(int));
-  for (int i = 0; i < embedding_count; i++) {
-    reader.read((char *)&length, sizeof(int));
-    char *tmp = (char *)malloc(length);
-    reader.read(tmp, length);
-    json params = json::parse(tmp);
-    this->insert(params);
-    free(tmp);
-  }
   reader.close();
   this->db_->Flush(rocksdb::FlushOptions());
   this->db_->CompactRange(rocksdb::CompactRangeOptions(), nullptr, nullptr);
 }
 
-std::shared_ptr<std::string>
-EmbeddingWareHouse::create_record(int group, const int64_t &key) {
+std::shared_ptr<std::string> EmbeddingWareHouse::create_record(
+    int group, const int64_t &key) {
   assert(0 <= group && group < max_embedding_num);
   auto embedding = this->embeddings_[group];
   assert(embedding != nullptr);
@@ -291,10 +241,6 @@ EmbeddingWareHouse::create_record(int group, const int64_t &key) {
 
 void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
                                 int n) {
-  if (this->db_ == nullptr) {
-    std::cout << "rocksdb is closed." << std::endl;
-    return;
-  }
   assert(0 <= group && group < max_embedding_num);
   auto embedding = this->embeddings_[group];
   assert(embedding != nullptr);
@@ -336,10 +282,6 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
 
 void EmbeddingWareHouse::apply_gradients(int group, int64_t *keys, int len,
                                          Float *gds, int n) {
-  if (this->db_ == nullptr) {
-    std::cout << "rocksdb is closed." << std::endl;
-    return;
-  }
   assert(0 <= group && group < max_embedding_num);
   auto embedding = this->embeddings_[group];
   assert(embedding != nullptr);

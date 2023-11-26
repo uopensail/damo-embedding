@@ -26,8 +26,8 @@ import os
 
 
 def damo_embedding_init(
-    dir: str = EMBEDDING_DEFAULT_PATH,
     ttl: int = EMBEDDING_DEFAULT_TTL,
+    dir: str = EMBEDDING_DEFAULT_PATH,
     del_old: bool = False,
 ):
     """open rocksdb

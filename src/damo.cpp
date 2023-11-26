@@ -1,27 +1,31 @@
 #include "damo.h"
 
-void damo_open(int ttl, const std::string &dir) {
-  global_embedding_warehouse->opendb(ttl, dir);
+PyDamo::PyDamo(const std::string &config_file) {
+  std::ifstream file(config_file);
+  if (!file) {
+    std::cerr << "Failed to open JSON file." << std::endl;
+    exit(-1);
+  }
+
+  json configure;
+  try {
+    file >> configure;
+  } catch (const std::exception &e) {
+    std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    exit(-1);
+  }
+  this->warehouse_ = std::make_shared<EmbeddingWareHouse>(configure);
 }
 
-void damo_new(const std::string &params) {
-  json p = json::parse(params);
-  global_embedding_warehouse->insert(p);
+void PyDamo::dump(const std::string &dir) { this->warehouse_->dump(dir); }
+
+void PyDamo::checkpoint(const std::string &dir) {
+  this->warehouse_->checkpoint(dir);
 }
 
-void damo_dump(const std::string &dir) {
-  global_embedding_warehouse->dump(dir);
-}
+void PyDamo::load(const std::string &dir) { this->warehouse_->load(dir); }
 
-void damo_checkpoint(const std::string &dir) {
-  global_embedding_warehouse->checkpoint(dir);
-}
-
-void damo_load(const std::string &dir) {
-  global_embedding_warehouse->load(dir);
-}
-
-void damo_pull(int group, py::array_t<int64_t> keys, py::array_t<float> w) {
+void PyDamo::pull(int group, py::array_t<int64_t> keys, py::array_t<float> w) {
   py::buffer_info keys_info = keys.request();
   assert(keys_info.ndim == 1);
   int64_t *keys_ptr = static_cast<int64_t *>(keys_info.ptr);
@@ -29,11 +33,11 @@ void damo_pull(int group, py::array_t<int64_t> keys, py::array_t<float> w) {
   py::buffer_info w_info = w.request();
   assert(w_info.ndim == 1);
   float *w_ptr = static_cast<float *>(w_info.ptr);
-  global_embedding_warehouse->lookup(group, keys_ptr, keys_info.size, w_ptr,
-                                     w_info.size);
+  this->warehouse_->lookup(group, keys_ptr, keys_info.size, w_ptr, w_info.size);
 }
 
-void damo_push(int group, py::array_t<int64_t> keys, py::array_t<float> gds) {
+void PyDamo::push(int group, py::array_t<int64_t> keys,
+                  py::array_t<float> gds) {
   py::buffer_info keys_info = keys.request();
   assert(keys_info.ndim == 1);
   int64_t *keys_ptr = static_cast<int64_t *>(keys_info.ptr);
@@ -41,6 +45,8 @@ void damo_push(int group, py::array_t<int64_t> keys, py::array_t<float> gds) {
   py::buffer_info gds_info = gds.request();
   assert(gds_info.ndim == 1);
   float *gds_ptr = static_cast<float *>(gds_info.ptr);
-  global_embedding_warehouse->lookup(group, keys_ptr, keys_info.size, gds_ptr,
-                                     gds_info.size);
+  this->warehouse_->apply_gradients(group, keys_ptr, keys_info.size, gds_ptr,
+                                    gds_info.size);
 }
+
+std::string PyDamo::to_json() { return this->warehouse_->to_json(); }

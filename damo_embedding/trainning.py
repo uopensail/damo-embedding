@@ -20,6 +20,7 @@ import json
 import torch
 import damo
 import shutil
+from typing import List
 
 from .config import IS_MULTIPROCESSING_TRAINING
 
@@ -27,6 +28,30 @@ if IS_MULTIPROCESSING_TRAINING:
     from .embedding import xx as Embedding
 else:
     from .embedding import Embedding as Embedding
+
+
+def list_all_sparse_embeddings(model: torch.nn.Module) -> List[Embedding]:
+    """list all sparse embeddings
+
+    Args:
+        model (torch.nn.Module): torch module
+
+    Returns:
+        List[Embedding]: all embeddings list
+    """
+    embeddings = []
+    for _, v in model.__dict__["_modules"].items():
+        if isinstance(v, Embedding):
+            embeddings.append(v)
+        elif isinstance(v, torch.nn.ModuleList):
+            for _, m in enumerate(v):
+                if isinstance(m, Embedding):
+                    embeddings.append(m)
+        elif isinstance(v, torch.nn.ModuleDict):
+            for _, m in v.items():
+                if isinstance(m, Embedding):
+                    embeddings.append(m)
+    return embeddings
 
 
 def save_model_for_training(model: torch.nn.Module, output_dir: str):

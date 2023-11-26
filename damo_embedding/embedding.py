@@ -29,30 +29,15 @@ class Embedding(torch.nn.Module):
     def __init__(
         self,
         dim: int,
-        group: int,
         initializer={},
         optimizer={},
-        load=False,
     ):
         super(Embedding, self).__init__()
         self.dim = dim
-        self.group = group
         self.init_params = initializer
         self.opt_params = optimizer
         assert self.group >= 0
         self.client = damo
-
-        if not load:
-            damo.embedding(
-                json.dumps(
-                    {
-                        "dim": self.dim,
-                        "group": self.group,
-                        "initializer": self.init_params,
-                        "optimizer": self.opt_params,
-                    }
-                )
-            )
 
     def pull(self, keys: np.ndarray):
         pass

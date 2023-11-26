@@ -19,22 +19,27 @@
 
 #pragma once
 
-#include "embedding.h"
 #include <pybind11/numpy.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
+#include "embedding.h"
 namespace py = pybind11;
 
-const std::string default_dir = "./embeddings";
-const int default_ttl = 86400 * 30;
+class PyDamo {
+ public:
+  PyDamo() = delete;
+  explicit PyDamo(const std::string &config_file);
+  ~PyDamo();
+  void dump(const std::string &dir);
+  void checkpoint(const std::string &dir);
+  void load(const std::string &dir);
+  void pull(int group, py::array_t<int64_t> keys, py::array_t<float> w);
+  void push(int group, py::array_t<int64_t> keys, py::array_t<float> gds);
+  std::string to_json();
 
-void damo_open(int ttl = default_ttl, const std::string &dir = default_dir);
-void damo_close();
-void damo_new(const std::string &params);
-void damo_dump(const std::string &dir);
-void damo_checkpoint(const std::string &dir);
-void damo_load(const std::string &dir);
-void damo_pull(int group, py::array_t<int64_t> keys, py::array_t<float> w);
-void damo_push(int group, py::array_t<int64_t> keys, py::array_t<float> gds);
+ private:
+  std::shared_ptr<EmbeddingWareHouse> warehouse_;
+};
 
-#endif // DAMO_EMBEDDING_PY_H
+#endif  // DAMO_EMBEDDING_PY_H

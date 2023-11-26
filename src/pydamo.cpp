@@ -7,13 +7,13 @@
 namespace py = pybind11;
 
 PYBIND11_MODULE(damo, m) {
-  m.doc() = "damo embedding server";
-  m.def("open", &damo_open, "damo embedding open rocksdb");
-  m.def("close", &damo_close, "damo embedding close rocksdb");
-  m.def("pull", &damo_pull, "damo embedding pull weights");
-  m.def("push", &damo_push, "damo embedding push gradients");
-  m.def("load", &damo_load, "damo embedding server load from checkpoint");
-  m.def("dump", &damo_dump, "damo embedding server dump for inference");
-  m.def("checkpoint", &damo_checkpoint, "damo embedding server do checkpoint");
-  m.def("embedding", &damo_new, "damo embedding create embedding");
+  m.doc() = "damo embedding";
+  py::class_<PyDamo>(m, "Damo class")
+      .def(py::init<const std::string &>())
+      .def("pull", &PyDamo::pull)
+      .def("push", &PyDamo::push)
+      .def("load", &PyDamo::load)
+      .def("dump", &PyDamo::dump)
+      .def("checkpoint", &PyDamo::checkpoint)
+      .def("__repr__", [](PyDamo &p) -> std::string { return p.to_json(); });
 }
