@@ -27,19 +27,19 @@
 namespace py = pybind11;
 
 class PyDamo {
- public:
+public:
   PyDamo() = delete;
   explicit PyDamo(const std::string &config_file);
-  ~PyDamo();
+  ~PyDamo() {}
   void dump(const std::string &dir);
   void checkpoint(const std::string &dir);
-  void load(const std::string &dir);
+  // void load(const std::string &dir);
   void pull(int group, py::array_t<int64_t> keys, py::array_t<float> w);
   void push(int group, py::array_t<int64_t> keys, py::array_t<float> gds);
   std::string to_json();
 
- private:
+private:
   std::shared_ptr<EmbeddingWareHouse> warehouse_;
 };
 
-#endif  // DAMO_EMBEDDING_PY_H
+#endif // DAMO_EMBEDDING_PY_H

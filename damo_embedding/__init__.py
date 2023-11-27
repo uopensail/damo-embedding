@@ -16,52 +16,59 @@
 # GNU Affero General Public License for more details.
 #
 
-from .config import *
-import torch
-from .inference import save_model_for_inference
-from .trainning import save_model_for_training, load_model, list_all_sparse_embeddings
-import shutil
-import damo
-import os
-import json
+__all__ = [
+    "damo_embedding_init",
+    "damo_embedding_close",
+    "Embedding",
+    "save_model",
+    "load_model",
+]
 
-GLOBAL_DAMO_INSTANCE = None
+import json
+import os
+
+import damo
+import torch
+
+from .config import DAMO_EMBEDDING_MODE_KEY, DAMO_SERVICE_BINARY
+from .inference import save_model_for_inference
+from .trainning import load_model, save_model_for_training
+from .util import (
+    Embedding,
+    get_damo_embedding_configure,
+    run_damo_embedding_service,
+    stop_damo_embeding_service,
+)
 
 
 def damo_embedding_init(
-    model: torch.Module,
-    ttl: int = EMBEDDING_DEFAULT_TTL,
-    dir: str = EMBEDDING_DEFAULT_PATH,
-    del_old: bool = False,
-    method: str = EMBEDDING_DEFAULT_METHOD,
-    recover: bool = True,
+    model: torch.nn.Module,
+    ttl: int,
+    dir: str,
+    reload_dir: str = "",
+    damo_service: str = DAMO_SERVICE_BINARY,
 ):
-    global GLOBAL_DAMO_INSTANCE
-    embeddings = list_all_sparse_embeddings(model=model)
-    configure = {"ttl": ttl, "dir": dir, "embeddings": []}
-    for i, embedding in enumerate(embeddings):
-        setattr(embedding, "group", i)
-        configure["embeddings"].append(
-            {
-                "dim": embedding.dim,
-                "group": embedding.group,
-                "initializer": embedding.optimizer,
-                "optimizer": embedding.optimizer,
-            }
-        )
+    global DAMO_INSTANCE
+    mode = os.environ.get(DAMO_EMBEDDING_MODE_KEY, "").lower()
+
+    configure = get_damo_embedding_configure(model)
+    configure["ttl"] = ttl
+    configure["dir"] = dir
+    if reload_dir != "":
+        configure["reload_dir"] = reload_dir
     config_path = f"/tmp/damo-configure-{os.getpid()}.json"
     json.dump(configure, open(config_path, "w"))
-    GLOBAL_DAMO_INSTANCE = damo.PyDamo(config_path)
+    if mode == "builtin" or mode == "":
+        DAMO_INSTANCE = damo.PyDamo(config_path)
+    elif mode == "service":
+        run_damo_embedding_service(damo_service, config_path)
 
 
 def damo_embedding_close():
     """close rocksdb"""
-    damo.close()
-
-
-def set_training_status(is_multiprocessing_training: bool):
-    global IS_MULTIPROCESSING_TRAINING
-    IS_MULTIPROCESSING_TRAINING = is_multiprocessing_training
+    global DAMO_INSTANCE
+    if DAMO_INSTANCE is None:
+        stop_damo_embeding_service()
 
 
 def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):

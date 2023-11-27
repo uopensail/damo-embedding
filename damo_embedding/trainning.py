@@ -15,45 +15,13 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-import os
 import json
-import torch
-import damo
+import os
 import shutil
-from typing import List
 
-from .config import IS_MULTIPROCESSING_TRAINING
+import torch
 
-if IS_MULTIPROCESSING_TRAINING:
-    from .embedding import xx as Embedding
-else:
-    from .embedding import Embedding as Embedding
-
-
-def list_all_sparse_embeddings(model: torch.nn.Module) -> List[Embedding]:
-    """list all sparse embeddings
-
-    Args:
-        model (torch.nn.Module): torch module
-
-    Returns:
-        List[Embedding]: all embeddings list
-    """
-    embeddings = []
-
-    for k, v in model.__dict__["_modules"].items():
-        if isinstance(v, Embedding):
-            embeddings.append((k, v))
-        elif isinstance(v, torch.nn.ModuleList):
-            for i, m in enumerate(v):
-                if isinstance(m, Embedding):
-                    embeddings.append((f"{k}-{i}", m))
-        elif isinstance(v, torch.nn.ModuleDict):
-            for i, m in v.items():
-                if isinstance(m, Embedding):
-                    embeddings.append((f"{k}-{i}", m))
-    embeddings.sort(key=lambda x: x[0])
-    return list(map(lambda x: x[1], embeddings))
+from .util import Embedding, checkpoint
 
 
 def save_model_for_training(model: torch.nn.Module, output_dir: str):
@@ -69,7 +37,7 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
         shutil.rmtree(output_dir)
     os.makedirs(output_dir)
     checkpoint_dir = os.path.join(output_dir, "checkpoint")
-    damo.checkpoint(checkpoint_dir)
+    checkpoint(checkpoint_dir)
 
     def get_embedding_params(embedding: Embedding):
         return {
@@ -84,29 +52,25 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
     for k, v in model.__dict__["_modules"].items():
         original_modules[k] = v
         if isinstance(v, Embedding):
-            sparse_embedding_params["e_%s" % k] = get_embedding_params(v)
+            sparse_embedding_params[k] = get_embedding_params(v)
             model.__dict__["_modules"][k] = torch.nn.Embedding(1, v.dim, padding_idx=0)
         elif isinstance(v, torch.nn.ModuleList):
             modules = torch.nn.ModuleList()
             for i, m in enumerate(v):
                 if isinstance(m, Embedding):
-                    sparse_embedding_params["l_%s_%d" % (k, i)] = get_embedding_params(
-                        v
-                    )
+                    sparse_embedding_params[f"{k}-{i}"] = get_embedding_params(v)
                     modules.append(torch.nn.Embedding(1, v.dim, padding_idx=0))
                 else:
                     modules.append(m)
             model.__dict__["_modules"][k] = modules
         elif isinstance(v, torch.nn.ModuleDict):
             modules = torch.nn.ModuleDict()
-            for n, m in v.items():
+            for i, m in v.items():
                 if isinstance(m, Embedding):
-                    sparse_embedding_params["d_%s_%s" % (n, k)] = get_embedding_params(
-                        v
-                    )
-                    modules[n] = torch.nn.Embedding(1, v.dim, padding_idx=0)
+                    sparse_embedding_params[f"{k}-{i}"] = get_embedding_params(v)
+                    modules[i] = torch.nn.Embedding(1, v.dim, padding_idx=0)
                 else:
-                    modules[n] = m
+                    modules[i] = m
             model.__dict__["_modules"][k] = modules
 
     torch.save(model, os.path.join(output_dir, "model.pt"))
@@ -144,11 +108,9 @@ def load_model(dir: str) -> torch.nn.Module:
             load=True,
         )
 
-    damo.load(os.path.join(dir, "checkpoint"))
-
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, torch.nn.Embedding):
-            key = "e_%s" % k
+            key = k
             if key not in sparse_embedding_params:
                 continue
             config = sparse_embedding_params[key]
@@ -156,7 +118,7 @@ def load_model(dir: str) -> torch.nn.Module:
         elif isinstance(v, torch.nn.ModuleList):
             modules = torch.nn.ModuleList()
             for i, m in enumerate(v):
-                key = "l_%s_%d" % (k, i)
+                key = f"{k}-{i}"
                 if key not in sparse_embedding_params:
                     modules.append(m)
                 else:
@@ -165,12 +127,12 @@ def load_model(dir: str) -> torch.nn.Module:
             model.__dict__["_modules"][k] = modules
         elif isinstance(v, torch.nn.ModuleDict):
             modules = torch.nn.ModuleDict()
-            for n, m in v.items():
-                key = "d_%s_%s" % (n, k)
+            for i, m in v.items():
+                key = f"{k}-{i}"
                 if key not in sparse_embedding_params:
-                    modules[n] = m
+                    modules[i] = m
                 else:
                     config = sparse_embedding_params[key]
-                    modules[n] = create_embedding(config)
+                    modules[i] = create_embedding(config)
             model.__dict__["_modules"][k] = modules
     return model

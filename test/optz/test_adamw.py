@@ -15,26 +15,27 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-
+import json
+import os
+import shutil
 import unittest
+
+import damo
 import numpy as np
 import torch
-import damo
-import shutil
-import os
-import json
 
 
-class AdagradTestCase(unittest.TestCase):
+class AdamWTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
         self.dim = 16
         self.group = 0
-        self.gamma = 0.01
-        self.eta = 0.0
+        self.gamma = 0.001
+        self.beta1 = 0.9
+        self.beta2 = 0.999
         self.lambda_ = 0.0
-        self.epsilon = 1e-10
+        self.epsilon = 1e-8
         self.configure = {
             "ttl": 86400,
             "dir": "/tmp/data_dir",
@@ -48,35 +49,62 @@ class AdagradTestCase(unittest.TestCase):
                         "stddev": 1.0,
                     },
                     "optimizer": {
-                        "name": "adagrad",
+                        "name": "adamw",
                         "gamma": self.gamma,
+                        "beta1": self.beta1,
+                        "beta2": self.beta2,
                         "lambda": self.lambda_,
                         "epsilon": self.epsilon,
                     },
                 }
             ],
         }
-        json.dump(self.configure, open("/tmp/damo-configure.json", "w"))
+
+        with open("/tmp/damo-configure.json", "w") as f:
+            json.dump(self.configure, f)
         self.damo = damo.PyDamo("/tmp/damo-configure.json")
 
     def test(self):
         # in test case, we use torch to test the results
         n = 8
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
+
         w = np.zeros(self.dim * n).astype(np.float32)
-        self.damo.pull(keys, w)
+        self.damo.pull(self.group, keys, w)
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adagrad(
+
+        y = torch.tensor(w, dtype=torch.float32, requires_grad=True)
+        y.grad = torch.tensor(gds, dtype=torch.float32)
+
+        opt1 = torch.optim.AdamW(
             [x],
             lr=self.gamma,
+            betas=(self.beta1, self.beta2),
+            weight_decay=self.lambda_,
             eps=self.epsilon,
         )
 
-        self.damo.push(keys, gds)
-        opt.step()
-        self.damo.pull(keys, w)
+        # opt2 = torch.optim.AdamW(
+        #     [y],
+        #     lr=self.gamma,
+        #     betas=(self.beta1, self.beta2),
+        #     weight_decay=0.0,
+        #     eps=self.epsilon,
+        # )
+
+        self.damo.push(self.group, keys, gds)
+        opt1.step()
+        # opt2.step()
+
+        x0 = x.detach().numpy()
+        # y0 = y.detach().numpy()
+
+        # the diffenence between y0 and x0 is - w * self.gamma * self.lambda_
+        # print(y0 - x0 - w * self.gamma * self.lambda_)
+
+        self.damo.pull(self.group, keys, w)
         tmp = (w - x.detach().numpy()).astype(np.float32)
         tmp = tmp.reshape((self.dim, n))
         norms = np.linalg.norm(tmp, axis=-1)

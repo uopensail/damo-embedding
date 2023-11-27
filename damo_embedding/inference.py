@@ -17,17 +17,14 @@
 #
 
 import os
+import shutil
 import struct
-import torch
-import numpy as np
-import damo
-from typing import Tuple, Dict, List
-from .config import IS_MULTIPROCESSING_TRAINING
+from typing import Dict, List, Tuple
 
-if IS_MULTIPROCESSING_TRAINING:
-    from .embedding import xx as Embedding
-else:
-    from .embedding import Embedding as Embedding
+import numpy as np
+import torch
+
+from .util import Embedding, dump
 
 
 class KeyMapper(torch.nn.Module):
@@ -110,8 +107,13 @@ def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
         model (torch.nn.Module): torch module
         output_dir (str): output dir
     """
-    sparse_path = os.path.join(output_dir, ".sparse.dat")
-    damo.dump(sparse_path)
+    output_dir = os.path.join(output_dir, "inference")
+    if os.path.exists(output_dir):
+        shutil.rmtree(output_dir)
+    os.makedirs(output_dir)
+
+    sparse_path = os.path.join(output_dir, "sparse.dat")
+    dump(sparse_path)
     groups = {}
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, Embedding):
@@ -159,5 +161,3 @@ def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
     # recover
     for k, _ in model.__dict__["_modules"].items():
         model.__dict__["_modules"][k] = original_modules[k]
-
-    os.remove(sparse_path)

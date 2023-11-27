@@ -178,6 +178,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["numpy>=1.19.0"],
+    data_files=[("bin", ["build/damo-server"])],
     setup_requires=["numpy>=1.19.0", "pybind11>=2.11.1", "ninja>=1.11.1"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

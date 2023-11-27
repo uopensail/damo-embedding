@@ -33,12 +33,12 @@
 const int max_embedding_num = 256;
 
 class Embedding {
- public:
+public:
   Embedding() = delete;
   explicit Embedding(json &config);
   ~Embedding();
 
- public:
+public:
   int dim;
   int group;
   std::shared_ptr<Optimizer> optimizer;
@@ -46,7 +46,7 @@ class Embedding {
 };
 
 class ApplyGredientsOperator : public rocksdb::MergeOperator {
- public:
+public:
   explicit ApplyGredientsOperator(json &configure);
   ~ApplyGredientsOperator() {}
 
@@ -69,14 +69,14 @@ class ApplyGredientsOperator : public rocksdb::MergeOperator {
   [[nodiscard]] const char *Name() const override { return kClassName(); }
   [[nodiscard]] const char *NickName() const override { return kNickName(); }
 
- private:
+private:
   std::shared_ptr<Embedding> embeddings_[max_embedding_num];
 };
 
 class EmbeddingWareHouse {
- public:
+public:
   EmbeddingWareHouse() = delete;
-  explicit EmbeddingWareHouse(json &configure);
+  explicit EmbeddingWareHouse(const std::string &config_file);
   ~EmbeddingWareHouse() {}
 
   std::string to_json();
@@ -87,14 +87,16 @@ class EmbeddingWareHouse {
   void lookup(int group, int64_t *keys, int len, Float *data, int n);
   void apply_gradients(int group, int64_t *keys, int len, Float *gds, int n);
 
- private:
+  int dim(int group) const;
+
+private:
   std::shared_ptr<std::string> create_record(int group, const int64_t &key);
 
- private:
+private:
   json configure_;
   int size_;
   std::shared_ptr<Embedding> embeddings_[max_embedding_num];
   std::shared_ptr<rocksdb::DBWithTTL> db_;
 };
 
-#endif  // DAMO_EMBEDDING_EMBEDDING_H
+#endif // DAMO_EMBEDDING_EMBEDDING_H

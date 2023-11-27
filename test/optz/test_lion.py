@@ -15,40 +15,53 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-import unittest
-import damo
-import numpy as np
+import json
 import os
 import shutil
+import unittest
+
+import damo
+import numpy as np
 
 
 class LionTestCase(unittest.TestCase):
     def setUp(self):
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
-        self.storage = damo.PyStorage("/tmp/data_dir", 86400)
-        init_params = damo.Parameters()
-        init_params.insert("name", "truncate_normal")
-        init_params.insert("mean", 0.0)
-        init_params.insert("stddev", 1.0)
-        self.initializer = damo.PyInitializer(init_params)
-        optm_params = damo.Parameters()
-        optm_params.insert("name", "lion")
-        self.eta = 0.003
-        self.beta1 = 0.9
-        self.beta2 = 0.99
-        self.lambda_ = 0.01
-        optm_params.insert("eta", self.eta)
-        optm_params.insert("beta1", self.beta1)
-        optm_params.insert("beta2", self.beta2)
-        optm_params.insert("lambda", self.lambda_)
-        self.optimizer = damo.PyOptimizer(optm_params)
-
         self.dim = 16
-        group = 0
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, group
-        )
+        self.group = 0
+        self.beta1 = 0.9
+        self.beta2 = 0.999
+        self.lambda_ = 0.0
+        self.epsilon = 1e-8
+        self.eta = 0.003
+        self.configure = {
+            "ttl": 86400,
+            "dir": "/tmp/data_dir",
+            "embeddings": [
+                {
+                    "dim": self.dim,
+                    "group": self.group,
+                    "initializer": {
+                        "name": "truncate_normal",
+                        "mean": 0.0,
+                        "stddev": 1.0,
+                    },
+                    "optimizer": {
+                        "name": "lion",
+                        "eta": self.eta,
+                        "beta1": self.beta1,
+                        "beta2": self.beta2,
+                        "lambda": self.lambda_,
+                        "epsilon": self.epsilon,
+                    },
+                }
+            ],
+        }
+
+        with open("/tmp/damo-configure.json", "w") as f:
+            json.dump(self.configure, f)
+        self.damo = damo.PyDamo("/tmp/damo-configure.json")
 
     def tearDown(self):
         pass
@@ -57,15 +70,14 @@ class LionTestCase(unittest.TestCase):
         n = 8
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
         w = np.zeros(self.dim * n, dtype=np.float32)
-        self.embedding.lookup(keys, w)
+        self.damo.pull(self.group, keys, w)
         m = np.zeros(self.dim * n).astype(np.float32)
         gds = np.random.random(self.dim * n).astype(np.float32)
-        tmp_mu = np.sign(self.beta1 * m + (1.0 - self.beta1)
-                         * gds) + w * self.lambda_
+        tmp_mu = np.sign(self.beta1 * m + (1.0 - self.beta1) * gds) + w * self.lambda_
         m = self.beta2 * +(1.0 - self.beta2) * gds
-        self.embedding.apply_gradients(keys, gds)
+        self.damo.push(self.group, keys, gds)
         new_w = w - self.eta * tmp_mu
-        self.embedding.lookup(keys, w)
+        self.damo.pull(self.group, keys, w)
 
         assert np.linalg.norm(new_w - w) == 0.0
 

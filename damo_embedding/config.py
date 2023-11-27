@@ -15,9 +15,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
+import os
 
-IS_MULTIPROCESSING_TRAINING = False
+# damo embedding mode
+DAMO_EMBEDDING_MODE_KEY = "DAMO_EMBEDDING_MODE"
 
-EMBEDDING_DEFAULT_TTL = 86400 * 30
+# damo instance
+DAMO_INSTANCE = None
 
-EMBEDDING_DEFAULT_PATH = "./embeddings"
+# damo embedding http address
+DAMO_SERVICE_ADDRESS = "http://localhost:9275"
+
+# damo server binaray file path
+DAMO_SERVICE_BINARY = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "bin/damo-server"
+)
