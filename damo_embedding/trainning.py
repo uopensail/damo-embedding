@@ -100,13 +100,13 @@ def load_model(dir: str) -> torch.nn.Module:
     model = torch.load(os.path.join(dir, "model.pt"))
 
     def create_embedding(params):
-        return Embedding(
+        embedding = Embedding(
             dim=params["dim"],
-            group=params["group"],
             initializer=params["init_params"],
             optimizer=params["opt_params"],
-            load=True,
         )
+        setattr(embedding, "group", params["group"])
+        return embedding
 
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, torch.nn.Embedding):
