@@ -96,19 +96,3 @@ class DamoServiceTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
-adagrad_optimizer = {
-    "name": "adagrad",
-    "gamma": 0.001,
-    "lambda": 0.0,
-    "epsilon": 1e-8,
-}
-
-adam_optimizer = {
-    "name": "adam",
-    "gamma": 0.001,
-    "beta1": 0.9,
-    "beta2": 0.999,
-    "lambda": 0.0,
-    "epsilon": 1e-8,
-}
