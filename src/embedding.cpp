@@ -268,6 +268,9 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   std::vector<std::string> result;
   Key *group_keys = (Key *)malloc(len * sizeof(Key));
   for (int i = 0; i < len; i++) {
+    if (keys[i] == 0) {
+      continue;
+    }
     group_keys[i].group = group;
     group_keys[i].key = keys[i];
     s_keys.emplace_back(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)));
@@ -277,13 +280,14 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   MetaData *ptr;
 
   rocksdb::WriteBatch batch;
+  int index = 0;
   for (int i = 0; i < len; i++) {
     // filter 0
     if (keys[i] == 0) {
       continue;
     }
-    if (status[i].ok()) {
-      ptr = (MetaData *)(result[i].data());
+    if (status[index].ok()) {
+      ptr = (MetaData *)(result[index].data());
       memcpy(&(data[i * dim]), ptr->data, sizeof(Float) * dim);
     } else {
       auto value = this->create_record(group, keys[i]);
@@ -291,6 +295,7 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
       memcpy(&(data[i * dim]), ptr->data, sizeof(Float) * dim);
       batch.Put(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)), *value);
     }
+    index++;
   }
 
   rocksdb::WriteOptions put_options;

@@ -76,6 +76,7 @@ class DamoServiceTestCase(unittest.TestCase):
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
         w = np.zeros(self.dim * n).astype(np.float32)
         damo_embedding.util.pull(self.group, keys, w)
+        # print("w", w)
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
