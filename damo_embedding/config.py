@@ -15,27 +15,16 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-import unittest
-import damo
+import os
 
 
-class ParametersTestCase(unittest.TestCase):
-    def setUp(self):
-        pass
+# damo instance
+DAMO_INSTANCE = None
 
-    def tearDown(self):
-        pass
+# damo embedding http address
+DAMO_SERVICE_ADDRESS = "http://localhost:9275"
 
-    def test(self):
-        params = damo.Parameters()
-        params.insert("str", "str")
-        params.insert("int", 5)
-        params.insert("float", float(5.0))
-        params.insert("float2", 3.0)
-        params.insert("float", 4.0)
-        params.insert("bool", True)
-        print(params.to_json())
-
-
-if __name__ == "__main__":
-    unittest.main()
+# damo server binaray file path
+DAMO_SERVICE_BINARY = os.path.join(
+    os.path.dirname(os.path.dirname(__file__)), "damo-server"
+)

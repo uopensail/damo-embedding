@@ -23,11 +23,20 @@ from data_prepare import process as data_process
 from gwen import GroupWiseEmbeddingNetwork
 from sklearn.metrics import roc_auc_score
 
-from damo_embedding import Storage, save_model, load_from_checkpoint
+from damo_embedding import (
+    damo_embedding_close,
+    damo_embedding_init,
+    save_model,
+)
 
 
 def process(train_loader, valid_loader, epochs=1):
     model = GroupWiseEmbeddingNetwork([8 for _ in range(39)])
+    damo_embedding_init(
+        model=model,
+        ttl=86400 * 100,
+        dir="./embeddings",
+    )
     loss_fcn = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     best_auc = 0.0
@@ -67,8 +76,8 @@ def process(train_loader, valid_loader, epochs=1):
             best_auc = cur_auc
             # torch.save(model.state_dict(), "data/deepfm_best.pth")
         print("Current AUC: %.6f, Best AUC: %.6f\n" % (cur_auc, best_auc))
-    Storage.checkpoint("./checkpoint")
-    save_model(model, "./")
+    save_model(model, "./", False)
+    damo_embedding_close()
 
 
 if __name__ == "__main__":

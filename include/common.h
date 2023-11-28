@@ -25,12 +25,16 @@
 #include <time.h>
 
 #include <algorithm>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <random>
 #include <string>
 #include <unordered_map>
 
-#include "cpptoml.h"
+#include "json.hpp"
+
+using json = nlohmann::json;
 
 #define Float float
 const Float Epsilon = 1e-8f;
@@ -56,7 +60,7 @@ struct MetaData {
   int group;
   int64_t key;
   int64_t update_num;
-  int64_t update_time;  // ms
+  int64_t update_time; // ms
   int dim;
   Float data[];
 };
@@ -66,35 +70,41 @@ using MetaData = struct MetaData;
 using Key = struct Key;
 
 class Params {
- private:
-  std::shared_ptr<cpptoml::table> table;
-
- public:
-  Params() = delete;
-  Params(const std::shared_ptr<cpptoml::table> &table);
+public:
+  Params();
+  Params(json &params);
+  Params(const std::string &str);
   Params(const Params &p);
-  const bool isnil() const;
-  Params &operator=(const Params &p);
-  Params &operator=(const std::shared_ptr<cpptoml::table> &table);
 
+  Params &operator=(const Params &p);
+  const bool isnil() const;
   bool contains(const std::string &key);
 
-  template <class T>
-  T get(const std::string &key) const {
-    if (table != nullptr && table->contains(key)) {
-      return *table->get_as<T>(key);
+  template <class T> T get(const std::string &key) const {
+    if (!this->params_.contains(key)) {
+      throw std::out_of_range(key + " is not a valid key");
     }
-    throw std::out_of_range(key + " is not a valid key");
+    return this->params_[key].get<T>();
   }
+
+  template <class T> void insert(const std::string &key, const T &value) const {
+    this->params_[key] = value;
+  }
+
+  std::string to_json() const;
 
   template <class T>
   T get(const std::string &key, const T &default_value) const {
-    if (table != nullptr && table->contains(key)) {
-      return *table->get_as<T>(key);
+    if (!this->params_.contains(key)) {
+      return default_value;
     }
-    return default_value;
+    return this->params_[key].get<T>();
   }
+
   ~Params();
+
+private:
+  json params_;
 };
 
-#endif  // DAMO_COMMON_H
+#endif // DAMO_COMMON_H

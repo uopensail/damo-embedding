@@ -37,16 +37,14 @@ The arguments are listed below:
 
 4. **dimension**: int type, dim of embedding
 
-5. **group**: int type, [0, 2^16), defaul: 0
+5. **group**: int type, [0, 256), defaul: 0
 
 ```python
-import damo
-storage = damo.PyStorage(...)
-optimizer = damo.PyOptimizer(...)
-initializer = damo.PyInitializer(...)
+import damo_embeddimg
+optimizer = {...} # dict
+initializer = {...} # dict
 dimension = 16
-group = 1
-embedding = damo.PyEmbedding(storage, optimizer, initializer, dimension, group)
+embedding = damo_embeddimg.Embedding(dim=dimension, initializer=initializer, optimizer=optimizerp)
 ```
 
 ### Member Functions of Embedding

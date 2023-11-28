@@ -15,31 +15,47 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
+import json
+import os
+import shutil
 import unittest
+
 import damo
 import numpy as np
 
 
 class SGDTestCase(unittest.TestCase):
     def setUp(self):
-        self.storage = damo.PyStorage("/tmp/data_dir", 86400)
-        init_params = damo.Parameters()
-        init_params.insert("name", "truncate_normal")
-        init_params.insert("mean", 0.0)
-        init_params.insert("stddev", 1.0)
-        self.initializer = damo.PyInitializer(init_params)
-        optm_params = damo.Parameters()
-        optm_params.insert("name", "sgd")
-        self.lr = 0.001
-        optm_params.insert("gamma", self.lr)
-        optm_params.insert("lambda", 0.0)
-        self.optimizer = damo.PyOptimizer(optm_params)
-
+        if os.path.exists("/tmp/data_dir"):
+            shutil.rmtree("/tmp/data_dir")
         self.dim = 16
-        group = 0
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, group
-        )
+        self.group = 0
+        self.lr = 0.001
+
+        self.configure = {
+            "ttl": 86400,
+            "dir": "/tmp/data_dir",
+            "embeddings": [
+                {
+                    "dim": self.dim,
+                    "group": self.group,
+                    "initializer": {
+                        "name": "truncate_normal",
+                        "mean": 0.0,
+                        "stddev": 1.0,
+                    },
+                    "optimizer": {
+                        "name": "sgd",
+                        "gemma": self.lr,
+                        "lambda": 0.0,
+                    },
+                }
+            ],
+        }
+
+        with open("/tmp/damo-configure.json", "w") as f:
+            json.dump(self.configure, f)
+        self.damo = damo.PyDamo("/tmp/damo-configure.json")
 
     def tearDown(self):
         pass
@@ -51,10 +67,10 @@ class SGDTestCase(unittest.TestCase):
             keys[i] = i + 1
         w = np.zeros(self.dim * keys.shape[0], dtype=np.float32)
         gds = np.random.random(self.dim * keys.shape[0]).astype(np.float32)
-        self.embedding.lookup(keys, w)
+        self.damo.pull(self.group, keys, w)
         a = w - self.lr * gds
-        self.embedding.apply_gradients(keys, gds)
-        self.embedding.lookup(keys, w)
+        self.damo.push(self.group, keys, gds)
+        self.damo.pull(self.group, keys, w)
         assert np.linalg.norm(a - w) == 0.0
 
 

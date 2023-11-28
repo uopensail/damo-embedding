@@ -21,7 +21,7 @@ from typing import List
 import torch
 import torch.nn as nn
 
-from damo_embedding import Embedding
+from damo_embedding.damo_embedding import Embedding
 
 
 class GroupWiseEmbeddingNetwork(torch.nn.Module):

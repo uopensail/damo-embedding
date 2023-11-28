@@ -16,65 +16,79 @@
 # GNU Affero General Public License for more details.
 #
 
+import damo_embedding
+
+
+import json
+import os
+import shutil
 import unittest
+
+import damo
 import numpy as np
 import torch
-import damo
-import shutil
-import os
+import time
 
 
-class AdamTestCase(unittest.TestCase):
+class DamoServiceTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
-        self.storage = damo.PyStorage("/tmp/data_dir", 86400)
-        init_params = damo.Parameters()
-        init_params.insert("name", "truncate_normal")
-        init_params.insert("mean", 0.0)
-        init_params.insert("stddev", 1.0)
-        self.initializer = damo.PyInitializer(init_params)
-        optm_params = damo.Parameters()
-        optm_params.insert("name", "adam")
-        self.gamma = 0.001
-        self.beta1 = 0.9
-        self.beta2 = 0.999
-        self.lambda_ = 0.0
-        self.epsilon = 1e-8
-        optm_params.insert("gamma", self.gamma)
-        optm_params.insert("beta1", self.beta1)
-        optm_params.insert("beta2", self.beta2)
-        optm_params.insert("lambda", self.lambda_)
-        optm_params.insert("epsilon", self.epsilon)
-        self.optimizer = damo.PyOptimizer(optm_params)
-
         self.dim = 16
-        group = 0
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, group
-        )
+        self.group = 0
+        self.gamma = 0.01
+        self.eta = 0.0
+        self.lambda_ = 0.0
+        self.epsilon = 1e-10
+        self.configure = {
+            "ttl": 86400,
+            "dir": "/tmp/data_dir",
+            "port": 9275,
+            "embeddings": [
+                {
+                    "dim": self.dim,
+                    "group": self.group,
+                    "initializer": {
+                        "name": "truncate_normal",
+                        "mean": 0.0,
+                        "stddev": 1.0,
+                    },
+                    "optimizer": {
+                        "name": "adagrad",
+                        "gamma": self.gamma,
+                        "lambda": self.lambda_,
+                        "epsilon": self.epsilon,
+                    },
+                }
+            ],
+        }
+        with open("/tmp/damo-configure.json", "w") as f:
+            json.dump(self.configure, f)
+        damo_embedding.run_damo_embedding_service("/tmp/damo-configure.json")
+
+    def tearDown(self) -> None:
+        damo_embedding.stop_damo_embeding_service()
+        return super().tearDown()
 
     def test(self):
         # in test case, we use torch to test the results
         n = 8
         keys = np.random.randint(1, 10000 + 1, n, dtype=np.int64)
-
         w = np.zeros(self.dim * n).astype(np.float32)
-        self.embedding.lookup(keys, w)
+        damo_embedding.util.pull(self.group, keys, w)
+        # print("w", w)
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adam(
+        opt = torch.optim.Adagrad(
             [x],
             lr=self.gamma,
-            betas=(self.beta1, self.beta2),
-            weight_decay=self.lambda_,
             eps=self.epsilon,
         )
 
-        self.embedding.apply_gradients(keys, gds)
+        damo_embedding.util.push(self.group, keys, gds)
         opt.step()
-        self.embedding.lookup(keys, w)
+        damo_embedding.util.pull(self.group, keys, w)
         tmp = (w - x.detach().numpy()).astype(np.float32)
         tmp = tmp.reshape((self.dim, n))
         norms = np.linalg.norm(tmp, axis=-1)

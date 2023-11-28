@@ -15,38 +15,51 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-import unittest
-import damo
-import numpy as np
+import json
 import os
 import shutil
+import unittest
+
+import damo
+import numpy as np
 
 
 class FTRLTestCase(unittest.TestCase):
     def setUp(self):
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
-        self.storage = damo.PyStorage("/tmp/data_dir", 86400)
-        init_params = damo.Parameters()
-        init_params.insert("name", "zeros")
-        self.initializer = damo.PyInitializer(init_params)
-        optm_params = damo.Parameters()
-        optm_params.insert("name", "ftrl")
+        self.dim = 16
+        self.group = 0
         self.gamma = 0.005
         self.beta = 0.0
         self.lambda1 = 0.0
         self.lambda2 = 0.0
-        optm_params.insert("gamma", self.gamma)
-        optm_params.insert("beta", self.beta)
-        optm_params.insert("lambda1", self.lambda1)
-        optm_params.insert("lambda2", self.lambda2)
-        self.optimizer = damo.PyOptimizer(optm_params)
+        self.configure = {
+            "ttl": 86400,
+            "dir": "/tmp/data_dir",
+            "embeddings": [
+                {
+                    "dim": self.dim,
+                    "group": self.group,
+                    "initializer": {
+                        "name": "truncate_normal",
+                        "mean": 0.0,
+                        "stddev": 1.0,
+                    },
+                    "optimizer": {
+                        "name": "ftrl",
+                        "gamma": self.gamma,
+                        "beta": self.beta,
+                        "lambda1": self.lambda1,
+                        "lambda2": self.lambda2,
+                    },
+                }
+            ],
+        }
 
-        self.dim = 16
-        group = 0
-        self.embedding = damo.PyEmbedding(
-            self.storage, self.optimizer, self.initializer, self.dim, group
-        )
+        with open("/tmp/damo-configure.json", "w") as f:
+            json.dump(self.configure, f)
+        self.damo = damo.PyDamo("/tmp/damo-configure.json")
 
     def tearDown(self):
         pass
@@ -59,7 +72,7 @@ class FTRLTestCase(unittest.TestCase):
         w = np.zeros(self.dim * n, dtype=np.float32)
         new_w = np.zeros(self.dim * n, dtype=np.float32)
         for i in range(100):
-            self.embedding.lookup(keys, w)
+            self.damo.pull(self.group, keys, w)
             gds = np.random.random(self.dim * n).astype(np.float32)
             n1 = N + gds * gds
             delta = (1.0 / self.gamma) * (np.sqrt(n1) - np.sqrt(N))
@@ -67,8 +80,8 @@ class FTRLTestCase(unittest.TestCase):
             N = n1
             tmp = np.where(np.abs(z) < self.lambda1, 0, z - np.sign(z) * self.lambda1)
             new_w = -1.0 / ((self.beta + np.sqrt(N)) / self.gamma + self.lambda2) * tmp
-            self.embedding.apply_gradients(keys, gds)
-            self.embedding.lookup(keys, w)
+            self.damo.push(self.group, keys, gds)
+            self.damo.pull(self.group, keys, w)
             print(np.linalg.norm(w - new_w))
 
 

@@ -6,7 +6,6 @@ set(CMAKE_CXX_STANDARD 17)
 include_directories(include)
 include_directories(/usr/local/include)
 include_directories(/usr/include)
-
 link_directories(/usr/local/lib)
 
 
@@ -24,18 +23,15 @@ if(ROCKSDB_FOUND)
 endif()
 
 
-SET(DAMO_INCLUDE include/common.h include/counting_bloom_filter.h include/cpptoml.h
-    include/embedding.h include/initializer.h include/learning_rate_scheduler.h
-    include/optimizer.h include/pyembedding.h)
-
-SET(DAMO_SOURCE src/common.cpp src/counting_bloom_filter.cpp src/embedding.cpp
-    src/initializer.cpp src/learning_rate_scheduler.cpp src/optimizer.cpp
-    src/pydamo.cpp src/pyembedding.cpp)
+SET(DAMO_INCLUDE include/common.h include/json.hpp include/embedding.h include/initializer.h include/optimizer.h)
+SET(DAMO_SOURCE src/common.cpp src/embedding.cpp src/initializer.cpp src/optimizer.cpp)
 
 # Include pybind11
 find_package(pybind11 REQUIRED)
 # Define the Python module
-pybind11_add_module(damo ${DAMO_INCLUDE} ${DAMO_SOURCE})
+pybind11_add_module(damo ${DAMO_INCLUDE} ${DAMO_SOURCE} include/damo.h src/damo.cpp src/pydamo.cpp)
 
-# target_link_libraries(toolkit pthread)
+add_executable(damo-server ${DAMO_INCLUDE} ${DAMO_SOURCE} src/main.cpp include/httplib.h include/argparse.hpp)
+
 target_link_libraries(damo PRIVATE -lrocksdb -lpthread)
+target_link_libraries(damo-server -lrocksdb -lpthread)
