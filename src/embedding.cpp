@@ -128,6 +128,9 @@ void EmbeddingWareHouse::dump(const std::string &path) {
   int index = 0;
   for (int i = 0; i < max_embedding_num; i++) {
     auto embedding = this->embeddings_[i];
+    if (embedding == nullptr) {
+      continue;
+    }
     group[index] = embedding->group;
     group_dims[index] = embedding->dim;
     group_index[embedding->group] = index;
@@ -140,7 +143,6 @@ void EmbeddingWareHouse::dump(const std::string &path) {
   writer.write((char *)group, sizeof(int) * size);
   writer.write((char *)group_dims, sizeof(int) * size);
   writer.write((char *)group_counts, sizeof(int64_t) * size);
-
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
     group_counts[group_index[ptr->group]]++;
