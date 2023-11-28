@@ -17,8 +17,6 @@
 #
 import os
 
-# damo embedding mode
-DAMO_EMBEDDING_MODE_KEY = "DAMO_EMBEDDING_MODE"
 
 # damo instance
 DAMO_INSTANCE = None
@@ -28,5 +26,5 @@ DAMO_SERVICE_ADDRESS = "http://localhost:9275"
 
 # damo server binaray file path
 DAMO_SERVICE_BINARY = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "bin/damo-server"
+    os.path.dirname(os.path.dirname(__file__)), "damo-server"
 )

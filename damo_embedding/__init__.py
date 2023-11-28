@@ -30,7 +30,7 @@ import os
 import damo
 import torch
 
-from .config import DAMO_EMBEDDING_MODE_KEY, DAMO_SERVICE_BINARY
+from .config import DAMO_SERVICE_ADDRESS
 from .inference import save_model_for_inference
 from .trainning import load_model, save_model_for_training
 from .util import (
@@ -45,23 +45,34 @@ def damo_embedding_init(
     model: torch.nn.Module,
     ttl: int,
     dir: str,
-    reload_dir: str = "",
-    damo_service: str = DAMO_SERVICE_BINARY,
+    reload: str = "",
+    port: int = 9275,
+    mode: str = "",
 ):
-    global DAMO_INSTANCE
-    mode = os.environ.get(DAMO_EMBEDDING_MODE_KEY, "").lower()
+    """initial of damo embedding
 
+    Args:
+        model (torch.nn.Module): torch model
+        ttl (int): key ttl
+        dir (str): rocksdb dir
+        port (int, optional): server port. Defaults to 9275.
+        reload (str, optional): reload from from checkpont path. Defaults to "".
+    """
+    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
     configure = get_damo_embedding_configure(model)
+    configure["port"] = port
     configure["ttl"] = ttl
     configure["dir"] = dir
-    if reload_dir != "":
-        configure["reload_dir"] = reload_dir
+    if reload != "":
+        configure["reload_dir"] = reload
     config_path = f"/tmp/damo-configure-{os.getpid()}.json"
     json.dump(configure, open(config_path, "w"))
+    mode = mode.lower()
     if mode == "builtin" or mode == "":
         DAMO_INSTANCE = damo.PyDamo(config_path)
     elif mode == "service":
-        run_damo_embedding_service(damo_service, config_path)
+        DAMO_SERVICE_ADDRESS = f"http://localhost:{port}"
+        run_damo_embedding_service(config_path)
 
 
 def damo_embedding_close():

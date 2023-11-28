@@ -23,11 +23,22 @@ from data_prepare import process as data_process
 from deepfm import DeepFM
 from sklearn.metrics import roc_auc_score
 
-from damo_embedding.damo_embedding import Storage, save_model, load_model
+from damo_embedding import (
+    damo_embedding_close,
+    damo_embedding_init,
+    load_model,
+    save_model,
+)
 
 
 def process(train_loader, valid_loader, epochs=1):
     model = DeepFM(8, 39)
+    # Must Call init function
+    damo_embedding_init(
+        model=model,
+        ttl=86400 * 100,
+        dir="./embeddings",
+    )
     loss_fcn = torch.nn.BCELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.005)
     best_auc = 0.0
@@ -55,7 +66,6 @@ def process(train_loader, valid_loader, epochs=1):
                     )
                 )
         save_model(model, "train", True)
-        Storage.checkpoint("./checkpoint")
 
         model.eval()
         with torch.no_grad():
@@ -70,7 +80,8 @@ def process(train_loader, valid_loader, epochs=1):
             best_auc = cur_auc
             # torch.save(model.state_dict(), "data/deepfm_best.pth")
         print("Current AUC: %.6f, Best AUC: %.6f\n" % (cur_auc, best_auc))
-        save_model(model, "./", False)
+        save_model(model, "eval", False)
+        damo_embedding_close()
 
 
 def validate(valid_loader):

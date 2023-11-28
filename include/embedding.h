@@ -76,7 +76,7 @@ private:
 class EmbeddingWareHouse {
 public:
   EmbeddingWareHouse() = delete;
-  explicit EmbeddingWareHouse(const std::string &config_file);
+  explicit EmbeddingWareHouse(json &configure);
   ~EmbeddingWareHouse() {}
 
   std::string to_json();

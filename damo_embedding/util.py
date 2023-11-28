@@ -17,6 +17,7 @@
 #
 import struct
 import subprocess
+import time
 from collections import defaultdict
 from multiprocessing import Process
 from typing import List
@@ -25,23 +26,17 @@ import numpy as np
 import requests
 import torch
 
-from .config import DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
+from .config import DAMO_INSTANCE, DAMO_SERVICE_ADDRESS, DAMO_SERVICE_BINARY
 
 
 class Embedding(torch.nn.Module):
     """embedding module for training."""
 
-    def __init__(
-        self,
-        dim: int,
-        initializer={},
-        optimizer={},
-    ):
+    def __init__(self, dim: int, initializer={}, optimizer={}, **kwargs):
         super(Embedding, self).__init__()
         self.dim = dim
         self.initializer = initializer
         self.optimizer = optimizer
-        self.group = -1
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """embedding lookup
@@ -65,10 +60,7 @@ class Embedding(torch.nn.Module):
 
         for i in range(batch_size):
             for j in range(width):
-                key = data[i][j]
-                # 0 is padding value
-                if key != 0:
-                    values[i][j] = weight_dict[key]
+                values[i][j] = weight_dict[data[i][j]]
 
         def apply_gradients(gradients):
             grad = gradients.numpy()
@@ -77,8 +69,7 @@ class Embedding(torch.nn.Module):
             for i in range(batch_size):
                 for j in range(width):
                     key = data[i][j]
-                    if key != 0:
-                        grad_dict[key] += grad[i][j]
+                    grad_dict[key] += grad[i][j]
 
             values = np.zeros(length * self.dim, dtype=np.float32)
             for i in range(length):
@@ -103,8 +94,11 @@ def list_all_sparse_embeddings(model: torch.nn.Module) -> List[Embedding]:
     Returns:
         List[Embedding]: all embeddings list
     """
-    embeddings = []
 
+    if isinstance(model, Embedding):
+        return [model]
+
+    embeddings = []
     for k, v in model.__dict__["_modules"].items():
         if isinstance(v, Embedding):
             embeddings.append((k, v))
@@ -148,26 +142,25 @@ def get_damo_embedding_configure(model: torch.nn.Module) -> dict:
     return configure
 
 
-def damo_embedding_service(server: str, configure: str):
+def damo_embedding_service(config_file: str):
     """damo embedding service
 
     Args:
-        server (str): server bin file path
-        configure (str): configure path
+        config_file (str): configure path
     """
-    subprocess.run(f"bin/damo-server -c {configure}")
+    subprocess.run([f"{DAMO_SERVICE_BINARY}", "-c", f"{config_file}"])
 
 
-def run_damo_embedding_service(server: str, configure: str):
+def run_damo_embedding_service(config_file: str):
     """run damo embedding service as daemon processor
 
     Args:
-        server (str): server bin file path
-        configure (str): configure path
+        config_file (str): configure path
     """
-    p = Process(target=damo_embedding_service, args=(server, configure))
+    p = Process(target=damo_embedding_service, args=(config_file,))
     p.daemon = True
     p.start()
+    time.sleep(3)
 
 
 def stop_damo_embeding_service():
@@ -217,9 +210,8 @@ def pull(group: int, keys: np.ndarray, weights: np.ndarray):
         headers = {
             "Content-Type": "application/octet-stream",
         }
-
         r = requests.post(f"{DAMO_SERVICE_ADDRESS}/pull", buffer, headers=headers)
-        tmp = np.frombuffer(r.raw, dtype=np.float32)
+        tmp = np.frombuffer(r.content, dtype=np.float32)
         assert weights.shape[0] == tmp.shape[0]
         weights[:] = tmp[:]
 

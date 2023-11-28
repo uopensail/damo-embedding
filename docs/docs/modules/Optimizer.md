@@ -68,27 +68,20 @@ When using an optimizer, you need to configure the `name` item to indicate which
 ## Example
 
 ```python
-import damo
-import numpy as np
+adagrad_optimizer = {
+    "name": "adagrad",
+    "eta": 0.0,
+    "gamma": 0.001,
+    "lambda": 0.0,
+    "epsilon": 1e-8,
+}
 
-# configure learning rate scheduler
-schedluer_params = damo.Parameters()
-schedluer_params.insert("name": "")
-
-# configure optimizer
-optimizer_params = damo.Parameters()
-optimizer_params.insert("name": "sgd")
-optimizer_params.insert("gamma": 0.001)
-optimizer_params.insert("lambda": 0.0)
-
-# no scheduler
-opt1 = damo.PyOptimizer(optimizer_params)
-
-# specific scheduler
-opt1 = damo.PyOptimizer(optimizer_params, schedluer_params)
-
-w = np.zeros(10, dtype=np.float32)
-gs = np.random.random(10).astype(np.float32)
-step = 0
-opt1.call(w, gs, step)
+adam_optimizer = {
+    "name": "adam",
+    "gamma": 0.001,
+    "beta1": 0.9,
+    "beta2": 0.999,
+    "lambda": 0.0,
+    "epsilon": 1e-8,
+}
 ```

@@ -1,7 +1,21 @@
 #include "damo.h"
 
 PyDamo::PyDamo(const std::string &config_file) {
-  this->warehouse_ = std::make_shared<EmbeddingWareHouse>(config_file);
+  std::ifstream file(config_file);
+  if (!file) {
+    std::cerr << "Failed to open JSON file." << std::endl;
+    exit(-1);
+  }
+  json configure;
+  try {
+    file >> configure;
+  } catch (const std::exception &e) {
+    std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    exit(-1);
+  }
+  file.close();
+
+  this->warehouse_ = std::make_shared<EmbeddingWareHouse>(configure);
 }
 
 void PyDamo::dump(const std::string &dir) { this->warehouse_->dump(dir); }

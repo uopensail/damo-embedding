@@ -39,57 +39,21 @@ stochastic normal distribution, if the generated value exceeds 2 standard deviat
 ### Example
 
 ```python
-import damo
-import numpy as np
 
-# zero
-param = damo.Parameters()
-param.insert("name", "zeros")
-# must be float32
-value = np.random.random(10).astype(np.float32)
-obj = damo.PyInitializer(param)
-obj.call(value)
-print("zeros: ", value)
+# zeros
+zeros = {"name": "zeros"}
 
 # ones
-param = damo.Parameters()
-param.insert("name", "ones")
-# must be float32
-value = np.random.random(10).astype(np.float32)
-obj = damo.PyInitializer(param)
-obj.call(value)
-print("ones: ", value)
+ones = {"name": "ones"}
 
 # random_uniform
-param = damo.Parameters()
-param.insert("name", "random_uniform")
-param.insert("min", -1.0)
-param.insert("max", 1.0)
-# must be float32
-value = np.random.random(10).astype(np.float32)
-obj = damo.PyInitializer(param)
-obj.call(value)
-print("random_uniform: ", value)
+random_uniform = {"name": "random_uniform", "min": -1.0, "max": 1.0}
+
 
 # random_normal
-param = damo.Parameters()
-param.insert("name", "random_normal")
-param.insert("mean", 0.0)
-param.insert("stddev", 1.0)
-# must be float32
-value = np.random.random(10).astype(np.float32)
-obj = damo.PyInitializer(param)
-obj.call(value)
-print("random_normal: ", value)
+random_normal = {"name": "random_normal", "mean": 0.0, "stddev": 1.0}
+
 
 # truncate_normal
-param = damo.Parameters()
-param.insert("name", "truncate_normal")
-param.insert("mean", 0.0)
-param.insert("stddev", 1.0)
-# must be float32
-value = np.random.random(10).astype(np.float32)
-obj = damo.PyInitializer(param)
-obj.call(value)
-print("truncate_normal: ", value)
+truncate_normal = {"name": "truncate_normal", "mean": 0.0, "stddev": 1.0}
 ```

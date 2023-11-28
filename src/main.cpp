@@ -1,6 +1,7 @@
 #include "argparse.hpp"
 #include "embedding.h"
 #include "httplib.h"
+#include <csignal>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -19,7 +20,15 @@ struct PushRequest {
 
 #pragma pack(pop)
 
+httplib::Server srv;
+
+void signal_handler(int signal) {
+  srv.stop();
+  // std::this_thread::sleep_for(std::chrono::seconds(3));
+}
+
 int main(int argc, char const *argv[]) {
+  std::signal(SIGINT, signal_handler);
   auto args = util::argparser("damo embedding server");
   args.set_program_name("damo-server")
       .add_help_option()
@@ -31,18 +40,41 @@ int main(int argc, char const *argv[]) {
 
   std::string config_path = args.get_option<std::string>("--config");
 
-  std::shared_ptr<EmbeddingWareHouse> warehouse =
-      std::make_shared<EmbeddingWareHouse>(config_path);
+  std::ifstream file(config_path);
+  if (!file) {
+    std::cerr << "Failed to open JSON file." << std::endl;
+    exit(-1);
+  }
+  json configure;
+  try {
+    file >> configure;
+  } catch (const std::exception &e) {
+    std::cerr << "JSON parsing error: " << e.what() << std::endl;
+    exit(-1);
+  }
+  file.close();
+  int port = 9275;
+  if (configure.contains("port")) {
+    port = configure["port"].get<int>();
+  }
 
-  httplib::Server srv;
+  EmbeddingWareHouse *warehouse = new EmbeddingWareHouse(configure);
+
   srv.Post("/pull", [=](const httplib::Request &req, httplib::Response &res) {
     PullRequest *ptr = (PullRequest *)(req.body.data());
     int dim = warehouse->dim(ptr->group);
     int n = dim * ptr->size;
-    std::string result("", n * sizeof(Float));
-    Float *data = (Float *)(result.data());
+    std::string tmp("", n * sizeof(Float));
+    Float *data = (Float *)tmp.data();
     warehouse->lookup(ptr->group, ptr->keys, ptr->size, data, n);
-    res.set_content(result, "application/octet-stream");
+    res.set_content(tmp, "application/octet-stream");
+    // res.set_content_provider(
+    //     size_t(n * sizeof(Float)), "application/octet-stream",
+    //     [data](size_t offset, size_t length, httplib::DataSink &sink) {
+    //       sink.write((char *)data, length);
+    //       return true;
+    //     });
+    // free(data);
   });
 
   srv.Post("/push", [=](const httplib::Request &req, httplib::Response &res) {
@@ -51,7 +83,7 @@ int main(int argc, char const *argv[]) {
     int n = dim * ptr->size;
     int64_t *keys = (int64_t *)ptr->data;
     Float *gds = (Float *)&(ptr->data[sizeof(int64_t) * ptr->size]);
-    warehouse->lookup(ptr->group, keys, ptr->size, gds, n);
+    warehouse->apply_gradients(ptr->group, keys, ptr->size, gds, n);
     res.status = 200;
     return;
   });
@@ -142,7 +174,9 @@ int main(int argc, char const *argv[]) {
              warehouse->checkpoint(path);
              res.status = 200;
            });
-
-  srv.listen("0.0.0.0", 9275);
+  std::cout << "damo server is running on port: " << port << std::endl;
+  srv.listen("0.0.0.0", port);
+  delete warehouse;
+  std::cout << "damo server is stoped!" << std::endl;
   return 0;
 }

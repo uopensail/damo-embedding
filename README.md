@@ -51,14 +51,12 @@ class DeepFM(torch.nn.Module):
             1,
             initializer=initializer,
             optimizer=optimizer,
-            **kwargs,
         )
 
         self.v = Embedding(
             self.emb_size,
             initializer=initializer,
             optimizer=optimizer,
-            **kwargs,
         )
         self.w0 = torch.zeros(1, dtype=torch.float32, requires_grad=True)
         self.dims = [fea_size * emb_size] + hid_dims
@@ -108,7 +106,7 @@ class DeepFM(torch.nn.Module):
 ```python
 from damo_embedding import save_model
 model = DeepFM(8, 39)
-save_model(model, "./")
+save_model(model, "./", training=False)
 ```
 # Document
 [Doc Website](https://uopensail.github.io/damo-embedding/docs/Intro)

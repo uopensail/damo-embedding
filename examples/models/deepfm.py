@@ -19,7 +19,7 @@
 import torch
 import torch.nn as nn
 
-from damo_embedding.damo_embedding import Embedding
+from damo_embedding import Embedding
 
 
 class DeepFM(torch.nn.Module):

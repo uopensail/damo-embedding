@@ -151,6 +151,12 @@ class CMakeBuild(build_ext):
             ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
         )
 
+        # copy damo-server
+        os.rename(
+            os.path.join(build_temp, "damo-server"),
+            os.path.join(self.build_lib, "damo-server"),
+        )
+
 
 with open("README.md", "r", encoding="utf-8") as fd:
     long_description = fd.read()
@@ -164,7 +170,7 @@ setup(
     author_email="",
     url="https://github.com/uopensail/damo-embedding",
     packages=find_packages(),
-    py_modules=["damo", "damo_embedding"],
+    py_modules=["damo"],
     ext_modules=[CMakeExtension("damo")],
     cmdclass={"build_ext": CMakeBuild},
     keywords=[
@@ -178,7 +184,6 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     install_requires=["numpy>=1.19.0"],
-    data_files=[("bin", ["build/damo-server"])],
     setup_requires=["numpy>=1.19.0", "pybind11>=2.11.1", "ninja>=1.11.1"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

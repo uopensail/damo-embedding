@@ -56,20 +56,8 @@ bool ApplyGredientsOperator::FullMerge(
   return true;
 }
 
-EmbeddingWareHouse::EmbeddingWareHouse(const std::string &config_file) {
-  std::ifstream file(config_file);
-  if (!file) {
-    std::cerr << "Failed to open JSON file." << std::endl;
-    exit(-1);
-  }
-
-  try {
-    file >> configure_;
-  } catch (const std::exception &e) {
-    std::cerr << "JSON parsing error: " << e.what() << std::endl;
-    exit(-1);
-  }
-
+EmbeddingWareHouse::EmbeddingWareHouse(json &configure)
+    : configure_(configure) {
   // create embeddings
   assert(configure_.contains("embeddings"));
   for (int i = 0; i < max_embedding_num; i++) {
@@ -278,6 +266,10 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   std::vector<std::string> result;
   Key *group_keys = (Key *)malloc(len * sizeof(Key));
   for (int i = 0; i < len; i++) {
+    // filter 0
+    if (keys[i] == 0) {
+      continue;
+    }
     group_keys[i].group = group;
     group_keys[i].key = keys[i];
     s_keys.emplace_back(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)));
@@ -320,6 +312,10 @@ void EmbeddingWareHouse::apply_gradients(int group, int64_t *keys, int len,
   rocksdb::WriteBatch batch;
 
   for (int i = 0; i < len; i++) {
+    // filter 0
+    if (keys[i] == 0) {
+      continue;
+    }
     group_keys[i].group = group;
     group_keys[i].key = keys[i];
     batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)),
