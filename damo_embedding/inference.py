@@ -158,7 +158,7 @@ def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
 
     model_scripted = torch.jit.script(model)
     model_scripted.save(os.path.join(output_dir, "model.pt"))
-    shutil.rmtree(sparse_path)
+    os.remove(sparse_path)
     # recover
     for k, _ in model.__dict__["_modules"].items():
         model.__dict__["_modules"][k] = original_modules[k]
