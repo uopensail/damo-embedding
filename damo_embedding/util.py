@@ -135,7 +135,7 @@ def get_damo_embedding_configure(model: torch.nn.Module) -> dict:
             {
                 "dim": embedding.dim,
                 "group": group,
-                "initializer": embedding.optimizer,
+                "initializer": embedding.initializer,
                 "optimizer": embedding.optimizer,
             }
         )

@@ -35,5 +35,3 @@ add_executable(damo-server ${DAMO_INCLUDE} ${DAMO_SOURCE} src/main.cpp include/h
 
 target_link_libraries(damo PRIVATE -lrocksdb -lpthread)
 target_link_libraries(damo-server -lrocksdb -lpthread)
-
-install(TARGETS damo-server RUNTIME DESTINATION /usr/local/bin/)
