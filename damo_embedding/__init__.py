@@ -30,7 +30,7 @@ import os
 import damo
 import torch
 
-from .config import DAMO_SERVICE_ADDRESS
+from .config import DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
 from .inference import save_model_for_inference
 from .trainning import load_model, save_model_for_training
 from .util import (
