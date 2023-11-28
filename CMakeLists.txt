@@ -33,5 +33,5 @@ pybind11_add_module(damo ${DAMO_INCLUDE} ${DAMO_SOURCE} include/damo.h src/damo.
 
 add_executable(damo-server ${DAMO_INCLUDE} ${DAMO_SOURCE} src/main.cpp include/httplib.h include/argparse.hpp)
 
-target_link_libraries(damo PRIVATE -lrocksdb -lpthread)
-target_link_libraries(damo-server -lrocksdb -lpthread)
+target_link_libraries(damo PRIVATE -ldl -lrocksdb -lpthread)
+target_link_libraries(damo-server -ldl -lrocksdb -lpthread)
