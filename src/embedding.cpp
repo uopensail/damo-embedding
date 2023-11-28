@@ -145,6 +145,9 @@ void EmbeddingWareHouse::dump(const std::string &path) {
   writer.write((char *)group_counts, sizeof(int64_t) * size);
   for (it->SeekToFirst(); it->Valid(); it->Next()) {
     ptr = (MetaData *)it->value().data();
+    if (ptr->key == 0) {
+      continue;
+    }
     group_counts[group_index[ptr->group]]++;
     writer.write((char *)&ptr->key, sizeof(int64_t));
     writer.write((char *)&ptr->group, sizeof(int));
