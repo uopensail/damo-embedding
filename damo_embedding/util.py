@@ -26,7 +26,7 @@ import numpy as np
 import requests
 import torch
 
-from .config import DAMO_INSTANCE, DAMO_SERVICE_ADDRESS, DAMO_SERVICE_BINARY
+from . import config
 
 
 class Embedding(torch.nn.Module):
@@ -148,7 +148,7 @@ def damo_embedding_service(config_file: str):
     Args:
         config_file (str): configure path
     """
-    subprocess.run([f"{DAMO_SERVICE_BINARY}", "-c", f"{config_file}"])
+    subprocess.run([f"{config.DAMO_SERVICE_BINARY}", "-c", f"{config_file}"])
 
 
 def run_damo_embedding_service(config_file: str):
@@ -164,8 +164,7 @@ def run_damo_embedding_service(config_file: str):
 
 
 def stop_damo_embeding_service():
-    global DAMO_SERVICE_ADDRESS
-    requests.get(f"{DAMO_SERVICE_ADDRESS}/stop")
+    requests.get(f"{config.DAMO_SERVICE_ADDRESS}/stop")
 
 
 def push(group: int, keys: np.ndarray, gradients: np.ndarray):
@@ -176,9 +175,8 @@ def push(group: int, keys: np.ndarray, gradients: np.ndarray):
         keys (np.ndarray): push keys
         gradients (np.ndarray): gradients of keys
     """
-    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
-    if DAMO_INSTANCE is not None:
-        DAMO_INSTANCE.pull(group, keys, gradients)
+    if config.DAMO_INSTANCE is not None:
+        config.DAMO_INSTANCE.pull(group, keys, gradients)
     else:
         buffer = struct.pack(
             f"@ii{keys.shape[0]}q{gradients.shape[0]}f",
@@ -191,7 +189,7 @@ def push(group: int, keys: np.ndarray, gradients: np.ndarray):
             "Content-Type": "application/octet-stream",
         }
 
-        requests.post(f"{DAMO_SERVICE_ADDRESS}/push", buffer, headers=headers)
+        requests.post(f"{config.DAMO_SERVICE_ADDRESS}/push", buffer, headers=headers)
 
 
 def pull(group: int, keys: np.ndarray, weights: np.ndarray):
@@ -202,15 +200,16 @@ def pull(group: int, keys: np.ndarray, weights: np.ndarray):
         keys (np.ndarray): pull keys
         weights (np.ndarray): keys weights
     """
-    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
-    if DAMO_INSTANCE is not None:
-        DAMO_INSTANCE.pull(group, keys, weights)
+    if config.DAMO_INSTANCE is not None:
+        config.DAMO_INSTANCE.pull(group, keys, weights)
     else:
         buffer = struct.pack(f"@ii{keys.shape[0]}q", group, keys.shape[0], *keys)
         headers = {
             "Content-Type": "application/octet-stream",
         }
-        r = requests.post(f"{DAMO_SERVICE_ADDRESS}/pull", buffer, headers=headers)
+        r = requests.post(
+            f"{config.DAMO_SERVICE_ADDRESS}/pull", buffer, headers=headers
+        )
         tmp = np.frombuffer(r.content, dtype=np.float32)
         assert weights.shape[0] == tmp.shape[0]
         weights[:] = tmp[:]
@@ -222,15 +221,14 @@ def dump(dir: str):
     Args:
         dir (str): spare embedding path
     """
-    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
-    if DAMO_INSTANCE is not None:
-        DAMO_INSTANCE.dump(dir)
+    if config.DAMO_INSTANCE is not None:
+        config.DAMO_INSTANCE.dump(dir)
     else:
         headers = {
             "Content-Type": "text/plain",
         }
 
-        requests.post(f"{DAMO_SERVICE_ADDRESS}/dump", data=dir, headers=headers)
+        requests.post(f"{config.DAMO_SERVICE_ADDRESS}/dump", data=dir, headers=headers)
 
 
 def checkpoint(dir: str):
@@ -239,12 +237,13 @@ def checkpoint(dir: str):
     Args:
         dir (str): checkpoint path
     """
-    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
-    if DAMO_INSTANCE is not None:
-        DAMO_INSTANCE.checkpoint(dir)
+    if config.DAMO_INSTANCE is not None:
+        config.DAMO_INSTANCE.checkpoint(dir)
     else:
         headers = {
             "Content-Type": "text/plain",
         }
 
-        requests.post(f"{DAMO_SERVICE_ADDRESS}/checkpoint", data=dir, headers=headers)
+        requests.post(
+            f"{config.DAMO_SERVICE_ADDRESS}/checkpoint", data=dir, headers=headers
+        )

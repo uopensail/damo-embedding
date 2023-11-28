@@ -30,7 +30,7 @@ import os
 import damo
 import torch
 
-from .config import DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
+from . import config
 from .inference import save_model_for_inference
 from .trainning import load_model, save_model_for_training
 from .util import (
@@ -58,7 +58,6 @@ def damo_embedding_init(
         port (int, optional): server port. Defaults to 9275.
         reload (str, optional): reload from from checkpont path. Defaults to "".
     """
-    global DAMO_INSTANCE, DAMO_SERVICE_ADDRESS
     configure = get_damo_embedding_configure(model)
     configure["port"] = port
     configure["ttl"] = ttl
@@ -68,17 +67,16 @@ def damo_embedding_init(
     config_path = f"/tmp/damo-configure-{os.getpid()}.json"
     json.dump(configure, open(config_path, "w"))
     mode = mode.lower()
-    if mode == "builtin" or mode == "":
-        DAMO_INSTANCE = damo.PyDamo(config_path)
+    if mode == "":
+        config.DAMO_INSTANCE = damo.PyDamo(config_path)
     elif mode == "service":
-        DAMO_SERVICE_ADDRESS = f"http://localhost:{port}"
+        config.DAMO_SERVICE_ADDRESS = f"http://localhost:{port}"
         run_damo_embedding_service(config_path)
 
 
 def damo_embedding_close():
     """close rocksdb"""
-    global DAMO_INSTANCE
-    if DAMO_INSTANCE is None:
+    if config.DAMO_INSTANCE is None:
         stop_damo_embeding_service()
 
 
