@@ -268,10 +268,6 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   std::vector<std::string> result;
   Key *group_keys = (Key *)malloc(len * sizeof(Key));
   for (int i = 0; i < len; i++) {
-    // filter 0
-    if (keys[i] == 0) {
-      continue;
-    }
     group_keys[i].group = group;
     group_keys[i].key = keys[i];
     s_keys.emplace_back(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)));
@@ -282,6 +278,10 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
 
   rocksdb::WriteBatch batch;
   for (int i = 0; i < len; i++) {
+    // filter 0
+    if (keys[i] == 0) {
+      continue;
+    }
     if (status[i].ok()) {
       ptr = (MetaData *)(result[i].data());
       memcpy(&(data[i * dim]), ptr->data, sizeof(Float) * dim);
