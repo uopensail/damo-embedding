@@ -1,11 +1,11 @@
 name: Build and upload to PyPI
 
 on:
-  release:
-    types: [published]
-  #push:
-  #  branches:
-  #    - pypi
+  #release:
+  #  types: [published]
+  push:
+    branches:
+      - pypi
 
 jobs:
   build_wheels:
@@ -13,7 +13,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        #os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v2
