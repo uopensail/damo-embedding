@@ -212,7 +212,7 @@ def pull(group: int, keys: np.ndarray, weights: np.ndarray):
         )
         tmp = np.frombuffer(r.content, dtype=np.float32)
         assert weights.shape[0] == tmp.shape[0]
-        weights[:] = tmp[:]
+        np.copyto(weights, tmp)
 
 
 def dump(dir: str):

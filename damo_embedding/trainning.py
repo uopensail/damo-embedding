@@ -41,8 +41,8 @@ def save_model_for_training(model: torch.nn.Module, output_dir: str):
 
     def get_embedding_params(embedding: Embedding):
         return {
-            "init_params": embedding.init_params,
-            "opt_params": embedding.opt_params,
+            "init_params": embedding.initializer,
+            "opt_params": embedding.optimizer,
             "dim": embedding.dim,
             "group": embedding.group,
         }
