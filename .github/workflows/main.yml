@@ -1,11 +1,11 @@
 name: Build and upload to PyPI
 
 on:
-  #release:
-  #  types: [published]
-  push:
-    branches:
-      - pypi
+  release:
+    types: [published]
+  #push:
+  #  branches:
+  #    - pypi
 
 jobs:
   build_wheels:
