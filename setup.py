@@ -22,9 +22,26 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+import pathlib
 
 from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
+
+here = pathlib.Path(__file__).parent.resolve()
+
+def get_requires(filename):
+    requirements = []
+    with open(filename, "rt") as req_file:
+        for line in req_file.read().splitlines():
+            if not line.strip().startswith("#"):
+                requirements.append(line)
+    return requirements
+
+def generate_long_description_file():
+    this_directory = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(this_directory, 'README.md')) as f:
+        long_description = f.read()
+    return long_description
 
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
@@ -183,7 +200,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    install_requires=["numpy>=1.19.0", "requests>=2.22.0"],
+    install_requires=get_requires(os.path.join(here, "requirements.txt")),
     setup_requires=[
         "numpy>=1.19.0",
         "requests>=2.22.0",
