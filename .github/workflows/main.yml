@@ -3,9 +3,9 @@ name: Build and upload to PyPI
 on:
   release:
     types: [published]
-  #push:
-  #  branches:
-  #    - pypi
+  push:
+    tags:
+      - '*'
 
 jobs:
   build_wheels:
@@ -29,10 +29,19 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
-
+      - name: Set CIBW_ENVIRONMENT
+        run: |
+          if [[ "${{ github.event_name }}" == 'push' && "${{ github.ref }}" == 'refs/tags/'*  ]]; then
+            echo "Setting CIBW_ENVIRONMENT_DEBUG for 1"
+            echo "CIBW_ENVIRONMENT_DEBUG=1" >> $GITHUB_ENV
+          else
+            echo "Setting CIBW_ENVIRONMENT_DEBUG for 0"
+            echo "CIBW_ENVIRONMENT_DEBUG=0" >> $GITHUB_ENV
+          fi
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.6.1
         env:
+          CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
             brew install rocksdb
           CIBW_BEFORE_ALL_LINUX: >
@@ -69,7 +78,7 @@ jobs:
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.4.2
-        if: 'github.event.release.prerelease'
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
