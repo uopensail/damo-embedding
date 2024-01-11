@@ -80,7 +80,9 @@ def damo_embedding_close():
         stop_damo_embeding_service()
 
 
-def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):
+def save_model(
+    model: torch.nn.Module, output_dir: str, training: bool = True, **kwargs
+):
     """save mode
 
     Args:
@@ -91,4 +93,5 @@ def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):
     if training:
         save_model_for_training(model, output_dir)
     else:
-        save_model_for_inference(model, output_dir)
+        graph_update = kwargs.get("graph_update", True)
+        save_model_for_inference(model, output_dir, graph_update)
