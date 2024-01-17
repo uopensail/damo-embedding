@@ -212,4 +212,4 @@ def update_model(original_model_path: str, model_path: str, meta_path: str):
         meta_path (str): meta file path
     """
     model = torch.jit.load(original_model_path)
-    update_model_graph(model=model, model_path=meta_path, meta_path=meta_path)
+    update_model_graph(model=model, model_path=model_path, meta_path=meta_path)
