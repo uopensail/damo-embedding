@@ -27,7 +27,20 @@ import requests
 import torch
 
 from . import config
+import socket
+def wait_port_ready(port,host="localhost", timeout=1200):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            sock = socket.create_connection((host, port), timeout=3)
+            sock.close()
+            cost_ts = time.time() - start_time
+            print(f"wait_port_ready cost {cost_ts}")
+            return True
+        except (socket.timeout, ConnectionRefusedError):
+            time.sleep(3)
 
+    return False
 
 class Embedding(torch.nn.Module):
     """embedding module for training."""
@@ -151,7 +164,7 @@ def damo_embedding_service(config_file: str):
     subprocess.run([f"{config.DAMO_SERVICE_BINARY}", "-c", f"{config_file}"])
 
 
-def run_damo_embedding_service(config_file: str):
+def run_damo_embedding_service(config_file: str, port: int):
     """run damo embedding service as daemon processor
 
     Args:
@@ -160,7 +173,9 @@ def run_damo_embedding_service(config_file: str):
     p = Process(target=damo_embedding_service, args=(config_file,))
     p.daemon = True
     p.start()
-    time.sleep(3)
+    is_ready = wait_port_ready(port=port)
+    if is_ready == False:
+        raise Exception("embedding services port not ready")
 
 
 def stop_damo_embeding_service():

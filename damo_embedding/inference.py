@@ -103,7 +103,7 @@ def sparse_to_numpy(
 
 
 def save_model_for_inference(
-    model: torch.nn.Module, output_dir: str, graph_update: bool = True
+    model: torch.nn.Module, output_dir: str, graph_update: bool = False
 ) -> None:
     """save model to dir for inference
 
@@ -166,7 +166,7 @@ def save_model_for_inference(
     meta_path = os.path.join(output_dir, "meta.json")
     if graph_update:
         update_model_graph(
-            model=model,
+            model=model_scripted,
             model_path=model_path,
             meta_path=meta_path,
         )

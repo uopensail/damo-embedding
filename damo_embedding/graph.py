@@ -202,3 +202,14 @@ def update_model_graph(model: torch.nn.Module, model_path: str, meta_path: str):
     meta = update_sparse_parts_from_graph(model)
     json.dump({"meta": meta, "sparse": 1}, open(meta_path, "w"))
     model.save(model_path)
+
+def update_model(original_model_path: str, model_path: str, meta_path: str):
+    """update model graph
+
+    Args:
+        model (str): original model
+        model_path (str): new model path
+        meta_path (str): meta file path
+    """
+    model = torch.jit.load(original_model_path)
+    update_model_graph(model=model, model_path=meta_path, meta_path=meta_path)

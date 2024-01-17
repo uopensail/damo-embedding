@@ -64,7 +64,7 @@ class DamoServiceTestCase(unittest.TestCase):
         }
         with open("/tmp/damo-configure.json", "w") as f:
             json.dump(self.configure, f)
-        damo_embedding.run_damo_embedding_service("/tmp/damo-configure.json")
+        damo_embedding.run_damo_embedding_service("/tmp/damo-configure.json",9275)
 
     def tearDown(self) -> None:
         damo_embedding.stop_damo_embeding_service()
