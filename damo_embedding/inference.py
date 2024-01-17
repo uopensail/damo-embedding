@@ -16,6 +16,7 @@
 # GNU Affero General Public License for more details.
 #
 
+import json
 import os
 import shutil
 import struct
@@ -24,6 +25,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 import torch
 
+from .graph import update_model_graph
 from .util import Embedding, dump
 
 
@@ -100,12 +102,15 @@ def sparse_to_numpy(
     return group_data, group_ids
 
 
-def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
+def save_model_for_inference(
+    model: torch.nn.Module, output_dir: str, graph_update: bool = False
+) -> None:
     """save model to dir for inference
 
     Args:
-        model (torch.nn.Module): torch module
+        model (torch.nn.Module):  torch module
         output_dir (str): output dir
+        graph_update (bool, optional): update graph or not
     """
     output_dir = os.path.join(output_dir, "inference")
     if os.path.exists(output_dir):
@@ -157,8 +162,20 @@ def save_model_for_inference(model: torch.nn.Module, output_dir: str) -> None:
             model.__dict__["_modules"][k] = modules
 
     model_scripted = torch.jit.script(model)
-    model_scripted.save(os.path.join(output_dir, "model.pt"))
-    os.remove(sparse_path)
+    model_path = os.path.join(output_dir, "model.pt")
+    meta_path = os.path.join(output_dir, "meta.json")
+    if graph_update:
+        update_model_graph(
+            model=model_scripted,
+            model_path=model_path,
+            meta_path=meta_path,
+        )
+    else:
+        model_scripted.save(model_path)
+        json.dump({"sparse": 0}, open(meta_path, "w"))
+
     # recover
     for k, _ in model.__dict__["_modules"].items():
         model.__dict__["_modules"][k] = original_modules[k]
+
+    os.remove(sparse_path)

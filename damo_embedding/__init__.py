@@ -22,6 +22,7 @@ __all__ = [
     "Embedding",
     "save_model",
     "load_model",
+    "update_model"
 ]
 
 import json
@@ -31,6 +32,7 @@ import damo
 import torch
 
 from . import config
+from .graph import update_model
 from .inference import save_model_for_inference
 from .trainning import load_model, save_model_for_training
 from .util import (
@@ -71,7 +73,7 @@ def damo_embedding_init(
         config.DAMO_INSTANCE = damo.PyDamo(config_path)
     elif mode == "service":
         config.DAMO_SERVICE_ADDRESS = f"http://localhost:{port}"
-        run_damo_embedding_service(config_path)
+        run_damo_embedding_service(config_path, port)
 
 
 def damo_embedding_close():
@@ -80,7 +82,9 @@ def damo_embedding_close():
         stop_damo_embeding_service()
 
 
-def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):
+def save_model(
+    model: torch.nn.Module, output_dir: str, training: bool = True, **kwargs
+):
     """save mode
 
     Args:
@@ -91,4 +95,5 @@ def save_model(model: torch.nn.Module, output_dir: str, training: bool = True):
     if training:
         save_model_for_training(model, output_dir)
     else:
-        save_model_for_inference(model, output_dir)
+        graph_update = kwargs.get("graph_update", False)
+        save_model_for_inference(model, output_dir, graph_update)
