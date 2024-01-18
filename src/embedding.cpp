@@ -265,7 +265,6 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   assert(embedding != nullptr);
   int dim = embedding->dim;
   assert(len * dim == n);
-  memset(data, 0, n * sizeof(Float));
 
   std::vector<rocksdb::Slice> s_keys;
   std::vector<std::string> result;

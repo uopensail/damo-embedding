@@ -203,6 +203,7 @@ def update_model_graph(model: torch.nn.Module, model_path: str, meta_path: str):
     json.dump({"meta": meta, "sparse": 1}, open(meta_path, "w"))
     model.save(model_path)
 
+
 def update_model(original_model_path: str, model_path: str, meta_path: str):
     """update model graph
 

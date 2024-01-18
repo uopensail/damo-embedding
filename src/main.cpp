@@ -64,17 +64,10 @@ int main(int argc, char const *argv[]) {
     PullRequest *ptr = (PullRequest *)(req.body.data());
     int dim = warehouse->dim(ptr->group);
     int n = dim * ptr->size;
-    std::string tmp("", n * sizeof(Float));
+    std::string tmp(n * sizeof(Float), 0);
     Float *data = (Float *)tmp.data();
     warehouse->lookup(ptr->group, ptr->keys, ptr->size, data, n);
     res.set_content(tmp, "application/octet-stream");
-    // res.set_content_provider(
-    //     size_t(n * sizeof(Float)), "application/octet-stream",
-    //     [data](size_t offset, size_t length, httplib::DataSink &sink) {
-    //       sink.write((char *)data, length);
-    //       return true;
-    //     });
-    // free(data);
   });
 
   srv.Post("/push", [=](const httplib::Request &req, httplib::Response &res) {
