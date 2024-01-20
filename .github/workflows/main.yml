@@ -44,6 +44,7 @@ jobs:
         env:
           CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
+            brew list rocksdb --versions &&
             brew install rocksdb
           CIBW_BEFORE_ALL_LINUX: >
             cmake --version &&
