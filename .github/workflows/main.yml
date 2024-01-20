@@ -52,7 +52,7 @@ jobs:
           CIBW_BEFORE_BUILD: >
             pip install pybind11 ninja
           CIBW_BEFORE_BUILD_MACOS: >
-            brew install rocksd
+            brew install rocksdb
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
