@@ -44,11 +44,13 @@ jobs:
         env:
           CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
-            brew install rocksdb@8.5.3
+            brew install rocksdb
           CIBW_BEFORE_ALL_LINUX: >
             cmake --version &&
             yum install -y python3-devel python-devel &&
             strip /usr/local/lib/librocksdb.so
+          CIBW_BEFORE_BUILD_MACOS: >
+            brew install rocksdb
           CIBW_BEFORE_BUILD: >
             pip install pybind11 ninja
           CIBW_ARCHS_LINUX: auto, aarch64 
