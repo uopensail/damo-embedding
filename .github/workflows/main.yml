@@ -40,7 +40,7 @@ jobs:
             echo "CIBW_ENVIRONMENT_DEBUG=0" >> $GITHUB_ENV
           fi
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.2
+        uses: pypa/cibuildwheel@v2.10.0
         env:
           CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
