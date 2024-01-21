@@ -51,8 +51,7 @@ jobs:
             strip /usr/local/lib/librocksdb.so
           CIBW_BEFORE_BUILD: >
             pip install pybind11 ninja
-          CIBW_BEFORE_BUILD_MACOS: >
-            brew install rocksdb && pip install pybind11 ninja
+          CIBW_CONFIG_SETTINGS_MACOS: "--only=ONLY"
           CIBW_ARCHS_LINUX: auto, aarch64 
 
       - uses: actions/upload-artifact@v2
