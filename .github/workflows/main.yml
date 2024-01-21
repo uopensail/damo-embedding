@@ -15,7 +15,7 @@ jobs:
       matrix:
         #os: [ubuntu-latest, macos-latest]
         #os: [ubuntu-latest]
-        os: [macos-latest]
+        os: [macos-latest,macos-arm64]
 
     steps:
       - uses: actions/checkout@v2
@@ -43,7 +43,7 @@ jobs:
             echo "CIBW_ENVIRONMENT_DEBUG=0" >> $GITHUB_ENV
           fi
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse --only=ONLY
+        run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
