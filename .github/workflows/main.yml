@@ -13,9 +13,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        #os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         #os: [ubuntu-latest]
-        os: [macos-latest]
+        #os: [macos-latest]
 
     steps:
       - uses: actions/checkout@v2
@@ -30,6 +30,8 @@ jobs:
         uses: docker/setup-qemu-action@v2
         with:
           platforms: all
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==2.16.2
       - name: Set CIBW_ENVIRONMENT
         run: |
           if [[ "${{ github.event_name }}" == 'push' && "${{ github.ref }}" == 'refs/tags/'*  ]]; then
@@ -40,7 +42,7 @@ jobs:
             echo "CIBW_ENVIRONMENT_DEBUG=0" >> $GITHUB_ENV
           fi
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.6.1
+        run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_ENVIRONMENT: DEBUG=${{ env.CIBW_ENVIRONMENT_DEBUG }}
           CIBW_BEFORE_ALL_MACOS: >
