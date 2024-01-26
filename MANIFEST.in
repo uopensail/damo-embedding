@@ -1,4 +1,6 @@
 recursive-include include *
+recursive-include src *
 include LICENSE
 include README.md
 include requirements.txt
+include CMakeLists.txt
