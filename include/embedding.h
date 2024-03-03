@@ -85,7 +85,7 @@ public:
   void load(const std::string &path);
 
   void lookup(int group, int64_t *keys, int len, Float *data, int n);
-  void apply_gradients(int group, int64_t *keys, int len, Float *gds, int n);
+  void apply_gradients(uint64_t step_control, int group, int64_t *keys, int len, Float *gds, int n);
 
   int dim(int group) const;
 

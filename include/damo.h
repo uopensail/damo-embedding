@@ -35,7 +35,7 @@ public:
   void checkpoint(const std::string &dir);
   // void load(const std::string &dir);
   void pull(int group, py::array_t<int64_t> keys, py::array_t<float> w);
-  void push(int group, py::array_t<int64_t> keys, py::array_t<float> gds);
+  void push(uint64_t step_control, int group, py::array_t<int64_t> keys, py::array_t<float> gds);
   std::string to_json();
 
 private:

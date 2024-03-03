@@ -13,6 +13,7 @@ struct PullRequest {
 };
 
 struct PushRequest {
+  uint64_t step_control;
   int group;
   int size;
   char data[];
@@ -76,7 +77,7 @@ int main(int argc, char const *argv[]) {
     int n = dim * ptr->size;
     int64_t *keys = (int64_t *)ptr->data;
     Float *gds = (Float *)&(ptr->data[sizeof(int64_t) * ptr->size]);
-    warehouse->apply_gradients(ptr->group, keys, ptr->size, gds, n);
+    warehouse->apply_gradients(ptr->step_control, ptr->group, keys, ptr->size, gds, n);
     res.status = 200;
     return;
   });

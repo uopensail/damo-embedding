@@ -37,7 +37,7 @@ void PyDamo::pull(int group, py::array_t<int64_t> keys, py::array_t<float> w) {
   this->warehouse_->lookup(group, keys_ptr, keys_info.size, w_ptr, w_info.size);
 }
 
-void PyDamo::push(int group, py::array_t<int64_t> keys,
+void PyDamo::push(uint64_t step_control, int group, py::array_t<int64_t> keys,
                   py::array_t<float> gds) {
   py::buffer_info keys_info = keys.request();
   assert(keys_info.ndim == 1);
@@ -46,7 +46,7 @@ void PyDamo::push(int group, py::array_t<int64_t> keys,
   py::buffer_info gds_info = gds.request();
   assert(gds_info.ndim == 1);
   float *gds_ptr = static_cast<float *>(gds_info.ptr);
-  this->warehouse_->apply_gradients(group, keys_ptr, keys_info.size, gds_ptr,
+  this->warehouse_->apply_gradients(step_control, group, keys_ptr, keys_info.size, gds_ptr,
                                     gds_info.size);
 }
 

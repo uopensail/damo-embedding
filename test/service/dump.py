@@ -85,7 +85,7 @@ class DamoServiceTestCase(unittest.TestCase):
             eps=self.epsilon,
         )
 
-        damo_embedding.util.push(self.group, keys, gds)
+        damo_embedding.util.push(0,self.group, keys, gds)
         opt.step()
         damo_embedding.util.pull(self.group, keys, w)
         tmp = (w - x.detach().numpy()).astype(np.float32)

@@ -90,7 +90,7 @@ class Embedding(torch.nn.Module):
                     grad_dict[keys[i]] / batch_size
                 )
 
-            push(self.group, keys, values)
+            push(config.global_step_control, self.group, keys, values)
 
         ret = torch.from_numpy(values)
         ret.requires_grad_()
@@ -182,7 +182,7 @@ def stop_damo_embeding_service():
     requests.get(f"{config.DAMO_SERVICE_ADDRESS}/stop")
 
 
-def push(group: int, keys: np.ndarray, gradients: np.ndarray):
+def push(step_control: int, group: int, keys: np.ndarray, gradients: np.ndarray):
     """push gradients to damo embedding
 
     Args:
@@ -194,7 +194,8 @@ def push(group: int, keys: np.ndarray, gradients: np.ndarray):
         config.DAMO_INSTANCE.pull(group, keys, gradients)
     else:
         buffer = struct.pack(
-            f"@ii{keys.shape[0]}q{gradients.shape[0]}f",
+            f"@Qii{keys.shape[0]}q{gradients.shape[0]}f",
+            step_control,
             group,
             keys.shape[0],
             *keys,

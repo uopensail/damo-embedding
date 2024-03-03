@@ -43,6 +43,7 @@ const Float Epsilon = 1e-8f;
 #define u_int64_t unsigned long long
 #endif
 
+#define STEP_CONTROL_BYTESIZE 8
 int64_t get_current_time();
 Float safe_sqrt(Float x);
 Float sign(Float x);
@@ -61,6 +62,7 @@ struct MetaData {
   int64_t key;
   int64_t update_num;
   int64_t update_time; // ms
+  uint64_t step_control;
   int dim;
   Float data[];
 };

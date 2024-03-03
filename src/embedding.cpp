@@ -48,7 +48,13 @@ bool ApplyGredientsOperator::FullMerge(
   memcpy(new_ptr, ptr, existing_value->size());
   for (const auto &value : operand_list) {
     new_ptr->update_num++;
-    float *gds = (float *)(const_cast<char *>(value.data()));
+    uint64_t step_control = *((uint64_t*)value.data());
+    if (step_control != 0 
+        && ((step_control&0xffffffff00000000) <= (new_ptr->step_control&0xffffffff00000000))
+        && ((step_control&0x00000000ffffffff) <= (new_ptr->step_control&0x00000000ffffffff))) {
+          continue;
+    }
+    float *gds = (float *)((const_cast<char *>(value.data()))+STEP_CONTROL_BYTESIZE);
     embedding->optimizer->call(new_ptr->data, gds, new_ptr->dim,
                                new_ptr->update_num);
   }
@@ -307,7 +313,7 @@ void EmbeddingWareHouse::lookup(int group, int64_t *keys, int len, Float *data,
   return;
 }
 
-void EmbeddingWareHouse::apply_gradients(int group, int64_t *keys, int len,
+void EmbeddingWareHouse::apply_gradients(uint64_t step_control, int group, int64_t *keys, int len,
                                          Float *gds, int n) {
   assert(0 <= group && group < max_embedding_num);
   auto embedding = this->embeddings_[group];
@@ -319,7 +325,7 @@ void EmbeddingWareHouse::apply_gradients(int group, int64_t *keys, int len,
   rocksdb::WriteOptions put_options;
   put_options.sync = false;
   rocksdb::WriteBatch batch;
-
+  char* tmp_value = (char*)malloc(STEP_CONTROL_BYTESIZE + sizeof(Float) * dim);
   for (int i = 0; i < len; i++) {
     // filter 0
     if (keys[i] == 0) {
@@ -327,9 +333,12 @@ void EmbeddingWareHouse::apply_gradients(int group, int64_t *keys, int len,
     }
     group_keys[i].group = group;
     group_keys[i].key = keys[i];
+    memcpy(tmp_value, &step_control, STEP_CONTROL_BYTESIZE);
+    memcpy(tmp_value+STEP_CONTROL_BYTESIZE, (char *)&gds[i * dim],sizeof(Float) * dim);
     batch.Merge(rocksdb::Slice((char *)&group_keys[i], sizeof(Key)),
-                rocksdb::Slice((char *)&gds[i * dim], sizeof(Float) * dim));
+                rocksdb::Slice(tmp_value, STEP_CONTROL_BYTESIZE + sizeof(Float) * dim));
   }
   this->db_->Write(put_options, &batch);
+  free(tmp_value);
   free(group_keys);
 }

@@ -22,7 +22,8 @@ __all__ = [
     "Embedding",
     "save_model",
     "load_model",
-    "update_model"
+    "update_model",
+    "damo_set_global_step_control"
 ]
 
 import json
@@ -50,6 +51,7 @@ def damo_embedding_init(
     reload: str = "",
     port: int = 9275,
     mode: str = "",
+    run_service = True,
 ):
     """initial of damo embedding
 
@@ -73,7 +75,7 @@ def damo_embedding_init(
         config.DAMO_INSTANCE = damo.PyDamo(config_path)
     elif mode == "service":
         config.DAMO_SERVICE_ADDRESS = f"http://localhost:{port}"
-        run_damo_embedding_service(config_path, port)
+        if run_service: run_damo_embedding_service(config_path, port)
 
 
 def damo_embedding_close():
@@ -81,6 +83,8 @@ def damo_embedding_close():
     if config.DAMO_INSTANCE is None:
         stop_damo_embeding_service()
 
+def damo_set_global_step_control(train_id:int, step:int):
+    config.set_global_step_control(train_id,step)
 
 def save_model(
     model: torch.nn.Module, output_dir: str, training: bool = True, **kwargs

@@ -28,3 +28,9 @@ DAMO_SERVICE_ADDRESS = "http://localhost:9275"
 DAMO_SERVICE_BINARY = os.path.join(
     os.path.dirname(os.path.dirname(__file__)), "damo-server"
 )
+
+global_step_control = 0
+def set_global_step_control(train_id: int, step: int):
+    global global_step_control
+    global_step_control = ((train_id << 32&0xffffffff00000000) | (step&0x00000000ffffffff))
+    
