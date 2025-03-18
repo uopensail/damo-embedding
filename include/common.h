@@ -14,17 +14,16 @@
 // GNU Affero General Public License for more details.
 //
 
-#ifndef DAMO_EMBEDDING_COMMMON_H
-#define DAMO_EMBEDDING_COMMMON_H
+#ifndef DAMO_EMBEDDING_COMMMON_H_
+#define DAMO_EMBEDDING_COMMMON_H_
 
 #pragma once
 
-#include <math.h>
-#include <stdio.h>
 #include <sys/time.h>
-#include <time.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -34,77 +33,109 @@
 
 #include "json.hpp"
 
-using json = nlohmann::json;
+namespace embedding {
 
-#define Float float
-const Float Epsilon = 1e-8f;
+constexpr float kEpsilon = 1e-8f;
 
-#ifndef u_int64_t
-#define u_int64_t unsigned long long
-#endif
-
+/**
+ * @brief Gets the current timestamp in milliseconds.
+ * @return The current time in milliseconds.
+ */
 int64_t get_current_time();
-Float safe_sqrt(Float x);
-Float sign(Float x);
 
-// the struct of value in rocksdb
-#pragma pack(push)
-#pragma pack(1)
+/**
+ * @brief Safely computes the square root.
+ * @param x The input value.
+ * @return The result of the square root.
+ * @exception std::invalid_argument Thrown when the input is negative.
+ */
+float safe_sqrt(float x);
 
+/**
+ * @brief Returns the sign of a number.
+ * @param x The input value.
+ * @return 1 for positive, -1 for negative, 0 for zero.
+ */
+float sign(float x);
+
+#pragma pack(push, 1)
+
+/// @brief Structure definition for a key.
 struct Key {
-  int group;
-  int64_t key;
+  int group;    ///< Group identifier
+  int64_t key;  ///< Key value
 };
 
+/// @brief Structure definition for metadata.
 struct MetaData {
-  int group;
-  int64_t key;
-  int64_t update_num;
-  int64_t update_time; // ms
-  int dim;
-  Float data[];
+  int32_t group;        ///< Group identifier
+  int64_t key;          ///< Key value
+  int64_t update_num;   ///< Number of updates
+  int64_t update_time;  ///< Last update time in milliseconds
+  int32_t dim;          ///< Data dimension
+  float data[];         ///< Flexible array to store data
 };
 #pragma pack(pop)
 
-using MetaData = struct MetaData;
-using Key = struct Key;
-
+/// @brief Class for handling parameters.
 class Params {
-public:
-  Params();
-  Params(json &params);
-  Params(const std::string &str);
-  Params(const Params &p);
+ public:
+  Params() = default;
 
-  Params &operator=(const Params &p);
-  const bool isnil() const;
-  bool contains(const std::string &key);
+  /// @brief Constructs from a JSON object.
+  explicit Params(const nlohmann::json& params);
 
-  template <class T> T get(const std::string &key) const {
-    if (!this->params_.contains(key)) {
-      throw std::out_of_range(key + " is not a valid key");
-    }
-    return this->params_[key].get<T>();
-  }
+  /// @brief Constructs from a JSON string.
+  explicit Params(const std::string& str);
 
-  template <class T> void insert(const std::string &key, const T &value) const {
-    this->params_[key] = value;
-  }
+  // Delete copy constructor and copy assignment operator
+  Params(const Params&) = delete;
+  Params& operator=(const Params&) = delete;
 
-  std::string to_json() const;
+  // Allow move semantics
+  Params(Params&&) = default;
+  Params& operator=(Params&&) = default;
 
+  ~Params() = default;
+
+  /// @brief Checks if a key exists in the parameters.
+  bool contains(const std::string& key) const { return params_.contains(key); }
+
+  /// @brief Gets the value of a specified key.
+  /// @tparam T The return value type.
+  /// @param key The key to query.
+  /// @return The corresponding value.
+  /// @throws std::out_of_range Thrown when the key does not exist.
   template <class T>
-  T get(const std::string &key, const T &default_value) const {
-    if (!this->params_.contains(key)) {
+  T get(const std::string& key) const {
+    if (!params_.contains(key)) {
+      throw std::out_of_range(key + " not found in parameters");
+    }
+    return params_[key].get<T>();
+  }
+
+  /// @brief Gets the value of a specified key with a default.
+  template <class T>
+  T get(const std::string& key, const T& default_value) const {
+    if (!params_.contains(key)) {
       return default_value;
     }
-    return this->params_[key].get<T>();
+    return params_[key].get<T>();
   }
 
-  ~Params();
+  /// @brief Inserts or updates a parameter.
+  template <class T>
+  void insert(const std::string& key, T&& value) {
+    params_[key] = std::forward<T>(value);
+  }
 
-private:
-  json params_;
+  /// @brief Converts parameters to a JSON string.
+  std::string to_json() const { return params_.dump(); }
+
+ private:
+  nlohmann::json params_;
 };
 
-#endif // DAMO_COMMON_H
+}  // namespace embedding
+
+#endif  // DAMO_EMBEDDING_COMMMON_H_

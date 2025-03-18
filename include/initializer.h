@@ -14,102 +14,126 @@
 // GNU Affero General Public License for more details.
 //
 
-#ifndef DAMO_EMBEDDING_INITIALIZER_H
-#define DAMO_EMBEDDING_INITIALIZER_H
+#ifndef DAMO_EMBEDDING_INITIALIZER_H_
+#define DAMO_EMBEDDING_INITIALIZER_H_
 
 #pragma once
+
 #include <iostream>
+#include <memory>
+#include <random>
 
 #include "common.h"
 
+namespace embedding {
+
+/**
+ * @brief Abstract base class for weight initializers.
+ */
 class Initializer {
  public:
+  // Disable default constructor and copy operations
   Initializer() = delete;
-  Initializer(const Initializer &) = delete;
-  Initializer(const Params &initializer_params);
-  virtual ~Initializer();
-  const std::string &get_name();
+  Initializer(const Initializer&) = delete;
+  Initializer& operator=(const Initializer&) = delete;
+
+  explicit Initializer(const Params& initializer_params)
+      : name_(initializer_params.get<std::string>("name")) {}
+  virtual ~Initializer() = default;
+
+  /**
+   * @brief Get the name of the initializer.
+   * @return The name of the initializer.
+   */
+  const std::string& get_name() const { return name_; }
+
+  /**
+   * @brief Convert initializer to string representation.
+   * @return String representation of the initializer.
+   */
   virtual std::string to_string() const = 0;
 
   /**
-   * @brief initialize the weights
-   *
-   * @param w weights to be initialized
-   * @param wn width of the weights
+   * @brief Initialize the weights.
+   * @param data Pointer to the data array to be initialized.
+   * @param dim Dimension of the data array.
    */
-  virtual void call(Float *data, int dim) = 0;
+  virtual void call(float* data, int dim) = 0;
 
  protected:
   std::string name_;
 };
 
-class Zeros : public Initializer {
- public:
-  Zeros() = delete;
-  Zeros(const Zeros &) = delete;
-  Zeros(const Params &initializer_params);
-  virtual ~Zeros();
-  virtual void call(Float *data, int dim);
-  virtual std::string to_string() const;
-};
-
-class Ones : public Initializer {
- public:
-  Ones() = delete;
-  Ones(const Ones &) = delete;
-  Ones(const Params &initializer_params);
-  virtual ~Ones();
-  virtual void call(Float *data, int dim);
-  virtual std::string to_string() const;
-};
-
+/**
+ * @brief Uniform random weight initializer.
+ */
 class RandomUniform : public Initializer {
  public:
+  // Disable default constructor and copy operations
   RandomUniform() = delete;
-  RandomUniform(const RandomUniform &) = delete;
-  RandomUniform(const Params &initializer_params);
-  virtual ~RandomUniform();
-  virtual void call(Float *data, int dim);
-  virtual std::string to_string() const;
+  RandomUniform(const RandomUniform&) = delete;
+  RandomUniform& operator=(const RandomUniform&) = delete;
+
+  explicit RandomUniform(const Params& initializer_params);
+  ~RandomUniform() override = default;
+
+  void call(float* data, int dim) override;
+  std::string to_string() const override;
 
  private:
-  double min_;
-  double max_;
-  std::uniform_real_distribution<double> distribution;
-  std::default_random_engine random;
+  std::default_random_engine random_;
 };
 
+/**
+ * @brief Normal random weight initializer.
+ */
 class RandomNormal : public Initializer {
  public:
+  // Disable default constructor and copy operations
   RandomNormal() = delete;
-  RandomNormal(const RandomNormal &) = delete;
-  RandomNormal(const Params &initializer_params);
-  virtual ~RandomNormal();
-  virtual void call(Float *data, int dim);
-  virtual std::string to_string() const;
+  RandomNormal(const RandomNormal&) = delete;
+  RandomNormal& operator=(const RandomNormal&) = delete;
+
+  explicit RandomNormal(const Params& initializer_params);
+  ~RandomNormal() override = default;
+
+  void call(float* data, int dim) override;
+  std::string to_string() const override;
 
  private:
   double mean_;
   double stddev_;
-  std::normal_distribution<double> distribution;
-  std::default_random_engine random;
+  std::normal_distribution<float> distribution_;
+  std::default_random_engine random_;
 };
 
-class TruncateNormal : public Initializer {
+/**
+ * @brief Xavier uniform weight initializer.
+ */
+class XavierUniform : public Initializer {
  public:
-  TruncateNormal() = delete;
-  TruncateNormal(const TruncateNormal &) = delete;
-  TruncateNormal(const Params &initializer_params);
-  virtual ~TruncateNormal();
-  virtual void call(Float *data, int dim);
-  virtual std::string to_string() const;
+  // Disable default constructor and copy operations
+  XavierUniform() = delete;
+  XavierUniform(const XavierUniform&) = delete;
+  XavierUniform& operator=(const XavierUniform&) = delete;
+
+  explicit XavierUniform(const Params& initializer_params);
+  ~XavierUniform() override = default;
+
+  void call(float* data, int dim) override;
+  std::string to_string() const override;
 
  private:
-  double mean_;
-  double stddev_;
-  std::normal_distribution<double> distribution;
-  std::default_random_engine random;
+  std::default_random_engine random_;
 };
 
-std::shared_ptr<Initializer> get_initializers(const Params &p);
-#endif  // DAMO_EMBEDDING_INITIALIZER_H
+/**
+ * @brief Factory function to create an initializer based on parameters.
+ * @param p The parameters for creating the initializer.
+ * @return A shared pointer to the created initializer.
+ */
+std::shared_ptr<Initializer> get_initializers(const Params& p);
+
+}  // namespace embedding
+
+#endif  // DAMO_EMBEDDING_INITIALIZER_H_

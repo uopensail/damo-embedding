@@ -15,7 +15,6 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-
 import json
 import os
 import shutil
@@ -26,7 +25,7 @@ import numpy as np
 import torch
 
 
-class AdamTestCase(unittest.TestCase):
+class AdamWTestCase(unittest.TestCase):
     def setUp(self) -> None:
         if os.path.exists("/tmp/data_dir"):
             shutil.rmtree("/tmp/data_dir")
@@ -45,12 +44,10 @@ class AdamTestCase(unittest.TestCase):
                     "dim": self.dim,
                     "group": self.group,
                     "initializer": {
-                        "name": "truncate_normal",
-                        "mean": 0.0,
-                        "stddev": 1.0,
+                        "name": "uniform",
                     },
                     "optimizer": {
-                        "name": "adam",
+                        "name": "adamw",
                         "gamma": self.gamma,
                         "beta1": self.beta1,
                         "beta2": self.beta2,
@@ -63,7 +60,7 @@ class AdamTestCase(unittest.TestCase):
 
         with open("/tmp/damo-configure.json", "w") as f:
             json.dump(self.configure, f)
-        self.damo = damo.PyDamo("/tmp/damo-configure.json")
+        self.damo = damo.Damo("/tmp/damo-configure.json")
 
     def test(self):
         # in test case, we use torch to test the results
@@ -75,7 +72,11 @@ class AdamTestCase(unittest.TestCase):
         gds = np.random.random(self.dim * n).astype(np.float32)
         x = torch.tensor(w, dtype=torch.float32, requires_grad=True)
         x.grad = torch.tensor(gds, dtype=torch.float32)
-        opt = torch.optim.Adam(
+
+        y = torch.tensor(w, dtype=torch.float32, requires_grad=True)
+        y.grad = torch.tensor(gds, dtype=torch.float32)
+
+        opt1 = torch.optim.AdamW(
             [x],
             lr=self.gamma,
             betas=(self.beta1, self.beta2),
@@ -84,7 +85,10 @@ class AdamTestCase(unittest.TestCase):
         )
 
         self.damo.push(self.group, keys, gds)
-        opt.step()
+        opt1.step()
+
+        x0 = x.detach().numpy()
+        
         self.damo.pull(self.group, keys, w)
         tmp = (w - x.detach().numpy()).astype(np.float32)
         tmp = tmp.reshape((self.dim, n))

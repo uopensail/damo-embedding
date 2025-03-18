@@ -3,6 +3,24 @@
 ## DeepFM
 
 ```python
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+#
+# `Damo-Embedding` - 'c++ tool for sparse parameter server'
+# Copyright (C) 2019 - present timepi <timepi123@gmail.com>
+# `Damo-Embedding` is provided under: GNU Affero General Public License
+# (AGPL3.0) https:#www.gnu.org/licenses/agpl-3.0.html unless stated otherwise.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU Affero General Public License as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU Affero General Public License for more details.
+#
+
 import torch
 import torch.nn as nn
 
@@ -24,32 +42,25 @@ class DeepFM(torch.nn.Module):
         self.fea_size = fea_size
 
         initializer = {
-            "name": "truncate_normal",
-            "mean": float(kwargs.get("mean", 0.0)),
-            "stddev": float(kwargs.get("stddev", 0.0001)),
+            "name": "uniform",
         }
 
         optimizer = {
-            "name": "adam",
-            "gamma": float(kwargs.get("gamma", 0.001)),
+            "name": "adamw",
+            "gamma": float(kwargs.get("gamma", 0.0001)),
             "beta1": float(kwargs.get("beta1", 0.9)),
             "beta2": float(kwargs.get("beta2", 0.999)),
             "lambda": float(kwargs.get("lambda", 0.0)),
             "epsilon": float(kwargs.get("epsilon", 1e-8)),
         }
 
-        self.w = Embedding(
-            1,
-            initializer=initializer,
-            optimizer=optimizer,
-        )
-
         self.v = Embedding(
-            self.emb_size,
+            dim=self.emb_size,
+            group=0,
             initializer=initializer,
             optimizer=optimizer,
+            **kwargs,
         )
-        self.w0 = torch.zeros(1, dtype=torch.float32, requires_grad=True)
         self.dims = [fea_size * emb_size] + hid_dims
 
         self.layers = nn.ModuleList()
@@ -72,16 +83,10 @@ class DeepFM(torch.nn.Module):
             tensor.Tensor: deepfm forward values
         """
         assert input.shape[1] == self.fea_size
-        w = self.w.forward(input)
         v = self.v.forward(input)
         square_of_sum = torch.pow(torch.sum(v, dim=1), 2)
         sum_of_square = torch.sum(v * v, dim=1)
-        fm_out = (
-            torch.sum((square_of_sum - sum_of_square)
-                      * 0.5, dim=1, keepdim=True)
-            + torch.sum(w, dim=1)
-            + self.w0
-        )
+        fm_out = torch.sum((square_of_sum - sum_of_square) * 0.5, dim=1, keepdim=True)
 
         dnn_out = torch.flatten(v, 1)
         for layer in self.layers:
@@ -100,6 +105,18 @@ model = DeepFM(8, 39)
 
 # ... other codes
 
+save_model(model, "train", True)
 
-save_model(model, "./", training=False)
+
+# save onnx model for inference 
+save_model(
+    model,
+    "eval",
+    False,
+    dummy_input=torch.randint(low=1, high=1000, size=(100, 39), dtype=torch.int64),
+    input_names=["input"],
+    output_names=["output"],
+    dynamic_axes={'input' : {0 : 'batch_size'},
+                        'output' : {0 : 'batch_size'}}
+)
 ```

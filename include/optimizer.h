@@ -14,171 +14,119 @@
 // GNU Affero General Public License for more details.
 //
 
-#ifndef DAMO_EMBEDDING_OPTIMIZER_H
-#define DAMO_EMBEDDING_OPTIMIZER_H
+#ifndef DAMO_EMBEDDING_OPTIMIZER_H_
+#define DAMO_EMBEDDING_OPTIMIZER_H_
 
 #pragma once
 
-#include <iostream>
+#include <memory>
+#include <string>
 
 #include "common.h"
 #include "initializer.h"
 
+namespace embedding {
+
+/**
+ * @brief Base class for optimization algorithms.
+ */
 class Optimizer {
-public:
-  Optimizer() = delete;
-  Optimizer(const Optimizer &) = delete;
-  Optimizer(const Params &optimizer_params);
-  virtual ~Optimizer();
+ public:
+  // Disable copy operations
+  Optimizer(const Optimizer&) = delete;
+  Optimizer& operator=(const Optimizer&) = delete;
+
+  /**
+   * @brief Constructs an optimizer with specified parameters.
+   * @param optimizer_params Configuration parameters for the optimizer.
+   */
+  explicit Optimizer(const Params& optimizer_params)
+      : name_(optimizer_params.get<std::string>("name")) {}
+  virtual ~Optimizer() = default;
+
+  /**
+   * @brief Gets the name of the optimizer.
+   * @return Constant reference to the optimizer's name.
+   */
+  const std::string& name() const { return name_; }
+
+  /**
+   * @brief Converts optimizer configuration to string representation.
+   * @return String describing the optimizer configuration.
+   */
   virtual std::string to_string() const = 0;
-  const std::string &get_name();
 
   /**
-   * @brief get the space of the optimizer
-   *
-   * @param dim weight dimension
-   * @return int
+   * @brief Gets the required workspace size for the optimizer.
+   * @param dim Dimension of the weight vector.
+   * @return Required workspace size in elements.
    */
-  virtual int get_space(int dim);
+  virtual int get_space(int dim) const = 0;
 
   /**
-   * @brief call the optimizer, updating the embedding
-   *
-   * @param w weights
-   * @param wn width of the weights
-   * @param gds gradients for weights
-   * @param gn width of the grad
-   * @param global_step global step
+   * @brief Updates parameters using optimization algorithm.
+   * @param data Pointer to parameter data array.
+   * @param grads Pointer to gradient data array.
+   * @param dim Dimension of the parameter vector.
+   * @param global_step Current global training step.
    */
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step) = 0;
+  virtual void call(float* data, const float* grads, int dim,
+                    int64_t global_step) = 0;
 
-protected:
-  std::string name_;
-};
-
-class SGDOptimizer : public Optimizer {
-public:
-  SGDOptimizer() = delete;
-  SGDOptimizer(const SGDOptimizer &) = delete;
-  SGDOptimizer(const Params &optimizer_params);
-  virtual ~SGDOptimizer();
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
-
-private:
-  Float gamma_;
-  Float lambda_;
-};
-
-class FTRLOptimizer : public Optimizer {
-public:
-  FTRLOptimizer() = delete;
-  FTRLOptimizer(const FTRLOptimizer &) = delete;
-  FTRLOptimizer(const Params &optimizer_params);
-  virtual ~FTRLOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
-
-private:
-  Float alpha_;
-  Float beta_;
-  Float lambda1_;
-  Float lambda2_;
-};
-
-class AdagradOptimizer : public Optimizer {
-public:
-  AdagradOptimizer() = delete;
-  AdagradOptimizer(const AdagradOptimizer &) = delete;
-  AdagradOptimizer(const Params &optimizer_params);
-  virtual ~AdagradOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
-
-private:
-  Float gamma_;
-  Float lambda_;
-  Float eta_;
-  Float epsilon_;
+ protected:
+  std::string name_;  ///< Name identifier for the optimizer
 };
 
 /**
- * @brief this is Adam with L2 regularization
- *
+ * @brief AdamW optimizer implementation with weight decay.
  */
-class AdamOptimizer : public Optimizer {
-public:
-  AdamOptimizer() = delete;
-  AdamOptimizer(const AdamOptimizer &) = delete;
-  AdamOptimizer(const Params &optimizer_params);
-  virtual ~AdamOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
-
-private:
-  Float gamma_;
-  Float beta1_;
-  Float beta2_;
-  Float lambda_;
-  Float epsilon_;
-};
-
-class AmsGradOptimizer : public Optimizer {
-public:
-  AmsGradOptimizer() = delete;
-  AmsGradOptimizer(const AmsGradOptimizer &) = delete;
-  AmsGradOptimizer(const Params &optimizer_params);
-  virtual ~AmsGradOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
-
-private:
-  Float gamma_;
-  Float beta1_;
-  Float beta2_;
-  Float lambda_;
-  Float epsilon_;
-};
-
 class AdamWOptimizer : public Optimizer {
-public:
-  AdamWOptimizer() = delete;
-  AdamWOptimizer(const AdamWOptimizer &) = delete;
-  AdamWOptimizer(const Params &optimizer_params);
-  virtual ~AdamWOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
+ public:
+  // Disable copy operations
+  AdamWOptimizer(const AdamWOptimizer&) = delete;
+  AdamWOptimizer& operator=(const AdamWOptimizer&) = delete;
 
-private:
-  Float gamma_;
-  Float beta1_;
-  Float beta2_;
-  Float lambda_;
-  Float epsilon_;
+  /**
+   * @brief Constructs AdamW optimizer with parameters.
+   * @param optimizer_params Configuration parameters for AdamW.
+   */
+  explicit AdamWOptimizer(const Params& optimizer_params);
+
+  /**
+   * @brief Gets required workspace size for AdamW.
+   * @param dim Parameter dimension.
+   * @return Workspace size requirement (2 * dim for moments).
+   */
+  int get_space(int dim) const override;
+
+  /**
+   * @brief Performs AdamW optimization step.
+   */
+  void call(float* data, const float* grads, int dim,
+            int64_t global_step) override;
+
+  /**
+   * @brief Returns string representation of AdamW configuration.
+   */
+  std::string to_string() const override;
+
+ private:
+  // Hyperparameters with default values
+  float gamma_;    ///< Learning rate
+  float beta1_;    ///< Exponential decay rate for 1st moment estimates
+  float beta2_;    ///< Exponential decay rate for 2nd moment estimates
+  float lambda_;   ///< Weight decay rate
+  float epsilon_;  ///< Numerical stability term
 };
 
-class LionOptimizer : public Optimizer {
-public:
-  LionOptimizer() = delete;
-  LionOptimizer(const LionOptimizer &) = delete;
-  LionOptimizer(const Params &optimizer_params);
-  virtual ~LionOptimizer();
-  virtual int get_space(int dim);
-  virtual void call(Float *data, Float *gds, int dim, int64_t global_step);
-  virtual std::string to_string() const;
+/**
+ * @brief Factory function to create optimizers.
+ * @param optimizer_params Parameters specifying optimizer configuration.
+ * @return Shared pointer to created optimizer instance.
+ * @throws std::invalid_argument for unknown optimizer types.
+ */
+std::shared_ptr<Optimizer> get_optimizers(const Params& optimizer_params);
 
-private:
-  Float eta_;
-  Float beta1_;
-  Float beta2_;
-  Float lambda_;
-};
+}  // namespace embedding
 
-std::shared_ptr<Optimizer> get_optimizers(const Params &optimizer_params);
-
-#endif // DAMO_EMBEDDING_OPTIMIZER_H
+#endif  // DAMO_EMBEDDING_OPTIMIZER_H_

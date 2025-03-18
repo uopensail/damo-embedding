@@ -14,8 +14,8 @@
 // GNU Affero General Public License for more details.
 //
 
-#ifndef DAMO_EMBEDDING_EMBEDDING_H
-#define DAMO_EMBEDDING_EMBEDDING_H
+#ifndef DAMO_EMBEDDING_EMBEDDING_H_
+#define DAMO_EMBEDDING_EMBEDDING_H_
 
 #pragma once
 
@@ -24,79 +24,110 @@
 #include <rocksdb/utilities/db_ttl.h>
 #include <rocksdb/write_batch.h>
 
+#include <iostream>
+#include <memory>
 #include <mutex>
+#include <string>
 
 #include "initializer.h"
 #include "optimizer.h"
 
-// damo embedding supports 256 embeddings
-const int max_embedding_num = 256;
+namespace embedding {
 
+constexpr int kMaxEmbeddingNum = 256;  ///< Maximum supported embeddings
+
+/**
+ * @brief Represents a single embedding configuration.
+ */
 class Embedding {
-public:
+ public:
   Embedding() = delete;
-  explicit Embedding(json &config);
-  ~Embedding();
+  explicit Embedding(const nlohmann::json& configure);
+  ~Embedding() = default;
 
-public:
-  int dim;
-  int group;
-  std::shared_ptr<Optimizer> optimizer;
-  std::shared_ptr<Initializer> initializer;
+  // Accessors
+  int dimension() const noexcept { return dim_; }
+  int group() const noexcept { return group_; }
+  std::shared_ptr<Optimizer> optimizer() const noexcept { return optimizer_; }
+  std::shared_ptr<Initializer> initializer() const noexcept {
+    return initializer_;
+  }
+
+ private:
+  int dim_;                               ///< Dimension of the embedding
+  int group_;                             ///< Group identifier
+  std::shared_ptr<Optimizer> optimizer_;  ///< Optimization algorithm
+  std::shared_ptr<Initializer>
+      initializer_;  ///< Weight initialization strategy
 };
 
-class ApplyGredientsOperator : public rocksdb::MergeOperator {
-public:
-  explicit ApplyGredientsOperator(json &configure);
-  ~ApplyGredientsOperator() {}
+/**
+ * @brief RocksDB merge operator for gradient application.
+ */
+class ApplyGradientsOperator : public rocksdb::MergeOperator {
+ public:
+  explicit ApplyGradientsOperator(const nlohmann::json& configure);
+  ~ApplyGradientsOperator() override = default;
 
-  virtual bool FullMerge(const rocksdb::Slice &key,
-                         const rocksdb::Slice *existing_value,
-                         const std::deque<std::string> &operand_list,
-                         std::string *new_value,
-                         rocksdb::Logger *logger) const override;
+  bool FullMerge(const rocksdb::Slice& key,
+                 const rocksdb::Slice* existing_value,
+                 const std::deque<std::string>& operand_list,
+                 std::string* new_value,
+                 rocksdb::Logger* logger) const override;
 
-  virtual bool PartialMerge(const rocksdb::Slice &key,
-                            const rocksdb::Slice &left_operand,
-                            const rocksdb::Slice &right_operand,
-                            std::string *new_value,
-                            rocksdb::Logger *logger) const override {
+  bool PartialMerge(const rocksdb::Slice& key,
+                    const rocksdb::Slice& left_operand,
+                    const rocksdb::Slice& right_operand, std::string* new_value,
+                    rocksdb::Logger* logger) const override {
     return false;
   }
 
-  static const char *kClassName() { return "ApplyGredientsOperator"; }
-  static const char *kNickName() { return "apply_gredients"; }
-  [[nodiscard]] const char *Name() const override { return kClassName(); }
-  [[nodiscard]] const char *NickName() const  { return kNickName(); }
+  const char* Name() const override { return "ApplyGradientsOperator"; }
 
-private:
-  std::shared_ptr<Embedding> embeddings_[max_embedding_num];
+ private:
+  std::array<std::unique_ptr<Embedding>, kMaxEmbeddingNum> embeddings_;
 };
 
-class EmbeddingWareHouse {
-public:
-  EmbeddingWareHouse() = delete;
-  explicit EmbeddingWareHouse(json &configure);
-  ~EmbeddingWareHouse() {}
+/**
+ * @brief Manages embedding storage and operations.
+ */
+class EmbeddingWarehouse {
+ public:
+  EmbeddingWarehouse() = delete;
+  explicit EmbeddingWarehouse(const nlohmann::json& configure);
+  ~EmbeddingWarehouse() = default;
 
-  std::string to_json();
-  void dump(const std::string &path);
-  void checkpoint(const std::string &path);
-  void load(const std::string &path);
+  std::string to_json() const { return this->configure_.dump(); }
+  void dump(const std::string& path);
+  void checkpoint(const std::string& path);
+  void load(const std::string& path);
 
-  void lookup(int group, int64_t *keys, int len, Float *data, int n);
-  void apply_gradients(int group, int64_t *keys, int len, Float *gds, int n);
+  void lookup(int group, const int64_t* keys, int len, float* data,
+              int n) const;
 
-  int dim(int group) const;
+  void apply_gradients(int group, const int64_t* keys, int len,
+                       const float* grads, int n);
 
-private:
-  std::shared_ptr<std::string> create_record(int group, const int64_t &key);
+  int dimension(int group) const;
 
-private:
-  json configure_;
-  int size_;
-  std::shared_ptr<Embedding> embeddings_[max_embedding_num];
-  std::shared_ptr<rocksdb::DBWithTTL> db_;
+ private:
+  // RAII封装的内存映射指针
+  struct RocksdbDeleter {
+    void operator()(rocksdb::DBWithTTL* db) const;
+  };
+  using RocksdbPtr = std::unique_ptr<rocksdb::DBWithTTL, RocksdbDeleter>;
+
+  std::unique_ptr<std::string> create_record(int group, int64_t key) const;
+
+  nlohmann::json configure_;  ///< Configuration parameters
+  int size_;                  ///< Number of embeddings
+  std::array<std::unique_ptr<Embedding>, kMaxEmbeddingNum>
+      embeddings_;  ///< Embedding configurations
+
+  RocksdbPtr db_;             ///< RocksDB instance with TTL support
+  mutable std::mutex mutex_;  ///< Synchronization primitive
 };
 
-#endif // DAMO_EMBEDDING_EMBEDDING_H
+}  // namespace embedding
+
+#endif  // DAMO_EMBEDDING_EMBEDDING_H_

@@ -1,2 +1,4 @@
 numpy>=1.19.0
 requests>=2.22.0
+onnx>=1.17.0
+onnxscript>=0.2.2

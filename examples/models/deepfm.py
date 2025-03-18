@@ -37,13 +37,11 @@ class DeepFM(torch.nn.Module):
         self.fea_size = fea_size
 
         initializer = {
-            "name": "truncate_normal",
-            "mean": float(kwargs.get("mean", 0.0)),
-            "stddev": float(kwargs.get("stddev", 0.0001)),
+            "name": "uniform",
         }
 
         optimizer = {
-            "name": "adam",
+            "name": "adamw",
             "gamma": float(kwargs.get("gamma", 0.0001)),
             "beta1": float(kwargs.get("beta1", 0.9)),
             "beta2": float(kwargs.get("beta2", 0.999)),
@@ -51,20 +49,13 @@ class DeepFM(torch.nn.Module):
             "epsilon": float(kwargs.get("epsilon", 1e-8)),
         }
 
-        self.w = Embedding(
-            1,
-            initializer=initializer,
-            optimizer=optimizer,
-            **kwargs,
-        )
-
         self.v = Embedding(
-            self.emb_size,
+            dim=self.emb_size,
+            group=0,
             initializer=initializer,
             optimizer=optimizer,
             **kwargs,
         )
-        self.w0 = torch.zeros(1, dtype=torch.float32, requires_grad=True)
         self.dims = [fea_size * emb_size] + hid_dims
 
         self.layers = nn.ModuleList()
@@ -87,15 +78,10 @@ class DeepFM(torch.nn.Module):
             tensor.Tensor: deepfm forward values
         """
         assert input.shape[1] == self.fea_size
-        w = self.w.forward(input)
         v = self.v.forward(input)
         square_of_sum = torch.pow(torch.sum(v, dim=1), 2)
         sum_of_square = torch.sum(v * v, dim=1)
-        fm_out = (
-            torch.sum((square_of_sum - sum_of_square) * 0.5, dim=1, keepdim=True)
-            + torch.sum(w, dim=1)
-            + self.w0
-        )
+        fm_out = torch.sum((square_of_sum - sum_of_square) * 0.5, dim=1, keepdim=True)
 
         dnn_out = torch.flatten(v, 1)
         for layer in self.layers:

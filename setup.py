@@ -168,12 +168,6 @@ class CMakeBuild(build_ext):
             ["cmake", "--build", ".", *build_args], cwd=build_temp, check=True
         )
 
-        # copy damo-server
-        os.rename(
-            os.path.join(build_temp, "damo-server"),
-            os.path.join(self.build_lib, "damo-server"),
-        )
-
 
 with open("README.md", "r", encoding="utf-8") as fd:
     long_description = fd.read()
@@ -193,10 +187,7 @@ setup(
     keywords=[
         "sparse embedding using rocksdb",
         "parameter server",
-        "ftrl",
-        "adam",
         "adamw",
-        "adagrad",
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",

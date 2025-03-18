@@ -21,9 +21,7 @@
 import json
 import os
 from typing import List, Tuple
-
-import pyluban
-import luban_parser
+import minia
 import numpy as np
 import pandas as pd
 import torch
@@ -41,7 +39,7 @@ def to_json(train_path: str, json_path: str):
     sparse_cols = [f"C_{i}" for i in range(26)]
     dense_cols = [f"I_{i}" for i in range(13)]
     train_cols = ["label"] + dense_cols + sparse_cols
-    train_data = pd.read_csv(train_path, names=train_cols, sep="\t")
+    train_data = pd.read_csv(train_path, names=train_cols, sep=",", header=1)
 
     with open(json_path, "w") as writer:
         for _, row in train_data.iterrows():
@@ -85,7 +83,7 @@ def transform(row: pd.Series, sparse_cols: List[str], dense_cols: List[str]) -> 
     return dic
 
 
-def luban_process(config_path: str, data_path: str) -> list:
+def minia_process(config_path: str, data_path: str) -> list:
     """use luban to generate training data
 
     Args:
@@ -95,25 +93,20 @@ def luban_process(config_path: str, data_path: str) -> list:
     Returns:
         list: training data records
     """
-    new_config = config_path + "_new"
-    luban_parser.parse(config_path, new_config)
+    toolkit = minia.Minia("config.toml")
     json_path = data_path + ".json"
     to_json(data_path, json_path)
-    toolkit = pyluban.Toolkit(new_config)
     ret = []
     with open(json_path, "r") as reader:
         line = reader.readline()
         while line:
             line = line.strip()
             if len(line) > 0:
-                features = pyluban.Features(line)
-                m = toolkit.process(features)
-                arr = np.asarray(m[0])
+                m = toolkit(line)
                 label = json.loads(line)["label"]["value"]
-                ret.append((label, arr))
+                ret.append((label, list(m.values())))
             line = reader.readline()
     os.remove(json_path)
-    os.remove(new_config)
     return ret
 
 
@@ -129,11 +122,11 @@ def process(
     Returns:
         Tuple[Data.DataLoader, Data.DataLoader]: train and test loaders
     """
-    train_data = luban_process(config_path, train_path)
+    train_data = minia_process(config_path, train_path)
     train, test = train_test_split(train_data, test_size=0.2, random_state=42)
     train_dataset = Data.TensorDataset(
         torch.from_numpy(
-            np.concatenate(list(map(lambda _: _[1].reshape([1, -1]), train)))
+            np.array(list(map(lambda _: _[1], train)), dtype=np.int64)
         ),
         torch.from_numpy(np.array(list(map(lambda _: _[0], train)), dtype=np.float32)),
     )
@@ -142,7 +135,7 @@ def process(
 
     test_dataset = Data.TensorDataset(
         torch.from_numpy(
-            np.concatenate(list(map(lambda _: _[1].reshape([1, -1]), test)))
+            np.array(list(map(lambda _: _[1], test)), dtype=np.int64)
         ),
         torch.from_numpy(np.array(list(map(lambda _: _[0], test)), dtype=np.float32)),
     )
@@ -155,5 +148,5 @@ def process(
 
 
 if __name__ == "__main__":
-    train_loader, valid_loader = process("config.json", "sample.txt")
+    train_loader, valid_loader = process("config.toml", "criteo_sample.txt")
     print(train_loader, valid_loader)

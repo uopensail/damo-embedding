@@ -10,11 +10,11 @@ All features are discretization and represented by the unique int64_t value. We 
 
 ```c++
 struct MetaData {
-    int group; 
+    int32_t group; 
     int64_t key;  
     int64_t update_time;
     int64_t update_num;
-    int dim;
+    int32_t dim;
     float data[];
 };
 ```
@@ -44,14 +44,14 @@ import damo_embeddimg
 optimizer = {...} # dict
 initializer = {...} # dict
 dimension = 16
-embedding = damo_embeddimg.Embedding(dim=dimension, initializer=initializer, optimizer=optimizerp)
+embedding = damo_embeddimg.Embedding(dim=dimension, group=0, initializer=initializer, optimizer=optimizerp)
 ```
 
-### Member Functions of Embedding
+### Pull And Push for Embedding
 
-There are two member functions of embedding, both have no return values, which are listed below:
+There are two functions for embedding, both have no return values, which are listed below:
 
-#### lookup: pull weight from embedding
+#### pull: pull weight from embedding
 
 The arguments are listed below:
 
@@ -67,6 +67,7 @@ The arguments are listed below:
 
 ```python
 import numpy as np
+import damo
 
 # example
 n = 8
@@ -74,18 +75,20 @@ keys = np.zeros(n).astype(np.int64)
 for i in range(n):
     keys[i] = i+1
 
+group = 0
+
 # array([1, 2, 3, 4, 5, 6, 7, 8], dtype=int64)
 
-weight = np.zeros(n*dimension).astype(np.float32)
+weights = np.zeros(n*dimension).astype(np.float32)
 
-embedding.lookup(keys, weight)
+damo.pull(group=group, keys=keys, weights=weights)
 
 # IT IS Easy To Extract Each Key's Weight
 tmp = weight.reshape((n, dimension))
 weight_dict = {k: v for k,v in zip(keys, tmp)}
 ```
 
-#### apply_gradients: push gradients to embedding
+#### push: push gradients to embedding
 
 The arguments are listed below:
 
@@ -99,8 +102,16 @@ The arguments are listed below:
 
 ```python
 import numpy as np
+import damo
+
+group = 0
+
+n = 8
+keys = np.zeros(n).astype(np.int64)
+for i in range(n):
+    keys[i] = i+1
 
 gradients = np.random.random(n*dimension).astype(np.float32)
 
-embedding.apply_gradients(keys, gradients)
+damo.push(group=group, keys=keys, gradients=gradients)
 ```

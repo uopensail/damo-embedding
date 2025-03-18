@@ -15,16 +15,11 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 # GNU Affero General Public License for more details.
 #
-import os
+import threading
+from typing import Optional
 
+import damo
 
 # damo instance
-DAMO_INSTANCE = None
-
-# damo embedding http address
-DAMO_SERVICE_ADDRESS = "http://localhost:9275"
-
-# damo server binaray file path
-DAMO_SERVICE_BINARY = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), "damo-server"
-)
+_singleton_damo_instance: Optional[damo.Damo] = None
+_singleton_lock = threading.Lock()
