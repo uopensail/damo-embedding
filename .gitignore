@@ -38,3 +38,4 @@ dist/
 .vscode/
 *__pycache__*
 *.whl
+.DS_Store
